@@ -1,0 +1,162 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // FIRE計算関連のリレーション
+  assets     Asset[]
+  expenses   Expense[]
+  scenarios  Scenario[]
+  lifeEvents LifeEvent[]
+
+  @@map("users")
+}
+
+model Asset {
+  id          String    @id @default(cuid())
+  userId      String
+  type        AssetType
+  name        String
+  symbol      String?   // 株式銘柄コードなど
+  amount      Decimal   @db.Decimal(15, 2)
+  currentValue Decimal  @db.Decimal(15, 2)
+  targetAllocation Float? // 目標配分比率（%）
+  isAutoUpdate Boolean  @default(false) // 自動更新対象か
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("assets")
+}
+
+model Expense {
+  id          String      @id @default(cuid())
+  userId      String
+  category    ExpenseCategory
+  name        String
+  amount      Decimal     @db.Decimal(15, 2)
+  frequency   Frequency   // 月次、年次など
+  isEssential Boolean     @default(true) // 必需品かどうか
+  retirementMultiplier Float @default(1.0) // 退職後の支出倍率
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("expenses")
+}
+
+model LifeEvent {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  targetYear  Int
+  estimatedCost Decimal @db.Decimal(15, 2)
+  isPaid      Boolean  @default(false)
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("life_events")
+}
+
+model Scenario {
+  id               String   @id @default(cuid())
+  userId           String
+  name             String
+  inflationRate    Float    @default(2.0) // インフレ率（%）
+  expectedReturn   Float    @default(5.0) // 期待リターン（%）
+  withdrawalRate   Float    @default(4.0) // 引き出し率（%）
+  currentAge       Int
+  retirementAge    Int      @default(65)
+  lifeExpectancy   Int      @default(85)
+  isActive         Boolean  @default(false) // アクティブなシナリオ
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projections Projection[]
+
+  @@map("scenarios")
+}
+
+model Projection {
+  id               String   @id @default(cuid())
+  scenarioId       String
+  year             Int
+  age              Int
+  totalAssets      Decimal  @db.Decimal(15, 2)
+  annualExpenses   Decimal  @db.Decimal(15, 2)
+  netWorth         Decimal  @db.Decimal(15, 2)
+  fireAchieved     Boolean  @default(false)
+  confidenceLevel  Float?   // モンテカルロ信頼度
+  createdAt        DateTime @default(now())
+
+  scenario Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@unique([scenarioId, year])
+  @@map("projections")
+}
+
+// 外部APIから取得した経済指標
+model EconomicIndicator {
+  id          String   @id @default(cuid())
+  type        String   // "inflation", "interest_rate", "stock_index"
+  name        String   // "日本 消費者物価指数", "日経225"
+  value       Decimal  @db.Decimal(10, 4)
+  date        DateTime
+  source      String   // "BOJ", "Yahoo Finance"
+  createdAt   DateTime @default(now())
+
+  @@unique([type, name, date])
+  @@map("economic_indicators")
+}
+
+enum AssetType {
+  STOCK
+  BOND
+  REAL_ESTATE
+  CASH
+  CRYPTO
+  COMMODITY
+  OTHER
+}
+
+enum ExpenseCategory {
+  HOUSING
+  FOOD
+  TRANSPORTATION
+  HEALTHCARE
+  EDUCATION
+  ENTERTAINMENT
+  UTILITIES
+  INSURANCE
+  OTHER
+}
+
+enum Frequency {
+  MONTHLY
+  QUARTERLY
+  ANNUALLY
+}
