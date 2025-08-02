@@ -10,12 +10,12 @@ export function formatCurrency(
   currency: string = 'JPY',
   locale: string = 'ja-JP'
 ): string {
+  // 万円単位で表示（円を万円に変換）
+  const amountInManYen = amount / 10000;
   return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
+    maximumFractionDigits: 1,
+  }).format(amountInManYen) + '万円';
 }
 
 export function formatNumber(

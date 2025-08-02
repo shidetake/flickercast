@@ -14,13 +14,20 @@ export default function Home() {
   const [input, setInput] = useState<FireCalculationInput>({
     currentAge: 30,
     retirementAge: 65,
-    currentAssets: 1000000,
-    monthlyExpenses: 300000,
-    monthlySavings: 100000,
+    currentAssets: 1000000, // 内部では円のまま
+    monthlyExpenses: 300000, // 内部では円のまま
+    monthlySavings: 100000, // 内部では円のまま
     expectedAnnualReturn: 5,
     inflationRate: 2,
     withdrawalRate: 4,
     lifeExpectancy: 85,
+  });
+
+  // 万円単位での表示用の値
+  const [displayValues, setDisplayValues] = useState({
+    currentAssets: 100, // 100万円
+    monthlyExpenses: 30, // 30万円
+    monthlySavings: 10, // 10万円
   });
 
   const [isCalculating, setIsCalculating] = useState(false);
@@ -34,6 +41,20 @@ export default function Home() {
     setInput(prev => ({
       ...prev,
       [field]: value
+    }));
+  };
+
+  const handleDisplayValueChange = (field: keyof typeof displayValues, value: number) => {
+    setDisplayValues(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    
+    // 内部計算用の値を更新（万円 → 円に変換）
+    const yenValue = value * 10000;
+    setInput(prev => ({
+      ...prev,
+      [field]: yenValue
     }));
   };
 
@@ -130,38 +151,38 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <Label htmlFor="currentAssets">現在の資産額（円）</Label>
+                  <Label htmlFor="currentAssets">現在の資産額（万円）</Label>
                   <Input
                     id="currentAssets"
                     type="number"
-                    value={input.currentAssets}
-                    onChange={(e) => handleInputChange('currentAssets', Number(e.target.value))}
+                    value={displayValues.currentAssets}
+                    onChange={(e) => handleDisplayValueChange('currentAssets', Number(e.target.value))}
                     min="0"
-                    step="10000"
+                    step="1"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="monthlyExpenses">月間支出（円）</Label>
+                  <Label htmlFor="monthlyExpenses">月間支出（万円）</Label>
                   <Input
                     id="monthlyExpenses"
                     type="number"
-                    value={input.monthlyExpenses}
-                    onChange={(e) => handleInputChange('monthlyExpenses', Number(e.target.value))}
+                    value={displayValues.monthlyExpenses}
+                    onChange={(e) => handleDisplayValueChange('monthlyExpenses', Number(e.target.value))}
                     min="0"
-                    step="1000"
+                    step="0.1"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="monthlySavings">月間貯蓄額（円）</Label>
+                  <Label htmlFor="monthlySavings">月間貯蓄額（万円）</Label>
                   <Input
                     id="monthlySavings"
                     type="number"
-                    value={input.monthlySavings}
-                    onChange={(e) => handleInputChange('monthlySavings', Number(e.target.value))}
+                    value={displayValues.monthlySavings}
+                    onChange={(e) => handleDisplayValueChange('monthlySavings', Number(e.target.value))}
                     min="0"
-                    step="1000"
+                    step="0.1"
                   />
                 </div>
 

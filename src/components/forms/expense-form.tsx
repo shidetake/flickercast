@@ -95,7 +95,7 @@ export default function ExpenseForm({ onSubmit, onCancel, initialData }: Expense
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="amount">金額（円）</Label>
+            <Label htmlFor="amount">金額（万円）</Label>
             <Input
               id="amount"
               type="number"

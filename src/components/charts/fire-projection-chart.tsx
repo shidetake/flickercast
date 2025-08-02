@@ -33,13 +33,15 @@ export default function FireProjectionChart({
   };
 
   const formatYAxis = (tickItem: number) => {
-    if (tickItem >= 100000000) {
-      return `${(tickItem / 100000000).toFixed(0)}億`;
+    // 万円単位で表示
+    const amountInManYen = tickItem / 10000;
+    if (amountInManYen >= 10000) {
+      return `${(amountInManYen / 10000).toFixed(0)}億円`;
     }
-    if (tickItem >= 10000) {
-      return `${(tickItem / 10000).toFixed(0)}万`;
+    if (amountInManYen >= 1) {
+      return `${amountInManYen.toFixed(0)}万円`;
     }
-    return tickItem.toString();
+    return `${amountInManYen.toFixed(1)}万円`;
   };
 
   // FIRE達成年を特定
