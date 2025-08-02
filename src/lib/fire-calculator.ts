@@ -106,12 +106,15 @@ export class FireCalculator {
     let yearsToFire = maxYearsToRetirement;
     let isFireAchievable = false;
 
+    // 実質月間貯蓄額（月間貯蓄額 - 月間支出）
+    const netMonthlySavings = monthlySavings - monthlyExpenses;
+
     // 年次計算
     for (let year = 0; year <= maxYearsToRetirement; year++) {
       const age = currentAge + year;
       const futureAssets = this.calculateFutureValue(
         currentAssets,
-        monthlySavings,
+        netMonthlySavings,
         expectedAnnualReturn,
         year
       );
@@ -161,7 +164,7 @@ export class FireCalculator {
     );
     const projectedAssets = this.calculateFutureValue(
       currentAssets,
-      monthlySavings,
+      netMonthlySavings,
       expectedAnnualReturn,
       yearsToFire
     );
