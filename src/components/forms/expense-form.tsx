@@ -138,7 +138,7 @@ export default function ExpenseForm({ onSubmit, onCancel, initialData }: Expense
             step="0.1"
             required
           />
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-foreground mt-1">
             1.0 = 現在と同額、0.8 = 現在の80%、1.2 = 現在の120%
           </p>
         </div>

@@ -203,7 +203,7 @@ export default function Home() {
                     max="10"
                     step="0.1"
                   />
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-foreground mt-1">
                     4%が一般的な安全な引き出し率とされています
                   </p>
                 </div>
