@@ -56,6 +56,11 @@ export class FireCalculator {
     const monthlyRate = annualRate / 100 / 12;
     const months = years * 12;
     
+    // 年利回りが0%の場合は単純累積計算
+    if (monthlyRate === 0) {
+      return presentValue + (monthlyContribution * months);
+    }
+    
     // 元本の複利計算
     const futureValuePrincipal = presentValue * Math.pow(1 + monthlyRate, months);
     
