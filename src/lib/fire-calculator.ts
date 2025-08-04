@@ -100,6 +100,7 @@ export class FireCalculator {
 
     const annualExpenses = monthlyExpenses * 12;
     const maxYearsToRetirement = retirementAge - currentAge;
+    const maxYearsToLife = lifeExpectancy - currentAge;
     const projections: YearlyProjection[] = [];
     
     let fireAge = retirementAge;
@@ -110,15 +111,35 @@ export class FireCalculator {
     const monthlyNetIncome = annualNetIncome / 12;
     const netMonthlySavings = monthlyNetIncome - monthlyExpenses;
 
-    // 年次計算
-    for (let year = 0; year <= maxYearsToRetirement; year++) {
+    // 年次計算（想定寿命まで）
+    let currentYearAssets = currentAssets;
+    
+    for (let year = 0; year <= maxYearsToLife; year++) {
       const age = currentAge + year;
-      const futureAssets = this.calculateFutureValue(
-        currentAssets,
-        netMonthlySavings,
-        expectedAnnualReturn,
-        year
-      );
+      
+      // 退職後は貯蓄停止、支出のみ
+      const isAfterRetirement = age >= retirementAge;
+      
+      // 年間の資産変動を計算
+      if (year === 0) {
+        // 初年度は現在の資産をそのまま使用
+        // futureAssets = currentYearAssets のままにする処理は削除
+      } else {
+        // 前年資産に年利を適用
+        currentYearAssets = currentYearAssets * (1 + expectedAnnualReturn / 100);
+        
+        // 収入/支出を加減
+        if (isAfterRetirement) {
+          // 退職後: インフレ調整後の年間支出を差し引く
+          const adjustedAnnualExpenses = this.adjustForInflation(annualExpenses, inflationRate, year);
+          currentYearAssets -= adjustedAnnualExpenses;
+        } else {
+          // 退職前: 年間純貯蓄額を加算
+          currentYearAssets += netMonthlySavings * 12;
+        }
+      }
+      
+      const futureAssets = currentYearAssets;
       
       // その年のインフレ調整後の年間支出
       const realAnnualExpenses = this.adjustForInflation(
@@ -135,8 +156,8 @@ export class FireCalculator {
       
       const fireAchieved = futureAssets >= requiredAssets;
       
-      // 初回のFIRE達成年を記録
-      if (fireAchieved && !isFireAchievable) {
+      // 初回のFIRE達成年を記録（退職年齢以内の場合のみ）
+      if (fireAchieved && !isFireAchievable && age <= retirementAge) {
         isFireAchievable = true;
         fireAge = age;
         yearsToFire = year;

@@ -11,6 +11,25 @@ import { ChartDataPoint, FireMetrics } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 
 export default function Home() {
+  // 統計データに基づく想定寿命計算
+  const calculateLifeExpectancy = (currentAge: number): number => {
+    const baseLifeExpectancy = 84.12; // 2023年平均
+    const currentGrowthRate = 0.05; // 現在の年間伸び率
+    const declineRate = 0.0003; // 年間鈍化率（さらに小さく調整）
+    
+    // 若い人ほど将来の医療技術進歩の恩恵を受ける期間が長い
+    const yearsOfBenefit = Math.max(0, baseLifeExpectancy - currentAge);
+    
+    let totalIncrease = 0;
+    // 現在から将来にかけての医療技術進歩を積算
+    for (let year = 0; year < yearsOfBenefit; year++) {
+      const yearlyGrowthRate = Math.max(0, currentGrowthRate - (year * declineRate));
+      totalIncrease += yearlyGrowthRate;
+    }
+    
+    return Math.round(baseLifeExpectancy + totalIncrease);
+  };
+
   const [input, setInput] = useState<FireCalculationInput>({
     currentAge: 38,
     retirementAge: 65,
@@ -20,7 +39,7 @@ export default function Home() {
     expectedAnnualReturn: 5,
     inflationRate: 2,
     withdrawalRate: 4,
-    lifeExpectancy: 85,
+    lifeExpectancy: calculateLifeExpectancy(38),
   });
 
   // 万円単位での表示用の値
@@ -38,10 +57,19 @@ export default function Home() {
   } | null>(null);
 
   const handleInputChange = (field: keyof FireCalculationInput, value: number) => {
-    setInput(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setInput(prev => {
+      const updated = {
+        ...prev,
+        [field]: value
+      };
+      
+      // 現在年齢が変更された場合、想定寿命も自動更新
+      if (field === 'currentAge') {
+        updated.lifeExpectancy = calculateLifeExpectancy(value);
+      }
+      
+      return updated;
+    });
   };
 
   const handleDisplayValueChange = (field: keyof typeof displayValues, value: number) => {
@@ -125,7 +153,7 @@ export default function Home() {
               </h2>
               
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="currentAge">現在年齢</Label>
                     <Input
@@ -146,6 +174,17 @@ export default function Home() {
                       onChange={(e) => handleInputChange('retirementAge', Number(e.target.value))}
                       min="30"
                       max="100"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lifeExpectancy">想定寿命</Label>
+                    <Input
+                      id="lifeExpectancy"
+                      type="number"
+                      value={input.lifeExpectancy}
+                      onChange={(e) => handleInputChange('lifeExpectancy', Number(e.target.value))}
+                      min="70"
+                      max="120"
                     />
                   </div>
                 </div>
