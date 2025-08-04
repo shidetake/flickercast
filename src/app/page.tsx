@@ -12,7 +12,7 @@ import { formatCurrency } from '@/lib/utils';
 
 export default function Home() {
   const [input, setInput] = useState<FireCalculationInput>({
-    currentAge: 30,
+    currentAge: 38,
     retirementAge: 65,
     currentAssets: 1000000, // 内部では円のまま
     monthlyExpenses: 300000, // 内部では円のまま
