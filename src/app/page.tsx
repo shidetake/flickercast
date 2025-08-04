@@ -16,7 +16,7 @@ export default function Home() {
     retirementAge: 65,
     currentAssets: 1000000, // 内部では円のまま
     monthlyExpenses: 300000, // 内部では円のまま
-    monthlySavings: 100000, // 内部では円のまま
+    annualNetIncome: 10000000, // 内部では円のまま（1000万円）
     expectedAnnualReturn: 5,
     inflationRate: 2,
     withdrawalRate: 4,
@@ -27,7 +27,7 @@ export default function Home() {
   const [displayValues, setDisplayValues] = useState({
     currentAssets: 100, // 100万円
     monthlyExpenses: 30, // 30万円
-    monthlySavings: 10, // 10万円
+    annualNetIncome: 1000, // 1000万円
   });
 
   const [isCalculating, setIsCalculating] = useState(false);
@@ -175,14 +175,14 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <Label htmlFor="monthlySavings">月間貯蓄額（万円）</Label>
+                  <Label htmlFor="annualNetIncome">手取り年収（万円）</Label>
                   <Input
-                    id="monthlySavings"
+                    id="annualNetIncome"
                     type="number"
-                    value={displayValues.monthlySavings}
-                    onChange={(e) => handleDisplayValueChange('monthlySavings', Number(e.target.value))}
+                    value={displayValues.annualNetIncome}
+                    onChange={(e) => handleDisplayValueChange('annualNetIncome', Number(e.target.value))}
                     min="0"
-                    step="0.1"
+                    step="10"
                   />
                 </div>
 

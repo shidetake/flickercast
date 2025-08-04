@@ -3,7 +3,7 @@ export interface FireCalculationInput {
   retirementAge: number;
   currentAssets: number;
   monthlyExpenses: number;
-  monthlySavings: number;
+  annualNetIncome: number; // 手取り年収（円）
   expectedAnnualReturn: number; // パーセント（例: 5 = 5%）
   inflationRate: number; // パーセント（例: 2 = 2%）
   withdrawalRate: number; // パーセント（例: 4 = 4%）
@@ -91,7 +91,7 @@ export class FireCalculator {
       retirementAge,
       currentAssets,
       monthlyExpenses,
-      monthlySavings,
+      annualNetIncome,
       expectedAnnualReturn,
       inflationRate,
       withdrawalRate,
@@ -106,8 +106,9 @@ export class FireCalculator {
     let yearsToFire = maxYearsToRetirement;
     let isFireAchievable = false;
 
-    // 実質月間貯蓄額（月間貯蓄額 - 月間支出）
-    const netMonthlySavings = monthlySavings - monthlyExpenses;
+    // 手取り年収から月間収入を計算し、実質月間貯蓄額を算出
+    const monthlyNetIncome = annualNetIncome / 12;
+    const netMonthlySavings = monthlyNetIncome - monthlyExpenses;
 
     // 年次計算
     for (let year = 0; year <= maxYearsToRetirement; year++) {
@@ -200,10 +201,10 @@ export class FireCalculator {
     savingsRateChanges: number[]
   ): FireCalculationResult[] {
     return savingsRateChanges.map(change => {
-      const newMonthlySavings = baseInput.monthlySavings * (1 + change / 100);
+      const newAnnualNetIncome = baseInput.annualNetIncome * (1 + change / 100);
       return this.calculateFire({
         ...baseInput,
-        monthlySavings: newMonthlySavings
+        annualNetIncome: newAnnualNetIncome
       });
     });
   }
