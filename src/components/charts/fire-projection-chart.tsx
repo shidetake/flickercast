@@ -26,7 +26,7 @@ export default function FireProjectionChart({
   className = "w-full h-96" 
 }: FireProjectionChartProps) {
   const formatTooltip = (value: number, name: string) => {
-    if (name === '資産' || name === '支出' || name === '純資産') {
+    if (name === '資産') {
       return [formatCurrency(value), name];
     }
     return [value, name];
@@ -93,26 +93,6 @@ export default function FireProjectionChart({
             activeDot={{ r: 6 }}
           />
           
-          {/* 年間支出の推移 */}
-          <Line
-            type="monotone"
-            dataKey="expenses"
-            stroke="#dc2626"
-            strokeWidth={2}
-            name="年間支出"
-            dot={false}
-            strokeDasharray="5 5"
-          />
-
-          {/* 純資産の推移 */}
-          <Line
-            type="monotone"
-            dataKey="netWorth"
-            stroke="#059669"
-            strokeWidth={2}
-            name="純資産"
-            dot={false}
-          />
 
           {/* FIRE目標額のライン */}
           {targetAmount && (
