@@ -163,18 +163,6 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <Label htmlFor="monthlyExpenses">月間支出（万円）</Label>
-                  <Input
-                    id="monthlyExpenses"
-                    type="number"
-                    value={displayValues.monthlyExpenses}
-                    onChange={(e) => handleDisplayValueChange('monthlyExpenses', Number(e.target.value))}
-                    min="0"
-                    step="0.1"
-                  />
-                </div>
-
-                <div>
                   <Label htmlFor="annualNetIncome">手取り年収（万円）</Label>
                   <Input
                     id="annualNetIncome"
@@ -183,6 +171,18 @@ export default function Home() {
                     onChange={(e) => handleDisplayValueChange('annualNetIncome', Number(e.target.value))}
                     min="0"
                     step="10"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="monthlyExpenses">月間支出（万円）</Label>
+                  <Input
+                    id="monthlyExpenses"
+                    type="number"
+                    value={displayValues.monthlyExpenses}
+                    onChange={(e) => handleDisplayValueChange('monthlyExpenses', Number(e.target.value))}
+                    min="0"
+                    step="0.1"
                   />
                 </div>
 
