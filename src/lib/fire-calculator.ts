@@ -4,6 +4,7 @@ export interface FireCalculationInput {
   currentAssets: number;
   monthlyExpenses: number;
   annualNetIncome: number; // 手取り年収（円）
+  postRetirementAnnualIncome: number; // 退職後年収（円）
   expectedAnnualReturn: number; // パーセント（例: 5 = 5%）
   inflationRate: number; // パーセント（例: 2 = 2%）
   withdrawalRate: number; // パーセント（例: 4 = 4%）
@@ -92,6 +93,7 @@ export class FireCalculator {
       currentAssets,
       monthlyExpenses,
       annualNetIncome,
+      postRetirementAnnualIncome,
       expectedAnnualReturn,
       inflationRate,
       withdrawalRate,
@@ -117,8 +119,8 @@ export class FireCalculator {
     for (let year = 0; year <= maxYearsToLife; year++) {
       const age = currentAge + year;
       
-      // 退職後は貯蓄停止、支出のみ
-      const isAfterRetirement = age >= retirementAge;
+      // 退職後は貯蓄停止、支出のみ（退職希望年齢の年はまだ現役）
+      const isAfterRetirement = age > retirementAge;
       
       // 年間の資産変動を計算
       if (year === 0) {
@@ -130,9 +132,9 @@ export class FireCalculator {
         
         // 収入/支出を加減
         if (isAfterRetirement) {
-          // 退職後: インフレ調整後の年間支出を差し引く
+          // 退職後: 退職後年収を加算し、インフレ調整後の年間支出を差し引く
           const adjustedAnnualExpenses = this.adjustForInflation(annualExpenses, inflationRate, year);
-          currentYearAssets -= adjustedAnnualExpenses;
+          currentYearAssets += postRetirementAnnualIncome - adjustedAnnualExpenses;
         } else {
           // 退職前: 年間純貯蓄額を加算
           currentYearAssets += netMonthlySavings * 12;

@@ -36,6 +36,7 @@ export default function Home() {
     currentAssets: 1000000, // 内部では円のまま
     monthlyExpenses: 300000, // 内部では円のまま
     annualNetIncome: 10000000, // 内部では円のまま（1000万円）
+    postRetirementAnnualIncome: 0, // 内部では円のまま（0円）
     expectedAnnualReturn: 5,
     inflationRate: 2,
     withdrawalRate: 4,
@@ -47,6 +48,7 @@ export default function Home() {
     currentAssets: 100, // 100万円
     monthlyExpenses: 30, // 30万円
     annualNetIncome: 1000, // 1000万円
+    postRetirementAnnualIncome: 0, // 0万円
   });
 
   const [isCalculating, setIsCalculating] = useState(false);
@@ -201,16 +203,29 @@ export default function Home() {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="annualNetIncome">手取り年収（万円）</Label>
-                  <Input
-                    id="annualNetIncome"
-                    type="number"
-                    value={displayValues.annualNetIncome}
-                    onChange={(e) => handleDisplayValueChange('annualNetIncome', Number(e.target.value))}
-                    min="0"
-                    step="10"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="annualNetIncome">手取り年収（万円）</Label>
+                    <Input
+                      id="annualNetIncome"
+                      type="number"
+                      value={displayValues.annualNetIncome}
+                      onChange={(e) => handleDisplayValueChange('annualNetIncome', Number(e.target.value))}
+                      min="0"
+                      step="10"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="postRetirementAnnualIncome">退職後年収（万円）</Label>
+                    <Input
+                      id="postRetirementAnnualIncome"
+                      type="number"
+                      value={displayValues.postRetirementAnnualIncome}
+                      onChange={(e) => handleDisplayValueChange('postRetirementAnnualIncome', Number(e.target.value))}
+                      min="0"
+                      step="10"
+                    />
+                  </div>
                 </div>
 
                 <div>
