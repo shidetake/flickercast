@@ -11,6 +11,7 @@ import { ChartDataPoint, FireMetrics, AssetHolding, Currency } from '@/lib/types
 import { formatCurrency } from '@/lib/utils';
 import { saveToLocalStorage, loadFromLocalStorage, exportToJson, importFromJson } from '@/lib/storage';
 import { useToast, ToastProvider } from '@/lib/toast-context';
+import { calculateTotalAssets as calculateTotalAssetsUnified } from '@/lib/asset-calculator';
 
 function HomeContent() {
   const { showSuccess, showError } = useToast();
@@ -159,22 +160,9 @@ function HomeContent() {
     }));
   };
 
-  // 総資産額を計算
+  // 総資産額を計算（統一関数を使用）
   const calculateTotalAssets = () => {
-    return input.assetHoldings.reduce(
-      (total, holding) => {
-        const assetValue = holding.quantity * holding.pricePerUnit;
-        
-        // USD銘柄の場合、為替レートでJPY換算し万円単位に変換
-        if (holding.currency === 'USD' && exchangeRate) {
-          return total + (assetValue * exchangeRate / 10000);
-        }
-        
-        // JPY銘柄またはその他の場合はそのまま
-        return total + assetValue;
-      }, 
-      0
-    );
+    return calculateTotalAssetsUnified(input.assetHoldings, exchangeRate, 'manyen');
   };
 
   const handleInputChange = (field: keyof FireCalculationInput, value: number) => {
@@ -252,8 +240,11 @@ function HomeContent() {
     setIsCalculating(true);
     
     try {
-      // FIRE計算実行
-      const fireResult = FireCalculator.calculateFire(input);
+      // FIRE計算実行（為替レートを含む）
+      const fireResult = FireCalculator.calculateFire({
+        ...input,
+        exchangeRate: exchangeRate
+      });
       
       // チャート用データに変換
       const chartData: ChartDataPoint[] = fireResult.projections.map(projection => ({

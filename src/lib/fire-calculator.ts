@@ -1,4 +1,5 @@
 import { AssetHolding } from './types';
+import { calculateTotalAssets } from './asset-calculator';
 
 export interface FireCalculationInput {
   currentAge: number;
@@ -12,6 +13,7 @@ export interface FireCalculationInput {
   inflationRate: number; // パーセント（例: 2 = 2%）
   withdrawalRate: number; // パーセント（例: 4 = 4%）
   lifeExpectancy: number;
+  exchangeRate?: number | null; // USD/JPY為替レート
 }
 
 export interface FireCalculationResult {
@@ -101,14 +103,12 @@ export class FireCalculator {
       expectedAnnualReturn,
       inflationRate,
       withdrawalRate,
-      lifeExpectancy
+      lifeExpectancy,
+      exchangeRate
     } = input;
 
-    // 銘柄保有情報から総資産額を計算（万円 → 円）
-    const currentAssets = assetHoldings.reduce(
-      (total, holding) => total + (holding.quantity * holding.pricePerUnit * 10000), 
-      0
-    );
+    // 銘柄保有情報から総資産額を計算（統一関数を使用、円単位）
+    const currentAssets = calculateTotalAssets(assetHoldings, exchangeRate, 'yen');
 
     const annualExpenses = monthlyExpenses * 12;
     const maxYearsToRetirement = retirementAge - currentAge;
