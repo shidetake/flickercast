@@ -277,6 +277,14 @@ export interface UserSettings {
   };
 }
 
+// 為替レートAPI関連の型
+export interface ExchangeRateResponse {
+  rate: number;
+  cached: boolean;
+  lastUpdated: Date;
+  warning?: string;
+}
+
 // 既にnumber型なので、型変換は不要
 export type AssetWithNumbers = Asset;
 export type ExpenseWithNumbers = Expense;

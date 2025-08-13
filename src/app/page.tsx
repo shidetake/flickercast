@@ -68,12 +68,33 @@ function HomeContent() {
     metrics: FireMetrics;
     requiredAssets: number;
   } | null>(null);
+  
+  // USD/JPY為替レート関連の状態
+  const [exchangeRate, setExchangeRate] = useState<number | null>(null);
+  const [exchangeRateLoading, setExchangeRateLoading] = useState(true);
 
   // 既存の銘柄IDから次のIDを計算
   const calculateNextAssetId = (assetHoldings: AssetHolding[]): number => {
     if (assetHoldings.length === 0) return 1;
     const maxId = Math.max(...assetHoldings.map(holding => parseInt(holding.id) || 0));
     return maxId + 1;
+  };
+
+  // 為替レート取得関数
+  const fetchExchangeRate = async () => {
+    try {
+      const response = await fetch('/api/exchange-rate');
+      if (!response.ok) {
+        throw new Error('為替レートの取得に失敗しました');
+      }
+      const data = await response.json();
+      setExchangeRate(data.rate);
+    } catch (error) {
+      console.error('Exchange rate fetch error:', error);
+      setExchangeRate(null);
+    } finally {
+      setExchangeRateLoading(false);
+    }
   };
 
   // ページ読み込み時にlocalStorageからデータを復元
@@ -93,6 +114,11 @@ function HomeContent() {
         annualPensionAmount: savedData.annualPensionAmount / 10000,
       });
     }
+  }, []);
+
+  // 為替レート取得
+  useEffect(() => {
+    fetchExchangeRate();
   }, []);
 
   // データ変更時にlocalStorageへ自動保存
@@ -374,6 +400,16 @@ function HomeContent() {
                   <div className="mt-3 p-2 bg-gray-50 rounded">
                     <span className="text-sm font-medium">
                       合計資産額: {calculateTotalAssets().toFixed(1)}万円
+                    </span>
+                    <br />
+                    <span className="text-xs text-gray-500">
+                      {exchangeRateLoading ? (
+                        '(USD/JPY: 読み込み中...)'
+                      ) : exchangeRate ? (
+                        `(USD/JPY: ${exchangeRate.toFixed(2)})`
+                      ) : (
+                        '(USD/JPY: 取得失敗)'
+                      )}
                     </span>
                   </div>
                 </div>
