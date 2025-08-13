@@ -395,7 +395,7 @@ function HomeContent() {
                         </div>
                       ) : (
                         // 通常モード: 全ての入力欄を表示
-                        <div key={holding.id} className="grid grid-cols-5 gap-2 items-center">
+                        <div key={holding.id} className="grid grid-cols-4 gap-2 items-center">
                           <Input
                             placeholder="銘柄名"
                             value={holding.name}
@@ -424,7 +424,6 @@ function HomeContent() {
                             <option value="JPY">JPY</option>
                             <option value="USD">USD</option>
                           </select>
-                          <div></div> {/* 削除ボタンのスペースを空にして非表示 */}
                         </div>
                       )
                     ))}
