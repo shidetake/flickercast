@@ -161,7 +161,17 @@ function HomeContent() {
   // 総資産額を計算
   const calculateTotalAssets = () => {
     return input.assetHoldings.reduce(
-      (total, holding) => total + (holding.quantity * holding.pricePerUnit), 
+      (total, holding) => {
+        const assetValue = holding.quantity * holding.pricePerUnit;
+        
+        // USD銘柄の場合、為替レートでJPY換算し万円単位に変換
+        if (holding.currency === 'USD' && exchangeRate) {
+          return total + (assetValue * exchangeRate / 10000);
+        }
+        
+        // JPY銘柄またはその他の場合はそのまま
+        return total + assetValue;
+      }, 
       0
     );
   };
@@ -371,7 +381,7 @@ function HomeContent() {
                         />
                         <Input
                           type="number"
-                          placeholder="単価（万円）"
+                          placeholder={holding.currency === 'USD' ? '単価（ドル）' : '単価（万円）'}
                           value={holding.pricePerUnit || ''}
                           onChange={(e) => updateAssetHolding(holding.id, 'pricePerUnit', Number(e.target.value))}
                           min="0"
