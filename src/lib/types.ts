@@ -223,12 +223,16 @@ export interface AlphaVantageData {
   lastUpdate: Date;
 }
 
+// 通貨タイプ
+export type Currency = 'JPY' | 'USD';
+
 // 銘柄保有情報
 export interface AssetHolding {
   id: string;
   name: string;
   quantity: number;
   pricePerUnit: number; // 万円単位
+  currency: Currency; // 通貨種別
 }
 
 // チャート用データ型

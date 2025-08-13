@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { FireCalculator, FireCalculationInput } from '@/lib/fire-calculator';
 import FireProjectionChart from '@/components/charts/fire-projection-chart';
 import FireSummary from '@/components/dashboard/fire-summary';
-import { ChartDataPoint, FireMetrics, AssetHolding } from '@/lib/types';
+import { ChartDataPoint, FireMetrics, AssetHolding, Currency } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { saveToLocalStorage, loadFromLocalStorage, exportToJson, importFromJson } from '@/lib/storage';
 import { useToast, ToastProvider } from '@/lib/toast-context';
@@ -39,7 +39,7 @@ function HomeContent() {
     currentAge: 38,
     retirementAge: 65,
     assetHoldings: [
-      { id: '1', name: '', quantity: 0, pricePerUnit: 0 },
+      { id: '1', name: '', quantity: 0, pricePerUnit: 0, currency: 'JPY' },
     ], // デフォルトは1つの空の銘柄
     monthlyExpenses: 300000, // 内部では円のまま
     annualNetIncome: 10000000, // 内部では円のまま（1000万円）
@@ -107,6 +107,7 @@ function HomeContent() {
       name: '',
       quantity: 0,
       pricePerUnit: 0,
+      currency: 'JPY',
     };
     setInput(prev => ({
       ...prev,
@@ -329,7 +330,7 @@ function HomeContent() {
                   
                   <div className="space-y-2">
                     {input.assetHoldings.map((holding) => (
-                      <div key={holding.id} className="grid grid-cols-4 gap-2 items-center">
+                      <div key={holding.id} className="grid grid-cols-5 gap-2 items-center">
                         <Input
                           placeholder="銘柄名"
                           value={holding.name}
@@ -350,6 +351,14 @@ function HomeContent() {
                           min="0"
                           step="0.1"
                         />
+                        <select
+                          value={holding.currency || 'JPY'}
+                          onChange={(e) => updateAssetHolding(holding.id, 'currency', e.target.value)}
+                          className="h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="JPY">JPY</option>
+                          <option value="USD">USD</option>
+                        </select>
                         <Button 
                           type="button"
                           onClick={() => removeAssetHolding(holding.id)}

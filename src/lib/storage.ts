@@ -154,7 +154,9 @@ function validateFireCalculationInput(data: unknown): data is FireCalculationInp
         typeof holding.id !== 'string' ||
         typeof holding.name !== 'string' ||
         typeof holding.quantity !== 'number' ||
-        typeof holding.pricePerUnit !== 'number') {
+        typeof holding.pricePerUnit !== 'number' ||
+        typeof holding.currency !== 'string' ||
+        !['JPY', 'USD'].includes(holding.currency)) {
       return false;
     }
   }
