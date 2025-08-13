@@ -1,7 +1,9 @@
+import { AssetHolding } from './types';
+
 export interface FireCalculationInput {
   currentAge: number;
   retirementAge: number;
-  currentAssets: number;
+  assetHoldings: AssetHolding[]; // 銘柄保有情報
   monthlyExpenses: number;
   annualNetIncome: number; // 手取り年収（円）
   postRetirementAnnualIncome: number; // 退職後年収（円）
@@ -91,7 +93,7 @@ export class FireCalculator {
     const {
       currentAge,
       retirementAge,
-      currentAssets,
+      assetHoldings,
       monthlyExpenses,
       annualNetIncome,
       postRetirementAnnualIncome,
@@ -101,6 +103,12 @@ export class FireCalculator {
       withdrawalRate,
       lifeExpectancy
     } = input;
+
+    // 銘柄保有情報から総資産額を計算（万円 → 円）
+    const currentAssets = assetHoldings.reduce(
+      (total, holding) => total + (holding.quantity * holding.pricePerUnit * 10000), 
+      0
+    );
 
     const annualExpenses = monthlyExpenses * 12;
     const maxYearsToRetirement = retirementAge - currentAge;

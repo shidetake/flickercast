@@ -127,6 +127,14 @@ export interface AlphaVantageData {
   lastUpdate: Date;
 }
 
+// 銘柄保有情報
+export interface AssetHolding {
+  id: string;
+  name: string;
+  quantity: number;
+  pricePerUnit: number; // 万円単位
+}
+
 // チャート用データ型
 export interface ChartDataPoint {
   year: number;

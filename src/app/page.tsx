@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { FireCalculator, FireCalculationInput } from '@/lib/fire-calculator';
 import FireProjectionChart from '@/components/charts/fire-projection-chart';
 import FireSummary from '@/components/dashboard/fire-summary';
-import { ChartDataPoint, FireMetrics } from '@/lib/types';
+import { ChartDataPoint, FireMetrics, AssetHolding } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 
 export default function Home() {
@@ -33,7 +33,9 @@ export default function Home() {
   const [input, setInput] = useState<FireCalculationInput>({
     currentAge: 38,
     retirementAge: 65,
-    currentAssets: 1000000, // 内部では円のまま
+    assetHoldings: [
+      { id: '1', name: '', quantity: 0, pricePerUnit: 0 },
+    ], // デフォルトは1つの空の銘柄
     monthlyExpenses: 300000, // 内部では円のまま
     annualNetIncome: 10000000, // 内部では円のまま（1000万円）
     postRetirementAnnualIncome: 0, // 内部では円のまま（0円）
@@ -46,7 +48,6 @@ export default function Home() {
 
   // 万円単位での表示用の値
   const [displayValues, setDisplayValues] = useState({
-    currentAssets: 100, // 100万円
     monthlyExpenses: 30, // 30万円
     annualNetIncome: 1000, // 1000万円
     postRetirementAnnualIncome: 0, // 0万円
@@ -59,6 +60,44 @@ export default function Home() {
     metrics: FireMetrics;
     requiredAssets: number;
   } | null>(null);
+
+  // 銘柄管理のヘルパー関数
+  const addAssetHolding = () => {
+    const newHolding: AssetHolding = {
+      id: Date.now().toString(),
+      name: '',
+      quantity: 0,
+      pricePerUnit: 0,
+    };
+    setInput(prev => ({
+      ...prev,
+      assetHoldings: [...prev.assetHoldings, newHolding]
+    }));
+  };
+
+  const updateAssetHolding = (id: string, field: keyof AssetHolding, value: string | number) => {
+    setInput(prev => ({
+      ...prev,
+      assetHoldings: prev.assetHoldings.map(holding =>
+        holding.id === id ? { ...holding, [field]: value } : holding
+      )
+    }));
+  };
+
+  const removeAssetHolding = (id: string) => {
+    setInput(prev => ({
+      ...prev,
+      assetHoldings: prev.assetHoldings.filter(holding => holding.id !== id)
+    }));
+  };
+
+  // 総資産額を計算
+  const calculateTotalAssets = () => {
+    return input.assetHoldings.reduce(
+      (total, holding) => total + (holding.quantity * holding.pricePerUnit), 
+      0
+    );
+  };
 
   const handleInputChange = (field: keyof FireCalculationInput, value: number) => {
     setInput(prev => {
@@ -109,7 +148,8 @@ export default function Home() {
 
       // メトリクス計算
       const annualExpenses = input.monthlyExpenses * 12;
-      const currentFireNumber = input.currentAssets / annualExpenses;
+      const currentAssets = calculateTotalAssets() * 10000; // 万円 → 円に変換
+      const currentFireNumber = currentAssets / annualExpenses;
       const requiredFireNumber = 25; // 4%ルール
       const fireProgress = Math.min((currentFireNumber / requiredFireNumber) * 100, 100);
 
@@ -194,15 +234,58 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <Label htmlFor="currentAssets">現在の資産額（万円）</Label>
-                  <Input
-                    id="currentAssets"
-                    type="number"
-                    value={displayValues.currentAssets}
-                    onChange={(e) => handleDisplayValueChange('currentAssets', Number(e.target.value))}
-                    min="0"
-                    step="1"
-                  />
+                  <div className="flex justify-between items-center mb-3">
+                    <Label>銘柄管理</Label>
+                    <Button 
+                      type="button" 
+                      onClick={addAssetHolding}
+                      size="sm"
+                      variant="outline"
+                    >
+                      + 銘柄を追加
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {input.assetHoldings.map((holding) => (
+                      <div key={holding.id} className="grid grid-cols-4 gap-2 items-center">
+                        <Input
+                          placeholder="銘柄名"
+                          value={holding.name}
+                          onChange={(e) => updateAssetHolding(holding.id, 'name', e.target.value)}
+                        />
+                        <Input
+                          type="number"
+                          placeholder="数量"
+                          value={holding.quantity || ''}
+                          onChange={(e) => updateAssetHolding(holding.id, 'quantity', Number(e.target.value))}
+                          min="0"
+                        />
+                        <Input
+                          type="number"
+                          placeholder="単価（万円）"
+                          value={holding.pricePerUnit || ''}
+                          onChange={(e) => updateAssetHolding(holding.id, 'pricePerUnit', Number(e.target.value))}
+                          min="0"
+                          step="0.1"
+                        />
+                        <Button 
+                          type="button"
+                          onClick={() => removeAssetHolding(holding.id)}
+                          size="sm"
+                          variant="destructive"
+                        >
+                          削除
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-3 p-2 bg-gray-50 rounded">
+                    <span className="text-sm font-medium">
+                      合計資産額: {calculateTotalAssets().toFixed(1)}万円
+                    </span>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -347,7 +430,7 @@ export default function Home() {
                         </div>
                         <div className="flex justify-between">
                           <span>現在の資産:</span>
-                          <span>{formatCurrency(input.currentAssets)}</span>
+                          <span>{formatCurrency(calculateTotalAssets() * 10000)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>年間支出:</span>
