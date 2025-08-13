@@ -53,6 +53,7 @@ function HomeContent() {
 
   const [input, setInput] = useState<FireCalculationInput>(createDefaultInput());
   const [nextAssetId, setNextAssetId] = useState(2); // 次に使用するAsset ID（デフォルトは1なので2から開始）
+  const [isDeleteMode, setIsDeleteMode] = useState(false); // 削除モード状態
 
   // 万円単位での表示用の値
   const [displayValues, setDisplayValues] = useState({
@@ -354,56 +355,78 @@ function HomeContent() {
                 <div>
                   <div className="flex justify-between items-center mb-3">
                     <Label>銘柄管理</Label>
-                    <Button 
-                      type="button" 
-                      onClick={addAssetHolding}
-                      size="sm"
-                      variant="outline"
-                    >
-                      + 銘柄を追加
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        type="button" 
+                        onClick={addAssetHolding}
+                        size="sm"
+                        variant="outline"
+                        disabled={isDeleteMode}
+                      >
+                        + 銘柄を追加
+                      </Button>
+                      <Button 
+                        type="button" 
+                        onClick={() => setIsDeleteMode(!isDeleteMode)}
+                        size="sm"
+                        variant={isDeleteMode ? "default" : "outline"}
+                      >
+                        {isDeleteMode ? '完了' : '削除'}
+                      </Button>
+                    </div>
                   </div>
                   
                   <div className="space-y-2">
                     {input.assetHoldings.map((holding) => (
-                      <div key={holding.id} className="grid grid-cols-5 gap-2 items-center">
-                        <Input
-                          placeholder="銘柄名"
-                          value={holding.name}
-                          onChange={(e) => updateAssetHolding(holding.id, 'name', e.target.value)}
-                        />
-                        <Input
-                          type="number"
-                          placeholder="数量"
-                          value={holding.quantity || ''}
-                          onChange={(e) => updateAssetHolding(holding.id, 'quantity', Number(e.target.value))}
-                          min="0"
-                        />
-                        <Input
-                          type="number"
-                          placeholder={holding.currency === 'USD' ? '単価（ドル）' : '単価（万円）'}
-                          value={holding.pricePerUnit || ''}
-                          onChange={(e) => updateAssetHolding(holding.id, 'pricePerUnit', Number(e.target.value))}
-                          min="0"
-                          step="0.1"
-                        />
-                        <select
-                          value={holding.currency || 'JPY'}
-                          onChange={(e) => updateAssetHolding(holding.id, 'currency', e.target.value)}
-                          className="h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="JPY">JPY</option>
-                          <option value="USD">USD</option>
-                        </select>
-                        <Button 
-                          type="button"
-                          onClick={() => removeAssetHolding(holding.id)}
-                          size="sm"
-                          variant="destructive"
-                        >
-                          削除
-                        </Button>
-                      </div>
+                      isDeleteMode ? (
+                        // 削除モード: 銘柄名のみ表示、左側に赤い削除ボタン
+                        <div key={holding.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
+                          <Button 
+                            type="button"
+                            onClick={() => removeAssetHolding(holding.id)}
+                            size="sm"
+                            className="w-6 h-6 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white flex-shrink-0"
+                          >
+                            -
+                          </Button>
+                          <span className="text-sm font-medium text-gray-900 truncate">
+                            {holding.name || '未設定'}
+                          </span>
+                        </div>
+                      ) : (
+                        // 通常モード: 全ての入力欄を表示
+                        <div key={holding.id} className="grid grid-cols-5 gap-2 items-center">
+                          <Input
+                            placeholder="銘柄名"
+                            value={holding.name}
+                            onChange={(e) => updateAssetHolding(holding.id, 'name', e.target.value)}
+                          />
+                          <Input
+                            type="number"
+                            placeholder="数量"
+                            value={holding.quantity || ''}
+                            onChange={(e) => updateAssetHolding(holding.id, 'quantity', Number(e.target.value))}
+                            min="0"
+                          />
+                          <Input
+                            type="number"
+                            placeholder={holding.currency === 'USD' ? '単価（ドル）' : '単価（万円）'}
+                            value={holding.pricePerUnit || ''}
+                            onChange={(e) => updateAssetHolding(holding.id, 'pricePerUnit', Number(e.target.value))}
+                            min="0"
+                            step="0.1"
+                          />
+                          <select
+                            value={holding.currency || 'JPY'}
+                            onChange={(e) => updateAssetHolding(holding.id, 'currency', e.target.value)}
+                            className="h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="JPY">JPY</option>
+                            <option value="USD">USD</option>
+                          </select>
+                          <div></div> {/* 削除ボタンのスペースを空にして非表示 */}
+                        </div>
+                      )
                     ))}
                   </div>
                   
