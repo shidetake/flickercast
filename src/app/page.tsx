@@ -10,8 +10,11 @@ import FireSummary from '@/components/dashboard/fire-summary';
 import { ChartDataPoint, FireMetrics, AssetHolding } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { saveToLocalStorage, loadFromLocalStorage, exportToJson, importFromJson } from '@/lib/storage';
+import { useToast, ToastProvider } from '@/lib/toast-context';
 
-export default function Home() {
+function HomeContent() {
+  const { showSuccess, showError } = useToast();
+
   // 統計データに基づく想定寿命計算
   const calculateLifeExpectancy = (currentAge: number): number => {
     const baseLifeExpectancy = 84.12; // 2023年平均
@@ -170,9 +173,10 @@ export default function Home() {
   const handleExport = () => {
     try {
       exportToJson(input);
+      showSuccess('データをエクスポートしました');
     } catch (error) {
       console.error('エクスポートエラー:', error);
-      alert('エクスポートに失敗しました');
+      showError('エクスポートに失敗しました');
     }
   };
 
@@ -196,10 +200,10 @@ export default function Home() {
         annualPensionAmount: importedData.annualPensionAmount / 10000,
       });
       
-      alert('データを正常にインポートしました');
+      showSuccess('データを正常にインポートしました');
     } catch (error) {
       console.error('インポートエラー:', error);
-      alert(`インポートに失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`);
+      showError(`インポートに失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`);
     }
     
     // ファイル選択をリセット
@@ -600,5 +604,13 @@ export default function Home() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <ToastProvider>
+      <HomeContent />
+    </ToastProvider>
   );
 }
