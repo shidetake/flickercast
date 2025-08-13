@@ -56,7 +56,7 @@ export default function ExpenseForm({ onSubmit, onCancel, initialData }: Expense
     }
   };
 
-  const handleInputChange = (field: keyof ExpenseFormData, value: any) => {
+  const handleInputChange = (field: keyof ExpenseFormData, value: string | number | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value

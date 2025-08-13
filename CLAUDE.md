@@ -41,12 +41,6 @@ npm run lint
 ```
 src/
 ├── app/                    # Next.js App Router
-│   ├── api/               # API routes
-│   │   ├── auth/          # Authentication endpoints
-│   │   ├── assets/        # Asset management
-│   │   ├── expenses/      # Expense tracking
-│   │   ├── external/      # External API integrations
-│   │   └── simulations/   # Monte Carlo simulations
 │   ├── globals.css        # Global styles with CSS variables
 │   ├── layout.tsx         # Root layout with Japanese fonts
 │   └── page.tsx          # Main FIRE simulator page
@@ -56,11 +50,10 @@ src/
 │   ├── forms/           # Data input forms
 │   └── ui/              # Reusable UI components
 └── lib/
-    ├── auth.ts          # NextAuth configuration
     ├── fire-calculator.ts # Core FIRE calculation engine
     ├── monte-carlo.ts   # Monte Carlo simulation logic
-    ├── external-apis.ts # External API integrations
-    ├── prisma.ts        # Database client
+    ├── external-apis.ts # External API integrations (client-side)
+    ├── storage.ts       # Local storage management & JSON import/export
     ├── types.ts         # TypeScript type definitions
     └── utils.ts         # Utility functions
 ```

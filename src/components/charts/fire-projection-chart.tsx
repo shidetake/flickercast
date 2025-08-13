@@ -112,7 +112,7 @@ export default function FireProjectionChart({
               stroke="#10b981"
               strokeDasharray="8 4"
               strokeWidth={2}
-              label={{ value: "FIRE達成", position: "topLeft" }}
+              label={{ value: "FIRE達成", position: "top" }}
             />
           )}
         </LineChart>

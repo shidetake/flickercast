@@ -1,19 +1,115 @@
-import { Decimal } from '@prisma/client/runtime/library';
 import { FireCalculationResult } from './fire-calculator';
 
-// Prismaから生成される型の再エクスポート
-export type {
-  User,
-  Asset,
-  AssetType,
-  Expense,
-  ExpenseCategory,
-  Frequency,
-  LifeEvent,
-  Scenario,
-  Projection,
-  EconomicIndicator
-} from '@prisma/client';
+// ローカル型定義（旧Prisma型の置き換え）
+export enum AssetType {
+  STOCK = 'STOCK',
+  BOND = 'BOND',
+  REAL_ESTATE = 'REAL_ESTATE',
+  CASH = 'CASH',
+  CRYPTO = 'CRYPTO',
+  COMMODITY = 'COMMODITY',
+  OTHER = 'OTHER'
+}
+
+export enum ExpenseCategory {
+  HOUSING = 'HOUSING',
+  FOOD = 'FOOD',
+  TRANSPORTATION = 'TRANSPORTATION',
+  HEALTHCARE = 'HEALTHCARE',
+  EDUCATION = 'EDUCATION',
+  ENTERTAINMENT = 'ENTERTAINMENT',
+  UTILITIES = 'UTILITIES',
+  INSURANCE = 'INSURANCE',
+  OTHER = 'OTHER'
+}
+
+export enum Frequency {
+  MONTHLY = 'MONTHLY',
+  QUARTERLY = 'QUARTERLY',
+  ANNUALLY = 'ANNUALLY'
+}
+
+// 基本データ型
+export interface User {
+  id: string;
+  email: string;
+  name?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Asset {
+  id: string;
+  type: AssetType;
+  name: string;
+  symbol?: string;
+  amount: number;
+  currentValue: number;
+  targetAllocation?: number;
+  isAutoUpdate: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Expense {
+  id: string;
+  category: ExpenseCategory;
+  name: string;
+  amount: number;
+  frequency: Frequency;
+  isEssential: boolean;
+  retirementMultiplier: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface LifeEvent {
+  id: string;
+  name: string;
+  targetYear: number;
+  estimatedCost: number;
+  isPaid: boolean;
+  description?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Scenario {
+  id: string;
+  name: string;
+  inflationRate: number;
+  expectedReturn: number;
+  withdrawalRate: number;
+  currentAge: number;
+  retirementAge: number;
+  lifeExpectancy: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Projection {
+  id: string;
+  scenarioId: string;
+  year: number;
+  age: number;
+  totalAssets: number;
+  annualExpenses: number;
+  netWorth: number;
+  fireAchieved: boolean;
+  confidenceLevel?: number;
+  createdAt: Date;
+}
+
+export interface EconomicIndicator {
+  id: string;
+  type: string;
+  name: string;
+  value: number;
+  date: Date;
+  source: string;
+  createdAt: Date;
+}
 
 // フロントエンド用の型定義
 export interface UserProfile {
@@ -177,12 +273,7 @@ export interface UserSettings {
   };
 }
 
-// Decimal型をnumberに変換するヘルパー型
-export type DecimalToNumber<T> = {
-  [K in keyof T]: T[K] extends Decimal ? number : T[K];
-};
-
-// フロントエンド用のAsset型（Decimalをnumberに変換）
-export type AssetWithNumbers = DecimalToNumber<Asset>;
-export type ExpenseWithNumbers = DecimalToNumber<Expense>;
-export type ProjectionWithNumbers = DecimalToNumber<Projection>;
+// 既にnumber型なので、型変換は不要
+export type AssetWithNumbers = Asset;
+export type ExpenseWithNumbers = Expense;
+export type ProjectionWithNumbers = Projection;

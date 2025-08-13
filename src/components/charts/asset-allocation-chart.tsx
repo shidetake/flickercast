@@ -72,7 +72,7 @@ export default function AssetAllocationChart({
     ];
   };
 
-  const renderCustomLabel = (entry: any) => {
+  const renderCustomLabel = (entry: { value: number }) => {
     const percentage = (entry.value / totalValue) * 100;
     return percentage > 5 ? `${percentage.toFixed(1)}%` : '';
   };

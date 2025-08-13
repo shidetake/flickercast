@@ -49,7 +49,7 @@ export default function AssetForm({ onSubmit, onCancel, initialData }: AssetForm
     }
   };
 
-  const handleInputChange = (field: keyof AssetFormData, value: any) => {
+  const handleInputChange = (field: keyof AssetFormData, value: string | number | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value

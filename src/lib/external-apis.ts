@@ -162,7 +162,7 @@ export class EconomicDataService {
     ]);
     
     return results
-      .filter((result): result is PromiseFulfilledResult<any> => 
+      .filter((result): result is PromiseFulfilledResult<BojInflationData> => 
         result.status === 'fulfilled' && result.value !== null
       )
       .map(result => result.value);

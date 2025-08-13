@@ -87,7 +87,7 @@ export function importFromJson(file: File): Promise<FireCalculationInput> {
         } else {
           reject(new Error('無効なデータ形式です'));
         }
-      } catch (error) {
+      } catch {
         reject(new Error('ファイルの読み込みに失敗しました'));
       }
     };
@@ -103,7 +103,7 @@ export function importFromJson(file: File): Promise<FireCalculationInput> {
 /**
  * FireCalculationInputの型バリデーション
  */
-function validateFireCalculationInput(data: any): data is FireCalculationInput {
+function validateFireCalculationInput(data: unknown): data is FireCalculationInput {
   if (!data || typeof data !== 'object') {
     return false;
   }
