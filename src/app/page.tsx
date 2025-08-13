@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,7 @@ import FireProjectionChart from '@/components/charts/fire-projection-chart';
 import FireSummary from '@/components/dashboard/fire-summary';
 import { ChartDataPoint, FireMetrics, AssetHolding } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
+import { saveToLocalStorage, loadFromLocalStorage, exportToJson, importFromJson } from '@/lib/storage';
 
 export default function Home() {
   // 統計データに基づく想定寿命計算
@@ -30,7 +31,8 @@ export default function Home() {
     return Math.round(baseLifeExpectancy + totalIncrease);
   };
 
-  const [input, setInput] = useState<FireCalculationInput>({
+  // デフォルト値を生成する関数
+  const createDefaultInput = (): FireCalculationInput => ({
     currentAge: 38,
     retirementAge: 65,
     assetHoldings: [
@@ -45,6 +47,9 @@ export default function Home() {
     withdrawalRate: 4,
     lifeExpectancy: calculateLifeExpectancy(38),
   });
+
+  const [input, setInput] = useState<FireCalculationInput>(createDefaultInput());
+  const [nextAssetId, setNextAssetId] = useState(2); // 次に使用するAsset ID（デフォルトは1なので2から開始）
 
   // 万円単位での表示用の値
   const [displayValues, setDisplayValues] = useState({
@@ -61,10 +66,41 @@ export default function Home() {
     requiredAssets: number;
   } | null>(null);
 
+  // 既存の銘柄IDから次のIDを計算
+  const calculateNextAssetId = (assetHoldings: AssetHolding[]): number => {
+    if (assetHoldings.length === 0) return 1;
+    const maxId = Math.max(...assetHoldings.map(holding => parseInt(holding.id) || 0));
+    return maxId + 1;
+  };
+
+  // ページ読み込み時にlocalStorageからデータを復元
+  useEffect(() => {
+    const savedData = loadFromLocalStorage();
+    if (savedData) {
+      setInput(savedData);
+      
+      // nextAssetIdを適切に設定
+      setNextAssetId(calculateNextAssetId(savedData.assetHoldings));
+      
+      // 表示値も更新
+      setDisplayValues({
+        monthlyExpenses: savedData.monthlyExpenses / 10000,
+        annualNetIncome: savedData.annualNetIncome / 10000,
+        postRetirementAnnualIncome: savedData.postRetirementAnnualIncome / 10000,
+        annualPensionAmount: savedData.annualPensionAmount / 10000,
+      });
+    }
+  }, []);
+
+  // データ変更時にlocalStorageへ自動保存
+  useEffect(() => {
+    saveToLocalStorage(input);
+  }, [input]);
+
   // 銘柄管理のヘルパー関数
   const addAssetHolding = () => {
     const newHolding: AssetHolding = {
-      id: Date.now().toString(),
+      id: nextAssetId.toString(),
       name: '',
       quantity: 0,
       pricePerUnit: 0,
@@ -73,6 +109,7 @@ export default function Home() {
       ...prev,
       assetHoldings: [...prev.assetHoldings, newHolding]
     }));
+    setNextAssetId(prev => prev + 1);
   };
 
   const updateAssetHolding = (id: string, field: keyof AssetHolding, value: string | number) => {
@@ -127,6 +164,46 @@ export default function Home() {
       ...prev,
       [field]: yenValue
     }));
+  };
+
+  // エクスポート機能
+  const handleExport = () => {
+    try {
+      exportToJson(input);
+    } catch (error) {
+      console.error('エクスポートエラー:', error);
+      alert('エクスポートに失敗しました');
+    }
+  };
+
+  // インポート機能
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const importedData = await importFromJson(file);
+      setInput(importedData);
+      
+      // nextAssetIdを適切に設定
+      setNextAssetId(calculateNextAssetId(importedData.assetHoldings));
+      
+      // 表示値も更新
+      setDisplayValues({
+        monthlyExpenses: importedData.monthlyExpenses / 10000,
+        annualNetIncome: importedData.annualNetIncome / 10000,
+        postRetirementAnnualIncome: importedData.postRetirementAnnualIncome / 10000,
+        annualPensionAmount: importedData.annualPensionAmount / 10000,
+      });
+      
+      alert('データを正常にインポートしました');
+    } catch (error) {
+      console.error('インポートエラー:', error);
+      alert(`インポートに失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`);
+    }
+    
+    // ファイル選択をリセット
+    event.target.value = '';
   };
 
   const calculateFire = async () => {
@@ -388,6 +465,41 @@ export default function Home() {
                 >
                   {isCalculating ? '計算中...' : 'FIRE達成度を計算'}
                 </Button>
+
+                {/* データ管理セクション */}
+                <div className="border-t pt-4">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">データ管理</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      onClick={handleExport}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                    >
+                      エクスポート
+                    </Button>
+                    <div>
+                      <input
+                        type="file"
+                        accept=".json"
+                        onChange={handleImport}
+                        style={{ display: 'none' }}
+                        id="import-file"
+                      />
+                      <Button
+                        onClick={() => document.getElementById('import-file')?.click()}
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                      >
+                        インポート
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    設定データをJSONファイルで保存・読み込みできます
+                  </p>
+                </div>
               </div>
             </div>
           </div>
