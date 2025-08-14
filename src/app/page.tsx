@@ -398,7 +398,7 @@ function HomeContent() {
                           />
                           <Input
                             type="number"
-                            placeholder={holding.currency === 'USD' ? '単価（ドル）' : '単価（万円）'}
+                            placeholder={holding.currency === 'USD' ? '単価 [ドル]' : '単価 [万円]'}
                             value={holding.pricePerUnit || ''}
                             onChange={(e) => updateAssetHolding(holding.id, 'pricePerUnit', Number(e.target.value))}
                             min="0"
@@ -436,7 +436,7 @@ function HomeContent() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="annualNetIncome">手取り年収（万円）</Label>
+                    <Label htmlFor="annualNetIncome">手取り年収 [万円]</Label>
                     <Input
                       id="annualNetIncome"
                       type="number"
@@ -447,7 +447,7 @@ function HomeContent() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="postRetirementAnnualIncome">退職後年収（万円）</Label>
+                    <Label htmlFor="postRetirementAnnualIncome">退職後年収 [万円]</Label>
                     <Input
                       id="postRetirementAnnualIncome"
                       type="number"
@@ -460,7 +460,7 @@ function HomeContent() {
                 </div>
 
                 <div>
-                  <Label htmlFor="annualPensionAmount">年間年金受給額（万円）</Label>
+                  <Label htmlFor="annualPensionAmount">年間年金受給額 [万円]</Label>
                   <Input
                     id="annualPensionAmount"
                     type="number"
@@ -472,7 +472,7 @@ function HomeContent() {
                 </div>
 
                 <div>
-                  <Label htmlFor="monthlyExpenses">月間支出（万円）</Label>
+                  <Label htmlFor="monthlyExpenses">月間支出 [万円]</Label>
                   <Input
                     id="monthlyExpenses"
                     type="number"
@@ -485,7 +485,7 @@ function HomeContent() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="expectedReturn">期待年利回り（%）</Label>
+                    <Label htmlFor="expectedReturn">期待年利回り [%]</Label>
                     <Input
                       id="expectedReturn"
                       type="number"
@@ -498,7 +498,7 @@ function HomeContent() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <Label htmlFor="inflationRate">インフレ率（%）</Label>
+                      <Label htmlFor="inflationRate">インフレ率 [%]</Label>
                       <Tooltip content="下げると楽観的な想定に、上げると厳しめの想定になります。">
                         <span className="w-4 h-4 bg-gray-500 text-white rounded-full flex items-center justify-center text-xs cursor-help">?</span>
                       </Tooltip>
