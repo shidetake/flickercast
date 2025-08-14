@@ -354,7 +354,7 @@ function HomeContent() {
                         variant="outline"
                         disabled={isDeleteMode}
                       >
-                        + 銘柄を追加
+                        追加
                       </Button>
                       <Button 
                         type="button" 
