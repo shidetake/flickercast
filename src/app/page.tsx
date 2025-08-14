@@ -140,7 +140,7 @@ function HomeContent() {
     saveToLocalStorage(input);
   }, [input]);
 
-  // 銘柄管理のヘルパー関数
+  // 金融資産管理のヘルパー関数
   const addAssetHolding = () => {
     const newHolding: AssetHolding = {
       id: nextAssetId.toString(),
@@ -431,7 +431,7 @@ function HomeContent() {
 
                 <div>
                   <div className="flex justify-between items-center mb-3">
-                    <Label>銘柄管理</Label>
+                    <Label>金融資産管理</Label>
                     <div className="flex gap-2">
                       <Button 
                         type="button" 
