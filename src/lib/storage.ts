@@ -53,8 +53,8 @@ export function exportToJson(data: FireCalculationInput): void {
     const url = URL.createObjectURL(blob);
     
     const now = new Date();
-    const dateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
-    const timeString = now.toISOString().split('T')[1].split('.')[0].replace(/:/g, '-'); // HH-mm-ss
+    const dateString = now.toLocaleDateString('sv-SE'); // YYYY-MM-DD
+    const timeString = now.toLocaleTimeString('sv-SE').replace(/:/g, '-'); // HH-mm-ss
     const filename = `fire-simulator-${dateString}_${timeString}.json`;
     
     const link = document.createElement('a');
