@@ -376,9 +376,9 @@ function HomeContent() {
                             type="button"
                             onClick={() => removeAssetHolding(holding.id)}
                             size="sm"
-                            className="w-6 h-6 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white flex-shrink-0"
+                            className="w-5 h-5 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white flex-shrink-0"
                           >
-                            -
+                            <span className="text-sm font-bold">−</span>
                           </Button>
                           <span className="text-sm font-medium text-gray-900 truncate">
                             {holding.name || '未設定'}
