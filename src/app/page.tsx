@@ -392,6 +392,43 @@ function HomeContent() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="annualNetIncome">手取り年収 [万円]</Label>
+                    <Input
+                      id="annualNetIncome"
+                      type="number"
+                      value={displayValues.annualNetIncome}
+                      onChange={(e) => handleDisplayValueChange('annualNetIncome', Number(e.target.value))}
+                      min="0"
+                      step="10"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="postRetirementAnnualIncome">退職後年収 [万円]</Label>
+                    <Input
+                      id="postRetirementAnnualIncome"
+                      type="number"
+                      value={displayValues.postRetirementAnnualIncome}
+                      onChange={(e) => handleDisplayValueChange('postRetirementAnnualIncome', Number(e.target.value))}
+                      min="0"
+                      step="10"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="annualPensionAmount">年間年金受給額 [万円]</Label>
+                  <Input
+                    id="annualPensionAmount"
+                    type="number"
+                    value={displayValues.annualPensionAmount}
+                    onChange={(e) => handleDisplayValueChange('annualPensionAmount', Number(e.target.value))}
+                    min="0"
+                    step="10"
+                  />
+                </div>
+
                 <div>
                   <div className="flex justify-between items-center mb-3">
                     <Label>銘柄管理</Label>
@@ -487,42 +524,6 @@ function HomeContent() {
                 </div>
 
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="annualNetIncome">手取り年収 [万円]</Label>
-                    <Input
-                      id="annualNetIncome"
-                      type="number"
-                      value={displayValues.annualNetIncome}
-                      onChange={(e) => handleDisplayValueChange('annualNetIncome', Number(e.target.value))}
-                      min="0"
-                      step="10"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="postRetirementAnnualIncome">退職後年収 [万円]</Label>
-                    <Input
-                      id="postRetirementAnnualIncome"
-                      type="number"
-                      value={displayValues.postRetirementAnnualIncome}
-                      onChange={(e) => handleDisplayValueChange('postRetirementAnnualIncome', Number(e.target.value))}
-                      min="0"
-                      step="10"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="annualPensionAmount">年間年金受給額 [万円]</Label>
-                  <Input
-                    id="annualPensionAmount"
-                    type="number"
-                    value={displayValues.annualPensionAmount}
-                    onChange={(e) => handleDisplayValueChange('annualPensionAmount', Number(e.target.value))}
-                    min="0"
-                    step="10"
-                  />
-                </div>
 
                 <div>
                   <Label htmlFor="monthlyExpenses">月間支出 [万円]</Label>
