@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tooltip } from '@/components/ui/tooltip';
 import { FireCalculator, FireCalculationInput } from '@/lib/fire-calculator';
 import FireProjectionChart from '@/components/charts/fire-projection-chart';
 import FireSummary from '@/components/dashboard/fire-summary';
@@ -499,7 +500,12 @@ function HomeContent() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="inflationRate">インフレ率（%）</Label>
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="inflationRate">インフレ率（%）</Label>
+                      <Tooltip content="下げると楽観的な想定に、上げると厳しめの想定になります。">
+                        <span className="w-4 h-4 bg-gray-500 text-white rounded-full flex items-center justify-center text-xs cursor-help">?</span>
+                      </Tooltip>
+                    </div>
                     <Input
                       id="inflationRate"
                       type="number"
