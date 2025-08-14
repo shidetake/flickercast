@@ -291,9 +291,6 @@ function HomeContent() {
           <h1 className="text-3xl font-bold text-gray-900">
             🔥 FIRE Simulator
           </h1>
-          <p className="text-gray-600 mt-1">
-            経済的自立・早期退職（FIRE）をシミュレートしましょう
-          </p>
         </div>
       </header>
 
