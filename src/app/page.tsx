@@ -398,7 +398,7 @@ function HomeContent() {
                           />
                           <Input
                             type="number"
-                            placeholder={holding.currency === 'USD' ? '単価 [ドル]' : '単価 [万円]'}
+                            placeholder={holding.currency === 'USD' ? '単価 [ドル]' : '単価 [円]'}
                             value={holding.pricePerUnit || ''}
                             onChange={(e) => updateAssetHolding(holding.id, 'pricePerUnit', Number(e.target.value))}
                             min="0"

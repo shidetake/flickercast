@@ -23,8 +23,8 @@ export function calculateTotalAssets(
     if (holding.currency === 'USD') {
       return total + (assetValue * currentExchangeRate);
     } else {
-      // JPY銘柄の場合、pricePerUnitは万円単位なので円に換算
-      return total + (assetValue * 10000);
+      // JPY銘柄の場合、pricePerUnitは円単位
+      return total + assetValue;
     }
   }, 0);
   

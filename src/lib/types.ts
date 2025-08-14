@@ -229,7 +229,7 @@ export interface AssetHolding {
   id: string;
   name: string;
   quantity: number;
-  pricePerUnit: number; // 万円単位
+  pricePerUnit: number; // JPY: 円単位, USD: ドル単位
   currency: Currency; // 通貨種別
 }
 
