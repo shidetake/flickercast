@@ -79,7 +79,6 @@ export interface Scenario {
   name: string;
   inflationRate: number;
   expectedReturn: number;
-  withdrawalRate: number;
   currentAge: number;
   retirementAge: number;
   lifeExpectancy: number;
@@ -193,7 +192,6 @@ export interface ScenarioFormData {
   name: string;
   inflationRate: number;
   expectedReturn: number;
-  withdrawalRate: number;
   currentAge: number;
   retirementAge: number;
   lifeExpectancy: number;

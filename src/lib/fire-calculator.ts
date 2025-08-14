@@ -11,7 +11,6 @@ export interface FireCalculationInput {
   annualPensionAmount: number; // 年間年金受給額（円）
   expectedAnnualReturn: number; // パーセント（例: 5 = 5%）
   inflationRate: number; // パーセント（例: 2 = 2%）
-  withdrawalRate: number; // パーセント（例: 4 = 4%）
   lifeExpectancy: number;
   exchangeRate?: number | null; // USD/JPY為替レート
 }
@@ -40,15 +39,6 @@ export interface YearlyProjection {
  * FIRE（Financial Independence, Retire Early）の計算を行う
  */
 export class FireCalculator {
-  /**
-   * 4%ルールに基づいてFIRE達成に必要な資産額を計算
-   */
-  static calculateRequiredAssets(
-    annualExpenses: number,
-    withdrawalRate: number = 4
-  ): number {
-    return (annualExpenses * 100) / withdrawalRate;
-  }
 
   /**
    * 複利計算で将来資産を予測
@@ -102,7 +92,6 @@ export class FireCalculator {
       annualPensionAmount,
       expectedAnnualReturn,
       inflationRate,
-      withdrawalRate,
       lifeExpectancy,
       exchangeRate
     } = input;
@@ -161,13 +150,9 @@ export class FireCalculator {
         year
       );
       
-      // FIRE達成に必要な資産額（その年のインフレ調整後）
-      const requiredAssets = this.calculateRequiredAssets(
-        realAnnualExpenses,
-        withdrawalRate
-      );
-      
-      const fireAchieved = futureAssets >= requiredAssets;
+      // FIRE達成判定: 資産が退職後の残り人生の支出を賐えるかチェック
+      const yearsInRetirement = lifeExpectancy - retirementAge;
+      const fireAchieved = futureAssets >= (realAnnualExpenses * yearsInRetirement);
       
       // 初回のFIRE達成年を記録（退職年齢以内の場合のみ）
       if (fireAchieved && !isFireAchievable && age <= retirementAge) {
@@ -193,10 +178,9 @@ export class FireCalculator {
       inflationRate,
       yearsToFire
     );
-    const requiredAssets = this.calculateRequiredAssets(
-      finalRealExpenses,
-      withdrawalRate
-    );
+    // 退職後の残り人生の支出を賐える資産が必要
+    const yearsInRetirement = lifeExpectancy - retirementAge;
+    const requiredAssets = finalRealExpenses * yearsInRetirement;
     const projectedAssets = this.calculateFutureValue(
       currentAssets,
       netMonthlySavings,

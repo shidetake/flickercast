@@ -48,7 +48,6 @@ function HomeContent() {
     annualPensionAmount: 0, // 内部では円のまま（0円）
     expectedAnnualReturn: 5,
     inflationRate: 2,
-    withdrawalRate: 4,
     lifeExpectancy: calculateLifeExpectancy(38),
   });
 
@@ -513,21 +512,6 @@ function HomeContent() {
                   </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="withdrawalRate">引き出し率（%）</Label>
-                  <Input
-                    id="withdrawalRate"
-                    type="number"
-                    value={input.withdrawalRate}
-                    onChange={(e) => handleInputChange('withdrawalRate', Number(e.target.value))}
-                    min="1"
-                    max="10"
-                    step="0.1"
-                  />
-                  <p className="text-sm text-foreground mt-1">
-                    4%が一般的な安全な引き出し率とされています
-                  </p>
-                </div>
 
                 <Button
                   onClick={calculateFire}
@@ -636,10 +620,6 @@ function HomeContent() {
                         <div className="flex justify-between">
                           <span>期待年利回り:</span>
                           <span>{input.expectedAnnualReturn}%</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>引き出し率:</span>
-                          <span>{input.withdrawalRate}%</span>
                         </div>
                       </div>
                     </div>

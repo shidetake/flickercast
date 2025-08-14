@@ -119,7 +119,6 @@ function validateFireCalculationInput(data: unknown): data is FireCalculationInp
     'annualPensionAmount',
     'expectedAnnualReturn',
     'inflationRate',
-    'withdrawalRate',
     'lifeExpectancy'
   ];
   
@@ -138,7 +137,6 @@ function validateFireCalculationInput(data: unknown): data is FireCalculationInp
       typeof data.annualPensionAmount !== 'number' ||
       typeof data.expectedAnnualReturn !== 'number' ||
       typeof data.inflationRate !== 'number' ||
-      typeof data.withdrawalRate !== 'number' ||
       typeof data.lifeExpectancy !== 'number') {
     return false;
   }

@@ -18,7 +18,6 @@ export interface MonteCarloSimulation {
   returnVolatility: number;
   inflationRate: number;
   inflationVolatility: number;
-  withdrawalRate: number;
   lifeExpectancy: number;
   simulations: number;
 }
@@ -50,7 +49,6 @@ export class MonteCarloSimulator {
       returnVolatility,
       inflationRate,
       inflationVolatility,
-      withdrawalRate,
       lifeExpectancy
     } = params;
 
@@ -77,8 +75,9 @@ export class MonteCarloSimulator {
       // インフレ調整後の支出
       const realAnnualExpenses = annualExpenses * Math.pow(1 + yearlyInflation, year);
       
-      // FIRE達成に必要な資産額
-      const requiredAssets = (realAnnualExpenses * 100) / withdrawalRate;
+      // FIRE達成判定: 資産が退職後の残り人生の支出を賐えるかチェック
+      const yearsInRetirement = lifeExpectancy - retirementAge;
+      const requiredAssets = realAnnualExpenses * yearsInRetirement;
       
       // 退職前：貯蓄フェーズ
       if (age < retirementAge) {
@@ -133,7 +132,6 @@ export class MonteCarloSimulator {
       returnVolatility,
       inflationRate: baseInput.inflationRate,
       inflationVolatility,
-      withdrawalRate: baseInput.withdrawalRate,
       lifeExpectancy: baseInput.lifeExpectancy,
       simulations,
     };
