@@ -523,18 +523,50 @@ function HomeContent() {
                   </div>
                 </div>
 
-
-
                 <div>
-                  <Label htmlFor="monthlyExpenses">月間支出 [万円]</Label>
+                  <Label htmlFor="expectedReturn">期待年利回り [%]</Label>
                   <Input
-                    id="monthlyExpenses"
+                    id="expectedReturn"
                     type="number"
-                    value={displayValues.monthlyExpenses}
-                    onChange={(e) => handleDisplayValueChange('monthlyExpenses', Number(e.target.value))}
+                    value={input.expectedAnnualReturn}
+                    onChange={(e) => handleInputChange('expectedAnnualReturn', Number(e.target.value))}
                     min="0"
+                    max="30"
                     step="0.1"
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 h-6">
+                      <Label htmlFor="monthlyExpenses">月間支出 [万円]</Label>
+                    </div>
+                    <Input
+                      id="monthlyExpenses"
+                      type="number"
+                      value={displayValues.monthlyExpenses}
+                      onChange={(e) => handleDisplayValueChange('monthlyExpenses', Number(e.target.value))}
+                      min="0"
+                      step="0.1"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 h-6">
+                      <Label htmlFor="inflationRate">インフレ率 [%]</Label>
+                      <Tooltip content="将来の支出がインフレ率に応じて増減します。下げると楽観的な想定に、上げると厳しめの想定になります。">
+                        <span className="w-4 h-4 bg-gray-500 text-white rounded-full flex items-center justify-center text-xs cursor-help">?</span>
+                      </Tooltip>
+                    </div>
+                    <Input
+                      id="inflationRate"
+                      type="number"
+                      value={input.inflationRate}
+                      onChange={(e) => handleInputChange('inflationRate', Number(e.target.value))}
+                      min="0"
+                      max="15"
+                      step="0.1"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -623,37 +655,6 @@ function HomeContent() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="expectedReturn">期待年利回り [%]</Label>
-                    <Input
-                      id="expectedReturn"
-                      type="number"
-                      value={input.expectedAnnualReturn}
-                      onChange={(e) => handleInputChange('expectedAnnualReturn', Number(e.target.value))}
-                      min="0"
-                      max="30"
-                      step="0.1"
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="inflationRate">インフレ率 [%]</Label>
-                      <Tooltip content="将来の支出がインフレ率に応じて増減します。下げると楽観的な想定に、上げると厳しめの想定になります。">
-                        <span className="w-4 h-4 bg-gray-500 text-white rounded-full flex items-center justify-center text-xs cursor-help">?</span>
-                      </Tooltip>
-                    </div>
-                    <Input
-                      id="inflationRate"
-                      type="number"
-                      value={input.inflationRate}
-                      onChange={(e) => handleInputChange('inflationRate', Number(e.target.value))}
-                      min="0"
-                      max="15"
-                      step="0.1"
-                    />
-                  </div>
-                </div>
 
 
                 <Button
