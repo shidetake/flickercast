@@ -1,10 +1,11 @@
-import { AssetHolding } from './types';
+import { AssetHolding, Loan } from './types';
 import { calculateTotalAssets } from './asset-calculator';
 
 export interface FireCalculationInput {
   currentAge: number;
   retirementAge: number;
   assetHoldings: AssetHolding[]; // 銘柄保有情報
+  loans: Loan[]; // ローン情報
   monthlyExpenses: number;
   annualNetIncome: number; // 手取り年収（円）
   postRetirementAnnualIncome: number; // 退職後年収（円）

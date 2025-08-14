@@ -233,6 +233,15 @@ export interface AssetHolding {
   currency: Currency; // 通貨種別
 }
 
+// ローン情報
+export interface Loan {
+  id: string;
+  name: string; // ローン名（住宅ローン、車のローン等）
+  balance: number; // 残高（円）
+  interestRate: number; // 金利（%）
+  monthlyPayment: number; // 月々返済額（円）
+}
+
 // チャート用データ型
 export interface ChartDataPoint {
   year: number;

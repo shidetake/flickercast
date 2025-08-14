@@ -8,7 +8,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { FireCalculator, FireCalculationInput } from '@/lib/fire-calculator';
 import FireProjectionChart from '@/components/charts/fire-projection-chart';
 import FireSummary from '@/components/dashboard/fire-summary';
-import { ChartDataPoint, FireMetrics, AssetHolding, Currency } from '@/lib/types';
+import { ChartDataPoint, FireMetrics, AssetHolding, Loan } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { saveToLocalStorage, loadFromLocalStorage, exportToJson, importFromJson } from '@/lib/storage';
 import { useToast, ToastProvider } from '@/lib/toast-context';
@@ -43,6 +43,7 @@ function HomeContent() {
     assetHoldings: [
       { id: '1', name: '', quantity: 0, pricePerUnit: 0, currency: 'JPY' },
     ], // デフォルトは1つの空の銘柄
+    loans: [], // デフォルトは空のローン配列
     monthlyExpenses: 300000, // 内部では円のまま
     annualNetIncome: 10000000, // 内部では円のまま（1000万円）
     postRetirementAnnualIncome: 0, // 内部では円のまま（0円）
@@ -54,7 +55,9 @@ function HomeContent() {
 
   const [input, setInput] = useState<FireCalculationInput>(createDefaultInput());
   const [nextAssetId, setNextAssetId] = useState(2); // 次に使用するAsset ID（デフォルトは1なので2から開始）
+  const [nextLoanId, setNextLoanId] = useState(1); // 次に使用するLoan ID
   const [isDeleteMode, setIsDeleteMode] = useState(false); // 削除モード状態
+  const [isLoanDeleteMode, setIsLoanDeleteMode] = useState(false); // ローン削除モード状態
 
   // 万円単位での表示用の値
   const [displayValues, setDisplayValues] = useState({
@@ -79,6 +82,13 @@ function HomeContent() {
   const calculateNextAssetId = (assetHoldings: AssetHolding[]): number => {
     if (assetHoldings.length === 0) return 1;
     const maxId = Math.max(...assetHoldings.map(holding => parseInt(holding.id) || 0));
+    return maxId + 1;
+  };
+
+  // 既存のローンIDから次のIDを計算
+  const calculateNextLoanId = (loans: Loan[]): number => {
+    if (loans.length === 0) return 1;
+    const maxId = Math.max(...loans.map(loan => parseInt(loan.id) || 0));
     return maxId + 1;
   };
 
@@ -107,6 +117,8 @@ function HomeContent() {
       
       // nextAssetIdを適切に設定
       setNextAssetId(calculateNextAssetId(savedData.assetHoldings));
+      // nextLoanIdを適切に設定
+      setNextLoanId(calculateNextLoanId(savedData.loans || []));
       
       // 表示値も更新
       setDisplayValues({
@@ -160,9 +172,47 @@ function HomeContent() {
     }));
   };
 
+  // ローン管理のヘルパー関数
+  const addLoan = () => {
+    const newLoan: Loan = {
+      id: nextLoanId.toString(),
+      name: '',
+      balance: 0,
+      interestRate: 0,
+      monthlyPayment: 0,
+    };
+    setInput(prev => ({
+      ...prev,
+      loans: [...prev.loans, newLoan]
+    }));
+    setNextLoanId(prev => prev + 1);
+  };
+
+  const updateLoan = (id: string, field: keyof Loan, value: string | number) => {
+    setInput(prev => ({
+      ...prev,
+      loans: prev.loans.map(loan =>
+        loan.id === id ? { ...loan, [field]: value } : loan
+      )
+    }));
+  };
+
+  const removeLoan = (id: string) => {
+    setInput(prev => ({
+      ...prev,
+      loans: prev.loans.filter(loan => loan.id !== id)
+    }));
+  };
+
   // 総資産額を計算（統一関数を使用）
   const calculateTotalAssets = () => {
     return calculateTotalAssetsUnified(input.assetHoldings, exchangeRate, 'manyen');
+  };
+
+  // 総月間返済額を計算（万円単位で返す）
+  const calculateTotalMonthlyPayments = () => {
+    const totalPayments = input.loans.reduce((sum, loan) => sum + loan.monthlyPayment, 0);
+    return totalPayments / 10000; // 円から万円に変換
   };
 
   const handleInputChange = (field: keyof FireCalculationInput, value: number) => {
@@ -217,6 +267,8 @@ function HomeContent() {
       
       // nextAssetIdを適切に設定
       setNextAssetId(calculateNextAssetId(importedData.assetHoldings));
+      // nextLoanIdを適切に設定
+      setNextLoanId(calculateNextLoanId(importedData.loans || []));
       
       // 表示値も更新
       setDisplayValues({
@@ -434,6 +486,7 @@ function HomeContent() {
                   </div>
                 </div>
 
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="annualNetIncome">手取り年収 [万円]</Label>
@@ -481,6 +534,92 @@ function HomeContent() {
                     min="0"
                     step="0.1"
                   />
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <Label>ローン管理</Label>
+                    <div className="flex gap-2">
+                      <Button 
+                        type="button" 
+                        onClick={addLoan}
+                        size="sm"
+                        variant="outline"
+                        disabled={isLoanDeleteMode}
+                      >
+                        追加
+                      </Button>
+                      <Button 
+                        type="button" 
+                        onClick={() => setIsLoanDeleteMode(!isLoanDeleteMode)}
+                        size="sm"
+                        variant={isLoanDeleteMode ? "default" : "outline"}
+                      >
+                        {isLoanDeleteMode ? '完了' : '削除'}
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {input.loans.map((loan) => (
+                      isLoanDeleteMode ? (
+                        // 削除モード: ローン名のみ表示、左側に赤い削除ボタン
+                        <div key={loan.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
+                          <Button 
+                            type="button"
+                            onClick={() => removeLoan(loan.id)}
+                            size="sm"
+                            className="w-5 h-5 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white flex-shrink-0"
+                          >
+                            <span className="text-sm font-bold">−</span>
+                          </Button>
+                          <span className="text-sm font-medium text-gray-900 truncate">
+                            {loan.name || '未設定'}
+                          </span>
+                        </div>
+                      ) : (
+                        // 通常モード: 全ての入力欄を表示
+                        <div key={loan.id} className="grid grid-cols-4 gap-2 items-center">
+                          <Input
+                            placeholder="ローン名"
+                            value={loan.name}
+                            onChange={(e) => updateLoan(loan.id, 'name', e.target.value)}
+                          />
+                          <Input
+                            type="number"
+                            placeholder="残高 [万円]"
+                            value={loan.balance ? (loan.balance / 10000) : ''}
+                            onChange={(e) => updateLoan(loan.id, 'balance', Number(e.target.value) * 10000)}
+                            min="0"
+                            step="1"
+                          />
+                          <Input
+                            type="number"
+                            placeholder="金利 [%]"
+                            value={loan.interestRate || ''}
+                            onChange={(e) => updateLoan(loan.id, 'interestRate', Number(e.target.value))}
+                            min="0"
+                            max="30"
+                            step="0.1"
+                          />
+                          <Input
+                            type="number"
+                            placeholder="月返済額 [万円]"
+                            value={loan.monthlyPayment ? (loan.monthlyPayment / 10000) : ''}
+                            onChange={(e) => updateLoan(loan.id, 'monthlyPayment', Number(e.target.value) * 10000)}
+                            min="0"
+                            step="0.1"
+                          />
+                        </div>
+                      )
+                    ))}
+                  </div>
+                  
+                  <div className="mt-3 p-2 bg-gray-50 rounded">
+                    <span className="text-sm font-medium">
+                      総月間返済額: {calculateTotalMonthlyPayments().toFixed(1)}万円
+                    </span>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

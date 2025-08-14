@@ -103,7 +103,8 @@ export function importFromJson(file: File): Promise<FireCalculationInput> {
 /**
  * FireCalculationInputの型バリデーション
  */
-function validateFireCalculationInput(data: unknown): data is FireCalculationInput {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function validateFireCalculationInput(data: any): data is FireCalculationInput {
   if (!data || typeof data !== 'object') {
     return false;
   }
@@ -113,6 +114,7 @@ function validateFireCalculationInput(data: unknown): data is FireCalculationInp
     'currentAge',
     'retirementAge',
     'assetHoldings',
+    'loans',
     'monthlyExpenses',
     'annualNetIncome',
     'postRetirementAnnualIncome',
@@ -155,6 +157,23 @@ function validateFireCalculationInput(data: unknown): data is FireCalculationInp
         typeof holding.pricePerUnit !== 'number' ||
         typeof holding.currency !== 'string' ||
         !['JPY', 'USD'].includes(holding.currency)) {
+      return false;
+    }
+  }
+  
+  // loansの配列チェック
+  if (!Array.isArray(data.loans)) {
+    return false;
+  }
+  
+  // 各loanの構造チェック
+  for (const loan of data.loans) {
+    if (!loan ||
+        typeof loan.id !== 'string' ||
+        typeof loan.name !== 'string' ||
+        typeof loan.balance !== 'number' ||
+        typeof loan.interestRate !== 'number' ||
+        typeof loan.monthlyPayment !== 'number') {
       return false;
     }
   }

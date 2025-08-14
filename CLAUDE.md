@@ -22,6 +22,7 @@ This is a FIRE (Financial Independence, Retire Early) simulation web application
 npm install
 
 # Run development server (uses port 3001)
+# IMPORTANT: Do NOT execute npm run dev automatically - user will run this manually
 npm run dev
 
 # Build for production
