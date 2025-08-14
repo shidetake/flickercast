@@ -129,15 +129,17 @@ export class FireCalculator {
         // 前年資産に年利を適用
         currentYearAssets = currentYearAssets * (1 + expectedAnnualReturn / 100);
         
+        // インフレ調整後の年間支出を計算
+        const adjustedAnnualExpenses = this.adjustForInflation(annualExpenses, inflationRate, year);
+        
         // 収入/支出を加減
         if (isAfterRetirement) {
           // 退職後: 退職後年収と年金を加算し、インフレ調整後の年間支出を差し引く
-          const adjustedAnnualExpenses = this.adjustForInflation(annualExpenses, inflationRate, year);
           const pensionIncome = age >= 65 ? annualPensionAmount : 0; // 65歳から年金受給開始
           currentYearAssets += postRetirementAnnualIncome + pensionIncome - adjustedAnnualExpenses;
         } else {
-          // 退職前: 年間純貯蓄額を加算
-          currentYearAssets += netMonthlySavings * 12;
+          // 退職前: インフレ調整後の支出を考慮した貯蓄額を加算
+          currentYearAssets += annualNetIncome - adjustedAnnualExpenses;
         }
       }
       
