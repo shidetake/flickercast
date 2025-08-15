@@ -48,6 +48,8 @@ function HomeContent() {
     annualNetIncome: 10000000, // 内部では円のまま（1000万円）
     postRetirementAnnualIncome: 0, // 内部では円のまま（0円）
     annualPensionAmount: 0, // 内部では円のまま（0円）
+    pensionStartAge: 65, // 年金受給開始年齢のデフォルト値
+    pensionEndAge: calculateLifeExpectancy(38), // 年金受給終了年齢は想定寿命
     expectedAnnualReturn: 5,
     inflationRate: 2,
     lifeExpectancy: calculateLifeExpectancy(38),
@@ -65,6 +67,8 @@ function HomeContent() {
     annualNetIncome: 1000, // 1000万円
     postRetirementAnnualIncome: 0, // 0万円
     annualPensionAmount: 0, // 0万円
+    pensionStartAge: 65, // 年金受給開始年齢
+    pensionEndAge: calculateLifeExpectancy(38), // 年金受給終了年齢
   });
 
   const [isCalculating, setIsCalculating] = useState(false);
@@ -126,6 +130,8 @@ function HomeContent() {
         annualNetIncome: savedData.annualNetIncome / 10000,
         postRetirementAnnualIncome: savedData.postRetirementAnnualIncome / 10000,
         annualPensionAmount: savedData.annualPensionAmount / 10000,
+        pensionStartAge: savedData.pensionStartAge || 65,
+        pensionEndAge: savedData.pensionEndAge || calculateLifeExpectancy(savedData.currentAge),
       });
     }
   }, []);
@@ -237,11 +243,13 @@ function HomeContent() {
       [field]: value
     }));
     
-    // 内部計算用の値を更新（万円 → 円に変換）
-    const yenValue = value * 10000;
+    // 年齢フィールドは変換不要、金額フィールドのみ万円 → 円に変換
+    const isAgeField = field === 'pensionStartAge' || field === 'pensionEndAge';
+    const actualValue = isAgeField ? value : value * 10000;
+    
     setInput(prev => ({
       ...prev,
-      [field]: yenValue
+      [field]: actualValue
     }));
   };
 
@@ -276,6 +284,8 @@ function HomeContent() {
         annualNetIncome: importedData.annualNetIncome / 10000,
         postRetirementAnnualIncome: importedData.postRetirementAnnualIncome / 10000,
         annualPensionAmount: importedData.annualPensionAmount / 10000,
+        pensionStartAge: importedData.pensionStartAge || 65,
+        pensionEndAge: importedData.pensionEndAge || calculateLifeExpectancy(importedData.currentAge),
       });
       
       showSuccess('データを正常にインポートしました');
@@ -417,16 +427,40 @@ function HomeContent() {
                   </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="annualPensionAmount">年間年金受給額 [万円]</Label>
-                  <Input
-                    id="annualPensionAmount"
-                    type="number"
-                    value={displayValues.annualPensionAmount}
-                    onChange={(e) => handleDisplayValueChange('annualPensionAmount', Number(e.target.value))}
-                    min="0"
-                    step="10"
-                  />
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="annualPensionAmount">年間年金受給額 [万円]</Label>
+                    <Input
+                      id="annualPensionAmount"
+                      type="number"
+                      value={displayValues.annualPensionAmount}
+                      onChange={(e) => handleDisplayValueChange('annualPensionAmount', Number(e.target.value))}
+                      min="0"
+                      step="10"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="pensionStartAge">受給開始年齢</Label>
+                    <Input
+                      id="pensionStartAge"
+                      type="number"
+                      value={displayValues.pensionStartAge}
+                      onChange={(e) => handleDisplayValueChange('pensionStartAge', Number(e.target.value))}
+                      min="0"
+                      step="1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="pensionEndAge">受給終了年齢</Label>
+                    <Input
+                      id="pensionEndAge"
+                      type="number"
+                      value={displayValues.pensionEndAge}
+                      onChange={(e) => handleDisplayValueChange('pensionEndAge', Number(e.target.value))}
+                      min="0"
+                      step="1"
+                    />
+                  </div>
                 </div>
 
                 <div>

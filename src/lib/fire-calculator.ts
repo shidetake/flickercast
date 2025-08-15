@@ -10,6 +10,8 @@ export interface FireCalculationInput {
   annualNetIncome: number; // 手取り年収（円）
   postRetirementAnnualIncome: number; // 退職後年収（円）
   annualPensionAmount: number; // 年間年金受給額（円）
+  pensionStartAge: number; // 年金受給開始年齢
+  pensionEndAge: number; // 年金受給終了年齢
   expectedAnnualReturn: number; // パーセント（例: 5 = 5%）
   inflationRate: number; // パーセント（例: 2 = 2%）
   lifeExpectancy: number;
