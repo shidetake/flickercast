@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AssetType } from '@prisma/client';
+import { AssetType } from '@/lib/types';
 import { AssetFormData } from '@/lib/types';
 
 interface AssetFormProps {
@@ -25,7 +25,7 @@ const assetTypeOptions = [
 
 export default function AssetForm({ onSubmit, onCancel, initialData }: AssetFormProps) {
   const [formData, setFormData] = useState<AssetFormData>({
-    type: initialData?.type || 'STOCK',
+    type: initialData?.type || AssetType.STOCK,
     name: initialData?.name || '',
     symbol: initialData?.symbol || '',
     amount: initialData?.amount || 0,
@@ -49,7 +49,7 @@ export default function AssetForm({ onSubmit, onCancel, initialData }: AssetForm
     }
   };
 
-  const handleInputChange = (field: keyof AssetFormData, value: string | number | boolean) => {
+  const handleInputChange = (field: keyof AssetFormData, value: string | number | boolean | undefined) => {
     setFormData(prev => ({
       ...prev,
       [field]: value

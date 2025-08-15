@@ -32,6 +32,7 @@ export interface YearlyProjection {
   assets: number;
   expenses: number;
   realExpenses: number; // インフレ調整後
+  netWorth: number;
   fireAchieved: boolean;
   yearsToFire: number;
 }
@@ -218,6 +219,7 @@ export class FireCalculator {
         assets: futureAssets,
         expenses: annualExpenses + yearlyLoanPayments,
         realExpenses: totalAnnualExpenses,
+        netWorth: futureAssets,
         fireAchieved: fireAchieved,
         yearsToFire: fireAchieved ? 0 : (year === 0 ? yearsToFire : year)
       });

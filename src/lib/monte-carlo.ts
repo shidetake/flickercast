@@ -1,5 +1,6 @@
 import { FireCalculationInput, YearlyProjection } from './fire-calculator';
 import { MonteCarloResult } from './types';
+import { calculateTotalAssets } from './asset-calculator';
 
 export interface MonteCarloParameters {
   simulations: number; // シミュレーション回数
@@ -96,6 +97,7 @@ export class MonteCarloSimulator {
         assets: Math.max(0, assets), // 資産は0を下回らない
         expenses: realAnnualExpenses,
         realExpenses: realAnnualExpenses,
+        netWorth: Math.max(0, assets),
         fireAchieved,
         yearsToFire: fireAchieved ? year : 0
       });
@@ -125,9 +127,9 @@ export class MonteCarloSimulator {
     const simulationParams: MonteCarloSimulation = {
       currentAge: baseInput.currentAge,
       retirementAge: baseInput.retirementAge,
-      currentAssets: baseInput.currentAssets,
+      currentAssets: calculateTotalAssets(baseInput.assetHoldings, baseInput.exchangeRate),
       monthlyExpenses: baseInput.monthlyExpenses,
-      monthlySavings: baseInput.monthlySavings,
+      monthlySavings: (baseInput.annualNetIncome - baseInput.monthlyExpenses * 12) / 12,
       expectedAnnualReturn: baseInput.expectedAnnualReturn,
       returnVolatility,
       inflationRate: baseInput.inflationRate,

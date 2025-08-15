@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ExpenseCategory, Frequency } from '@prisma/client';
+import { ExpenseCategory, Frequency } from '@/lib/types';
 import { ExpenseFormData } from '@/lib/types';
 
 interface ExpenseFormProps {
@@ -33,10 +33,10 @@ const frequencyOptions = [
 
 export default function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
   const [formData, setFormData] = useState<ExpenseFormData>({
-    category: initialData?.category || 'HOUSING',
+    category: initialData?.category || ExpenseCategory.HOUSING,
     name: initialData?.name || '',
     amount: initialData?.amount || 0,
-    frequency: initialData?.frequency || 'MONTHLY',
+    frequency: initialData?.frequency || Frequency.MONTHLY,
     isEssential: initialData?.isEssential ?? true,
     retirementMultiplier: initialData?.retirementMultiplier || 1.0,
   });
