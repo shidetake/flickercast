@@ -80,6 +80,36 @@ export class FireCalculator {
   }
 
   /**
+   * ローンの完済時期（年数）を計算
+   */
+  static calculateLoanPayoffYears(loan: Loan): number {
+    const { balance, monthlyPayment, interestRate } = loan;
+    
+    // 金利が0%または月次返済額が残高以上の場合
+    if (interestRate === 0) {
+      return Math.ceil(balance / monthlyPayment / 12);
+    }
+    
+    if (monthlyPayment >= balance) {
+      return 0; // 即座に完済可能
+    }
+    
+    const monthlyRate = interestRate / 100 / 12;
+    
+    // 元利均等返済の完済月数計算
+    // n = -log(1 - (P×r)/M) / log(1+r)
+    const numerator = 1 - (balance * monthlyRate) / monthlyPayment;
+    
+    // 数学的に返済不可能（利息 > 返済額）
+    if (numerator <= 0) {
+      return 999; // 実質的に完済不可能として扱う
+    }
+    
+    const months = -Math.log(numerator) / Math.log(1 + monthlyRate);
+    return Math.ceil(months / 12); // 年数に変換（切り上げ）
+  }
+
+  /**
    * メインのFIRE計算関数
    */
   static calculateFire(input: FireCalculationInput): FireCalculationResult {
@@ -87,6 +117,7 @@ export class FireCalculator {
       currentAge,
       retirementAge,
       assetHoldings,
+      loans,
       monthlyExpenses,
       annualNetIncome,
       postRetirementAnnualIncome,
@@ -100,6 +131,12 @@ export class FireCalculator {
     // 銘柄保有情報から総資産額を計算（統一関数を使用、円単位）
     const currentAssets = calculateTotalAssets(assetHoldings, exchangeRate, 'yen');
 
+    // 各ローンの完済時期を事前計算
+    const loanPayoffYears = new Map<string, number>();
+    loans.forEach(loan => {
+      loanPayoffYears.set(loan.id, this.calculateLoanPayoffYears(loan));
+    });
+
     const annualExpenses = monthlyExpenses * 12;
     const maxYearsToRetirement = retirementAge - currentAge;
     const maxYearsToLife = lifeExpectancy - currentAge;
@@ -111,7 +148,8 @@ export class FireCalculator {
 
     // 手取り年収から月間収入を計算し、実質月間貯蓄額を算出
     const monthlyNetIncome = annualNetIncome / 12;
-    const netMonthlySavings = monthlyNetIncome - monthlyExpenses;
+    const initialLoanPayments = loans.reduce((total, loan) => total + loan.monthlyPayment, 0);
+    const netMonthlySavings = monthlyNetIncome - monthlyExpenses - initialLoanPayments;
 
     // 年次計算（想定寿命まで）
     let currentYearAssets = currentAssets;
@@ -121,6 +159,11 @@ export class FireCalculator {
       
       // 退職後は貯蓄停止、支出のみ（退職希望年齢の年はまだ現役）
       const isAfterRetirement = age > retirementAge;
+      
+      // その年のアクティブなローン返済額を計算
+      const yearlyLoanPayments = loans
+        .filter(loan => year < (loanPayoffYears.get(loan.id) || 0))
+        .reduce((total, loan) => total + loan.monthlyPayment, 0) * 12;
       
       // 年間の資産変動を計算
       if (year === 0) {
@@ -132,15 +175,16 @@ export class FireCalculator {
         
         // インフレ調整後の年間支出を計算
         const adjustedAnnualExpenses = this.adjustForInflation(annualExpenses, inflationRate, year);
+        const adjustedLoanPayments = this.adjustForInflation(yearlyLoanPayments, inflationRate, year);
         
         // 収入/支出を加減
         if (isAfterRetirement) {
-          // 退職後: 退職後年収と年金を加算し、インフレ調整後の年間支出を差し引く
+          // 退職後: 退職後年収と年金を加算し、インフレ調整後の年間支出とローン返済を差し引く
           const pensionIncome = age >= 65 ? annualPensionAmount : 0; // 65歳から年金受給開始
-          currentYearAssets += postRetirementAnnualIncome + pensionIncome - adjustedAnnualExpenses;
+          currentYearAssets += postRetirementAnnualIncome + pensionIncome - adjustedAnnualExpenses - adjustedLoanPayments;
         } else {
-          // 退職前: インフレ調整後の支出を考慮した貯蓄額を加算
-          currentYearAssets += annualNetIncome - adjustedAnnualExpenses;
+          // 退職前: インフレ調整後の支出とローン返済を考慮した貯蓄額を加算
+          currentYearAssets += annualNetIncome - adjustedAnnualExpenses - adjustedLoanPayments;
         }
       }
       
@@ -153,9 +197,17 @@ export class FireCalculator {
         year
       );
       
-      // FIRE達成判定: 資産が退職後の残り人生の支出を賐えるかチェック
+      // その年のインフレ調整後のローン返済額
+      const realLoanPayments = this.adjustForInflation(
+        yearlyLoanPayments,
+        inflationRate,
+        year
+      );
+      
+      // FIRE達成判定: 資産が退職後の残り人生の支出を賄えるかチェック
       const yearsInRetirement = lifeExpectancy - retirementAge;
-      const fireAchieved = futureAssets >= (realAnnualExpenses * yearsInRetirement);
+      const totalAnnualExpenses = realAnnualExpenses + realLoanPayments;
+      const fireAchieved = futureAssets >= (totalAnnualExpenses * yearsInRetirement);
       
       // 初回のFIRE達成年を記録（退職年齢以内の場合のみ）
       if (fireAchieved && !isFireAchievable && age <= retirementAge) {
@@ -168,8 +220,8 @@ export class FireCalculator {
         year: year,
         age: age,
         assets: futureAssets,
-        expenses: annualExpenses,
-        realExpenses: realAnnualExpenses,
+        expenses: annualExpenses + yearlyLoanPayments,
+        realExpenses: totalAnnualExpenses,
         fireAchieved: fireAchieved,
         yearsToFire: fireAchieved ? 0 : (year === 0 ? yearsToFire : year)
       });
@@ -181,9 +233,18 @@ export class FireCalculator {
       inflationRate,
       yearsToFire
     );
-    // 退職後の残り人生の支出を賐える資産が必要
+    // FIRE達成時のアクティブなローン返済額を計算
+    const finalLoanPayments = loans
+      .filter(loan => yearsToFire < (loanPayoffYears.get(loan.id) || 0))
+      .reduce((total, loan) => total + loan.monthlyPayment, 0) * 12;
+    const finalRealLoanPayments = this.adjustForInflation(
+      finalLoanPayments,
+      inflationRate,
+      yearsToFire
+    );
+    // 退職後の残り人生の支出を賄える資産が必要
     const yearsInRetirement = lifeExpectancy - retirementAge;
-    const requiredAssets = finalRealExpenses * yearsInRetirement;
+    const requiredAssets = (finalRealExpenses + finalRealLoanPayments) * yearsInRetirement;
     const projectedAssets = this.calculateFutureValue(
       currentAssets,
       netMonthlySavings,
