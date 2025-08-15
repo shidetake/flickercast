@@ -629,7 +629,7 @@ function HomeContent() {
                           <Input
                             type="number"
                             placeholder="金利 [%]"
-                            value={loan.interestRate || ''}
+                            value={loan.interestRate ?? ''}
                             onChange={(e) => updateLoan(loan.id, 'interestRate', Number(e.target.value))}
                             min="0"
                             max="30"
