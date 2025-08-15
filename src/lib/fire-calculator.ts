@@ -128,6 +128,7 @@ export class FireCalculator {
       postRetirementAnnualIncome,
       annualPensionAmount,
       pensionStartAge,
+      pensionEndAge,
       expectedAnnualReturn,
       inflationRate,
       lifeExpectancy,
@@ -157,10 +158,10 @@ export class FireCalculator {
       return age > retirementAge ? postRetirementAnnualIncome : 0;
     });
 
-    // 年金受給を年ごとに事前計算（ユーザー指定の受給開始年齢から）
+    // 年金受給を年ごとに事前計算（ユーザー指定の受給開始年齢から終了年齢まで）
     const pensionSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
       const age = currentAge + year;
-      return age >= pensionStartAge ? annualPensionAmount : 0;
+      return (age >= pensionStartAge && age <= pensionEndAge) ? annualPensionAmount : 0;
     });
 
     const annualExpenses = monthlyExpenses * 12;
