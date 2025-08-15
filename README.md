@@ -1,144 +1,144 @@
-# 🔥 FIRE Simulator
+# 🔥 FIRE シミュレーター
 
-A comprehensive FIRE (Financial Independence, Retire Early) simulation web application that helps you calculate and visualize your path to financial independence.
+経済的自立とアーリーリタイア（FIRE）を目指すための包括的なシミュレーションWebアプリケーションです。あなたの経済的自立への道筋を計算し、視覚化します。
 
-## ✨ Features
+## ✨ 機能
 
-- **📊 FIRE Calculation**: Calculate your path to financial independence using the 4% withdrawal rule
-- **💰 Multi-Currency Portfolio**: Track assets in both JPY and USD with real-time exchange rates
-- **📈 Financial Projections**: Visualize asset growth and FIRE timeline with interactive charts
-- **🎯 Inflation Adjustment**: Account for inflation in future expense calculations
-- **📱 Responsive Design**: Mobile-first interface with Japanese localization
-- **💾 Data Persistence**: Automatic local storage with JSON import/export functionality
-- **🔄 Real-Time Exchange Rates**: Automatic USD/JPY conversion for international portfolios
+- **📊 FIRE計算**: 4%ルールを使用した経済的自立への道筋を計算
+- **💰 複数通貨ポートフォリオ**: リアルタイム為替レートでJPYとUSDの資産を追跡
+- **📈 資産推移予測**: インタラクティブなチャートで資産成長とFIREタイムラインを可視化
+- **🎯 インフレ調整**: 将来の支出計算にインフレを考慮
+- **📱 レスポンシブデザイン**: 日本語対応のモバイルファーストインターフェース
+- **💾 データ永続化**: JSON形式でのインポート・エクスポート機能付きローカルストレージ
+- **🔄 リアルタイム為替レート**: 国際ポートフォリオの自動USD/JPY変換
 
-## 🚀 Getting Started
+## 🚀 はじめ方
 
-### Prerequisites
+### 前提条件
 
-- Node.js 18+ and npm
+- Node.js 18+ と npm
 
-### Installation
+### インストール
 
-1. Clone the repository:
+1. リポジトリをクローン:
 ```bash
 git clone <repository-url>
 cd fire
 ```
 
-2. Install dependencies:
+2. 依存関係をインストール:
 ```bash
 npm install
 ```
 
-3. Run the development server:
+3. 開発サーバーを起動:
 ```bash
 npm run dev
 ```
 
-4. Open [http://localhost:3001](http://localhost:3001) in your browser
+4. ブラウザで [http://localhost:3001](http://localhost:3001) を開く
 
-## 🛠️ Available Scripts
+## 🛠️ 利用可能なスクリプト
 
 ```bash
-npm run dev      # Start development server on port 3001
-npm run build    # Build for production
-npm run start    # Start production server
-npm run lint     # Run ESLint
+npm run dev      # 開発サーバーをポート3001で起動
+npm run build    # 本番用ビルド
+npm run start    # 本番サーバー起動
+npm run lint     # ESLint実行
 ```
 
-## 🏗️ Technology Stack
+## 🏗️ 技術スタック
 
-- **Frontend**: Next.js 15 (App Router) with TypeScript and React 19
-- **Styling**: Tailwind CSS v4 with Japanese fonts (Noto Sans JP)
-- **Charts**: Recharts for financial data visualization
-- **UI Components**: Radix UI primitives with custom styling
-- **Data Storage**: Browser localStorage with JSON import/export
-- **External APIs**: Real-time USD/JPY exchange rate integration
+- **フロントエンド**: Next.js 15 (App Router) with TypeScript and React 19
+- **スタイリング**: Tailwind CSS v4 with Japanese fonts (Noto Sans JP)
+- **チャート**: Recharts による金融データ可視化
+- **UIコンポーネント**: カスタムスタイリングされたRadix UIプリミティブ
+- **データストレージ**: JSON インポート・エクスポート機能付きブラウザローカルストレージ
+- **外部API**: リアルタイムUSD/JPY為替レート統合
 
-## 📊 How It Works
+## 📊 動作原理
 
-### FIRE Calculation Method
+### FIRE計算手法
 
-The simulator uses the traditional FIRE approach:
+シミュレーターは従来のFIREアプローチを使用:
 
-1. **4% Withdrawal Rule**: You need 25x your annual expenses in assets
-2. **Compound Interest**: Assets grow based on expected annual returns
-3. **Inflation Adjustment**: Future expenses are adjusted for inflation
-4. **Multi-Currency Support**: Handles both JPY and USD assets with real-time conversion
+1. **4%ルール**: 年間支出の25倍の資産が必要
+2. **複利計算**: 期待年利率に基づく資産成長
+3. **インフレ調整**: 将来支出のインフレ調整
+4. **複数通貨対応**: リアルタイム変換でJPYとUSD資産を処理
 
-### Key Inputs
+### 主要入力項目
 
-- **Personal Information**: Current age, retirement age, life expectancy
-- **Assets**: Multi-currency portfolio with automatic valuation
-- **Income & Expenses**: Annual income and monthly expenses
-- **Assumptions**: Expected returns, inflation rate, pension income
+- **個人情報**: 現在年齢、退職年齢、平均寿命
+- **資産**: 自動評価機能付き複数通貨ポートフォリオ
+- **収入・支出**: 年収と月支出
+- **前提条件**: 期待利回り、インフレ率、年金収入
 
-### Calculation Features
+### 計算機能
 
-- **Compound Growth**: Monthly compounding of investment returns
-- **Inflation Impact**: Real vs nominal value projections
-- **Life Expectancy Model**: Statistical model considering medical advancement
-- **Retirement Income**: Supports post-retirement income and pension planning
+- **複利成長**: 投資リターンの月次複利計算
+- **インフレ影響**: 実質価値対名目価値の予測
+- **平均寿命モデル**: 医療技術進歩を考慮した統計モデル
+- **退職後収入**: 退職後収入と年金計画のサポート
 
-## 🎨 User Interface
+## 🎨 ユーザーインターフェース
 
-The application features:
+アプリケーションの特徴:
 
-- **Japanese Localization**: All text and number formatting in Japanese
-- **Responsive Design**: Optimized for mobile and desktop
-- **Interactive Charts**: Visual representation of asset growth and FIRE timeline
-- **Real-Time Calculations**: Instant updates as you modify inputs
-- **Data Management**: Export/import settings as JSON files
+- **日本語対応**: すべてのテキストと数値フォーマットが日本語
+- **レスポンシブデザイン**: モバイルとデスクトップに最適化
+- **インタラクティブチャート**: 資産成長とFIREタイムラインの視覚的表現
+- **リアルタイム計算**: 入力変更による即座の更新
+- **データ管理**: JSON ファイルでの設定エクスポート・インポート
 
-## 💾 Data Management
+## 💾 データ管理
 
-- **Automatic Saving**: All inputs are automatically saved to local storage
-- **Export/Import**: Save and share your financial scenarios as JSON files
-- **Privacy-First**: No data is sent to external servers (except exchange rates)
-- **Offline Capable**: Works without internet connection (using cached exchange rates)
+- **自動保存**: すべての入力がローカルストレージに自動保存
+- **エクスポート・インポート**: 金融シナリオをJSONファイルで保存・共有
+- **プライバシー第一**: 外部サーバーへのデータ送信なし（為替レートを除く）
+- **オフライン対応**: インターネット接続なしでも動作（キャッシュされた為替レート使用）
 
-## 🔧 Architecture
+## 🔧 アーキテクチャ
 
-### Client-Side Application
+### クライアントサイドアプリケーション
 
-- Runs entirely in the browser
-- No backend database required
-- Uses localStorage for data persistence
-- Fetches real-time exchange rates from internal API
+- ブラウザ内で完全に動作
+- バックエンドデータベース不要
+- データ永続化にlocalStorageを使用
+- 内部APIからリアルタイム為替レートを取得
 
-### Key Components
+### 主要コンポーネント
 
-- **Fire Calculator**: Core calculation engine with compound interest logic
-- **Asset Calculator**: Multi-currency portfolio valuation
-- **Storage System**: JSON-based data persistence with validation
-- **Chart Components**: Interactive financial projections visualization
+- **FIREカリキュレーター**: 複利ロジック付きコア計算エンジン
+- **資産カリキュレーター**: 複数通貨ポートフォリオ評価
+- **ストレージシステム**: バリデーション付きJSONベースデータ永続化
+- **チャートコンポーネント**: インタラクティブな金融予測可視化
 
-## 🌍 Localization
+## 🌍 ローカライゼーション
 
-The application is designed for Japanese users:
+日本のユーザー向けに設計されたアプリケーション:
 
-- All UI text in Japanese
-- Currency formatting in Japanese style (万円 units)
-- Date formatting following Japanese conventions
-- Optimized for Japanese financial planning practices
+- すべてのUIテキストが日本語
+- 日本式通貨フォーマット（万円単位）
+- 日本の慣例に従った日付フォーマット
+- 日本の資産形成実践に最適化
 
-## 🤝 Contributing
+## 🤝 コントリビューション
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+1. リポジトリをフォーク
+2. フィーチャーブランチを作成 (`git checkout -b feature/AmazingFeature`)
+3. 変更をコミット (`git commit -m 'Add some AmazingFeature'`)
+4. ブランチにプッシュ (`git push origin feature/AmazingFeature`)
+5. プルリクエストを開く
 
-## ⚠️ Disclaimer
+## ⚠️ 免責事項
 
-This simulator is for educational and planning purposes only. Investment decisions should be made based on your own research and consultation with qualified financial advisors. Past performance does not guarantee future results.
+このシミュレーターは教育および計画目的のみです。投資判断は自身の調査と資格を持った金融アドバイザーとの相談に基づいて行ってください。過去の実績は将来の結果を保証するものではありません。
 
-## 📄 License
+## 📄 ライセンス
 
-This project is licensed under the MIT License.
+このプロジェクトはMITライセンスの下でライセンスされています。
 
 ---
 
-© 2024 FIRE Simulator. 投資判断は自己責任でお願いします。
+© 2024 FIRE シミュレーター. 投資判断は自己責任でお願いします。
