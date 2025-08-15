@@ -127,6 +127,7 @@ export class FireCalculator {
       annualNetIncome,
       postRetirementAnnualIncome,
       annualPensionAmount,
+      pensionStartAge,
       expectedAnnualReturn,
       inflationRate,
       lifeExpectancy,
@@ -156,10 +157,10 @@ export class FireCalculator {
       return age > retirementAge ? postRetirementAnnualIncome : 0;
     });
 
-    // 65歳からの年金受給を年ごとに事前計算
+    // 年金受給を年ごとに事前計算（ユーザー指定の受給開始年齢から）
     const pensionSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
       const age = currentAge + year;
-      return age >= 65 ? annualPensionAmount : 0;
+      return age >= pensionStartAge ? annualPensionAmount : 0;
     });
 
     const annualExpenses = monthlyExpenses * 12;
