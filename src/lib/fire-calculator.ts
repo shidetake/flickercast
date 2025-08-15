@@ -80,33 +80,35 @@ export class FireCalculator {
   }
 
   /**
-   * ローンの完済時期（年数）を計算
+   * ローンの年次返済スケジュールを計算
    */
-  static calculateLoanPayoffYears(loan: Loan): number {
-    const { balance, monthlyPayment, interestRate } = loan;
+  static calculateLoanPaymentSchedule(loan: Loan, maxYears: number): number[] {
+    const schedule: number[] = new Array(maxYears).fill(0);
+    let remainingBalance = loan.balance;
+    const monthlyRate = loan.interestRate / 100 / 12;
     
-    // 金利が0%または月次返済額が残高以上の場合
-    if (interestRate === 0) {
-      return Math.ceil(balance / monthlyPayment / 12);
+    for (let year = 0; year < maxYears; year++) {
+      // 残高がゼロになったら以降の年は0円
+      if (remainingBalance <= 0) break;
+      
+      let yearlyPayment = 0;
+      
+      for (let month = 0; month < 12; month++) {
+        if (remainingBalance <= 0) break;
+        
+        // 金利分だけ残高が増える
+        remainingBalance *= (1 + monthlyRate);
+        
+        // 月次返済額を引く（残高を超えない範囲で）
+        const payment = Math.min(loan.monthlyPayment, remainingBalance);
+        remainingBalance -= payment;
+        yearlyPayment += payment;
+      }
+      
+      schedule[year] = yearlyPayment;
     }
     
-    if (monthlyPayment >= balance) {
-      return 0; // 即座に完済可能
-    }
-    
-    const monthlyRate = interestRate / 100 / 12;
-    
-    // 元利均等返済の完済月数計算
-    // n = -log(1 - (P×r)/M) / log(1+r)
-    const numerator = 1 - (balance * monthlyRate) / monthlyPayment;
-    
-    // 数学的に返済不可能（利息 > 返済額）
-    if (numerator <= 0) {
-      return 999; // 実質的に完済不可能として扱う
-    }
-    
-    const months = -Math.log(numerator) / Math.log(1 + monthlyRate);
-    return Math.ceil(months / 12); // 年数に変換（切り上げ）
+    return schedule;
   }
 
   /**
@@ -131,15 +133,16 @@ export class FireCalculator {
     // 銘柄保有情報から総資産額を計算（統一関数を使用、円単位）
     const currentAssets = calculateTotalAssets(assetHoldings, exchangeRate, 'yen');
 
-    // 各ローンの完済時期を事前計算
-    const loanPayoffYears = new Map<string, number>();
+    // 各ローンの年次返済スケジュールを事前計算
+    const maxYearsToLife = lifeExpectancy - currentAge;
+    const loanSchedules = new Map<string, number[]>();
     loans.forEach(loan => {
-      loanPayoffYears.set(loan.id, this.calculateLoanPayoffYears(loan));
+      const schedule = this.calculateLoanPaymentSchedule(loan, maxYearsToLife);
+      loanSchedules.set(loan.id, schedule);
     });
 
     const annualExpenses = monthlyExpenses * 12;
     const maxYearsToRetirement = retirementAge - currentAge;
-    const maxYearsToLife = lifeExpectancy - currentAge;
     const projections: YearlyProjection[] = [];
     
     let fireAge = retirementAge;
@@ -160,10 +163,9 @@ export class FireCalculator {
       // 退職後は貯蓄停止、支出のみ（退職希望年齢の年はまだ現役）
       const isAfterRetirement = age > retirementAge;
       
-      // その年のアクティブなローン返済額を計算
-      const yearlyLoanPayments = loans
-        .filter(loan => year < (loanPayoffYears.get(loan.id) || 0))
-        .reduce((total, loan) => total + loan.monthlyPayment, 0) * 12;
+      // その年のローン返済額を事前計算済みスケジュールから取得
+      const yearlyLoanPayments = Array.from(loanSchedules.values())
+        .reduce((total, schedule) => total + (schedule[year] || 0), 0);
       
       // 年間の資産変動を計算
       if (year === 0) {
@@ -232,10 +234,9 @@ export class FireCalculator {
       inflationRate,
       yearsToFire
     );
-    // FIRE達成時のアクティブなローン返済額を計算
-    const finalLoanPayments = loans
-      .filter(loan => yearsToFire < (loanPayoffYears.get(loan.id) || 0))
-      .reduce((total, loan) => total + loan.monthlyPayment, 0) * 12;
+    // FIRE達成時のローン返済額を事前計算済みスケジュールから取得
+    const finalLoanPayments = Array.from(loanSchedules.values())
+      .reduce((total, schedule) => total + (schedule[yearsToFire] || 0), 0);
     const finalRealLoanPayments = this.adjustForInflation(
       finalLoanPayments,
       inflationRate,
