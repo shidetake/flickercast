@@ -242,6 +242,15 @@ export interface Loan {
   monthlyPayment: number; // 月々返済額（円）
 }
 
+// 年金プラン情報
+export interface PensionPlan {
+  id: string;
+  name: string; // 年金名（国民年金、厚生年金、企業年金等）
+  annualAmount: number; // 年間受給額（円）
+  startAge: number; // 受給開始年齢
+  endAge: number; // 受給終了年齢
+}
+
 // チャート用データ型
 export interface ChartDataPoint {
   year: number;

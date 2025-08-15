@@ -8,7 +8,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { FireCalculator, FireCalculationInput } from '@/lib/fire-calculator';
 import FireProjectionChart from '@/components/charts/fire-projection-chart';
 import FireSummary from '@/components/dashboard/fire-summary';
-import { ChartDataPoint, FireMetrics, AssetHolding, Loan } from '@/lib/types';
+import { ChartDataPoint, FireMetrics, AssetHolding, Loan, PensionPlan } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { saveToLocalStorage, loadFromLocalStorage, exportToJson, importFromJson } from '@/lib/storage';
 import { useToast, ToastProvider } from '@/lib/toast-context';
@@ -44,12 +44,10 @@ function HomeContent() {
       { id: '1', name: '', quantity: 0, pricePerUnit: 0, currency: 'JPY' },
     ], // デフォルトは1つの空の銘柄
     loans: [], // デフォルトは空のローン配列
+    pensionPlans: [], // デフォルトは空の年金配列
     monthlyExpenses: 300000, // 内部では円のまま
     annualNetIncome: 10000000, // 内部では円のまま（1000万円）
     postRetirementAnnualIncome: 0, // 内部では円のまま（0円）
-    annualPensionAmount: 0, // 内部では円のまま（0円）
-    pensionStartAge: 65, // 年金受給開始年齢のデフォルト値
-    pensionEndAge: calculateLifeExpectancy(38), // 年金受給終了年齢は想定寿命
     expectedAnnualReturn: 5,
     inflationRate: 2,
     lifeExpectancy: calculateLifeExpectancy(38),
@@ -58,17 +56,16 @@ function HomeContent() {
   const [input, setInput] = useState<FireCalculationInput>(createDefaultInput());
   const [nextAssetId, setNextAssetId] = useState(2); // 次に使用するAsset ID（デフォルトは1なので2から開始）
   const [nextLoanId, setNextLoanId] = useState(1); // 次に使用するLoan ID
+  const [nextPensionId, setNextPensionId] = useState(1); // 次に使用するPension ID
   const [isDeleteMode, setIsDeleteMode] = useState(false); // 削除モード状態
   const [isLoanDeleteMode, setIsLoanDeleteMode] = useState(false); // ローン削除モード状態
+  const [isPensionDeleteMode, setIsPensionDeleteMode] = useState(false); // 年金削除モード状態
 
   // 万円単位での表示用の値
   const [displayValues, setDisplayValues] = useState({
     monthlyExpenses: 30, // 30万円
     annualNetIncome: 1000, // 1000万円
     postRetirementAnnualIncome: 0, // 0万円
-    annualPensionAmount: 0, // 0万円
-    pensionStartAge: 65, // 年金受給開始年齢
-    pensionEndAge: calculateLifeExpectancy(38), // 年金受給終了年齢
   });
 
   const [isCalculating, setIsCalculating] = useState(false);
@@ -93,6 +90,13 @@ function HomeContent() {
   const calculateNextLoanId = (loans: Loan[]): number => {
     if (loans.length === 0) return 1;
     const maxId = Math.max(...loans.map(loan => parseInt(loan.id) || 0));
+    return maxId + 1;
+  };
+
+  // 既存の年金IDから次のIDを計算
+  const calculateNextPensionId = (pensionPlans: PensionPlan[]): number => {
+    if (pensionPlans.length === 0) return 1;
+    const maxId = Math.max(...pensionPlans.map(plan => parseInt(plan.id) || 0));
     return maxId + 1;
   };
 
@@ -123,15 +127,14 @@ function HomeContent() {
       setNextAssetId(calculateNextAssetId(savedData.assetHoldings));
       // nextLoanIdを適切に設定
       setNextLoanId(calculateNextLoanId(savedData.loans || []));
+      // nextPensionIdを適切に設定
+      setNextPensionId(calculateNextPensionId(savedData.pensionPlans || []));
       
       // 表示値も更新
       setDisplayValues({
         monthlyExpenses: savedData.monthlyExpenses / 10000,
         annualNetIncome: savedData.annualNetIncome / 10000,
         postRetirementAnnualIncome: savedData.postRetirementAnnualIncome / 10000,
-        annualPensionAmount: savedData.annualPensionAmount / 10000,
-        pensionStartAge: savedData.pensionStartAge || 65,
-        pensionEndAge: savedData.pensionEndAge || calculateLifeExpectancy(savedData.currentAge),
       });
     }
   }, []);
@@ -175,6 +178,38 @@ function HomeContent() {
     setInput(prev => ({
       ...prev,
       assetHoldings: prev.assetHoldings.filter(holding => holding.id !== id)
+    }));
+  };
+
+  // 年金管理のヘルパー関数
+  const addPensionPlan = () => {
+    const newPensionPlan: PensionPlan = {
+      id: nextPensionId.toString(),
+      name: '',
+      annualAmount: 0,
+      startAge: 65,
+      endAge: calculateLifeExpectancy(input.currentAge),
+    };
+    setInput(prev => ({
+      ...prev,
+      pensionPlans: [...prev.pensionPlans, newPensionPlan]
+    }));
+    setNextPensionId(prev => prev + 1);
+  };
+
+  const updatePensionPlan = (id: string, field: keyof PensionPlan, value: string | number) => {
+    setInput(prev => ({
+      ...prev,
+      pensionPlans: prev.pensionPlans.map(plan =>
+        plan.id === id ? { ...plan, [field]: value } : plan
+      )
+    }));
+  };
+
+  const removePensionPlan = (id: string) => {
+    setInput(prev => ({
+      ...prev,
+      pensionPlans: prev.pensionPlans.filter(plan => plan.id !== id)
     }));
   };
 
@@ -243,9 +278,8 @@ function HomeContent() {
       [field]: value
     }));
     
-    // 年齢フィールドは変換不要、金額フィールドのみ万円 → 円に変換
-    const isAgeField = field === 'pensionStartAge' || field === 'pensionEndAge';
-    const actualValue = isAgeField ? value : value * 10000;
+    // 金額フィールドは万円 → 円に変換
+    const actualValue = value * 10000;
     
     setInput(prev => ({
       ...prev,
@@ -277,15 +311,14 @@ function HomeContent() {
       setNextAssetId(calculateNextAssetId(importedData.assetHoldings));
       // nextLoanIdを適切に設定
       setNextLoanId(calculateNextLoanId(importedData.loans || []));
+      // nextPensionIdを適切に設定
+      setNextPensionId(calculateNextPensionId(importedData.pensionPlans || []));
       
       // 表示値も更新
       setDisplayValues({
         monthlyExpenses: importedData.monthlyExpenses / 10000,
         annualNetIncome: importedData.annualNetIncome / 10000,
         postRetirementAnnualIncome: importedData.postRetirementAnnualIncome / 10000,
-        annualPensionAmount: importedData.annualPensionAmount / 10000,
-        pensionStartAge: importedData.pensionStartAge || 65,
-        pensionEndAge: importedData.pensionEndAge || calculateLifeExpectancy(importedData.currentAge),
       });
       
       showSuccess('データを正常にインポートしました');
@@ -427,39 +460,91 @@ function HomeContent() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="annualPensionAmount">年間年金受給額 [万円]</Label>
-                    <Input
-                      id="annualPensionAmount"
-                      type="number"
-                      value={displayValues.annualPensionAmount}
-                      onChange={(e) => handleDisplayValueChange('annualPensionAmount', Number(e.target.value))}
-                      min="0"
-                      step="10"
-                    />
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <Label>年金管理</Label>
+                    <div className="flex gap-2">
+                      <Button 
+                        type="button" 
+                        onClick={addPensionPlan}
+                        size="sm"
+                        variant="outline"
+                        disabled={isPensionDeleteMode}
+                      >
+                        追加
+                      </Button>
+                      <Button 
+                        type="button" 
+                        onClick={() => setIsPensionDeleteMode(!isPensionDeleteMode)}
+                        size="sm"
+                        variant={isPensionDeleteMode ? "default" : "outline"}
+                      >
+                        {isPensionDeleteMode ? '完了' : '削除'}
+                      </Button>
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="pensionStartAge">受給開始年齢</Label>
-                    <Input
-                      id="pensionStartAge"
-                      type="number"
-                      value={displayValues.pensionStartAge}
-                      onChange={(e) => handleDisplayValueChange('pensionStartAge', Number(e.target.value))}
-                      min="0"
-                      step="1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="pensionEndAge">受給終了年齢</Label>
-                    <Input
-                      id="pensionEndAge"
-                      type="number"
-                      value={displayValues.pensionEndAge}
-                      onChange={(e) => handleDisplayValueChange('pensionEndAge', Number(e.target.value))}
-                      min="0"
-                      step="1"
-                    />
+                  <div className="space-y-3">
+                    {/* ヘッダー行（年金プランが存在し、削除モードでない場合のみ表示） */}
+                    {input.pensionPlans.length > 0 && !isPensionDeleteMode && (
+                      <div className="grid grid-cols-4 gap-3 mb-2">
+                        <Label className="text-sm font-medium">年金名</Label>
+                        <Label className="text-sm font-medium">年間受給額 [万円]</Label>
+                        <Label className="text-sm font-medium">開始年齢</Label>
+                        <Label className="text-sm font-medium">終了年齢</Label>
+                      </div>
+                    )}
+                    
+                    {input.pensionPlans.map((plan) =>
+                      isPensionDeleteMode ? (
+                        // 削除モード: 年金名のみ表示、左側に赤い削除ボタン
+                        <div key={plan.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
+                          <Button 
+                            type="button"
+                            onClick={() => removePensionPlan(plan.id)}
+                            size="sm"
+                            className="w-5 h-5 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white flex-shrink-0"
+                          >
+                            <span className="text-sm font-bold">−</span>
+                          </Button>
+                          <span className="text-sm font-medium text-gray-900 truncate">
+                            {plan.name || '未設定'}
+                          </span>
+                        </div>
+                      ) : (
+                        // 通常モード: すべての入力フィールドを表示（ラベルなし）
+                        <div key={plan.id} className="grid grid-cols-4 gap-3">
+                          <Input
+                            placeholder="国民年金"
+                            value={plan.name}
+                            onChange={(e) => updatePensionPlan(plan.id, 'name', e.target.value)}
+                          />
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            value={plan.annualAmount / 10000}
+                            onChange={(e) => updatePensionPlan(plan.id, 'annualAmount', Number(e.target.value) * 10000)}
+                            min="0"
+                            step="1"
+                          />
+                          <Input
+                            type="number"
+                            placeholder="65"
+                            value={plan.startAge}
+                            onChange={(e) => updatePensionPlan(plan.id, 'startAge', Number(e.target.value))}
+                            min="0"
+                            step="1"
+                          />
+                          <Input
+                            type="number"
+                            placeholder="84"
+                            value={plan.endAge}
+                            onChange={(e) => updatePensionPlan(plan.id, 'endAge', Number(e.target.value))}
+                            min="0"
+                            step="1"
+                          />
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
 

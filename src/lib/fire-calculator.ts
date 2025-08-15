@@ -1,4 +1,4 @@
-import { AssetHolding, Loan } from './types';
+import { AssetHolding, Loan, PensionPlan } from './types';
 import { calculateTotalAssets } from './asset-calculator';
 
 export interface FireCalculationInput {
@@ -6,12 +6,10 @@ export interface FireCalculationInput {
   retirementAge: number;
   assetHoldings: AssetHolding[]; // 銘柄保有情報
   loans: Loan[]; // ローン情報
+  pensionPlans: PensionPlan[]; // 年金プラン情報
   monthlyExpenses: number;
   annualNetIncome: number; // 手取り年収（円）
   postRetirementAnnualIncome: number; // 退職後年収（円）
-  annualPensionAmount: number; // 年間年金受給額（円）
-  pensionStartAge: number; // 年金受給開始年齢
-  pensionEndAge: number; // 年金受給終了年齢
   expectedAnnualReturn: number; // パーセント（例: 5 = 5%）
   inflationRate: number; // パーセント（例: 2 = 2%）
   lifeExpectancy: number;
@@ -123,12 +121,10 @@ export class FireCalculator {
       retirementAge,
       assetHoldings,
       loans,
+      pensionPlans,
       monthlyExpenses,
       annualNetIncome,
       postRetirementAnnualIncome,
-      annualPensionAmount,
-      pensionStartAge,
-      pensionEndAge,
       expectedAnnualReturn,
       inflationRate,
       lifeExpectancy,
@@ -158,10 +154,13 @@ export class FireCalculator {
       return age > retirementAge ? postRetirementAnnualIncome : 0;
     });
 
-    // 年金受給を年ごとに事前計算（ユーザー指定の受給開始年齢から終了年齢まで）
+    // 複数年金プランの統合スケジュールを年ごとに事前計算
     const pensionSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
       const age = currentAge + year;
-      return (age >= pensionStartAge && age <= pensionEndAge) ? annualPensionAmount : 0;
+      return pensionPlans.reduce((total, plan) => {
+        const isPensionActive = age >= plan.startAge && age <= plan.endAge;
+        return total + (isPensionActive ? plan.annualAmount : 0);
+      }, 0);
     });
 
     const annualExpenses = monthlyExpenses * 12;
