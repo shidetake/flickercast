@@ -595,7 +595,7 @@ function HomeContent() {
                     {input.pensionPlans.length > 0 && !isPensionDeleteMode && (
                       <div className="grid grid-cols-4 gap-3 mb-2">
                         <Label className="text-sm font-medium">年金名</Label>
-                        <Label className="text-sm font-medium">受給額 [万円/月]</Label>
+                        <Label className="text-sm font-medium">受給額 [万円/年]</Label>
                         <Label className="text-sm font-medium">開始年齢</Label>
                         <Label className="text-sm font-medium">終了年齢</Label>
                       </div>
