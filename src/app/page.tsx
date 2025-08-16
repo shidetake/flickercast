@@ -473,7 +473,7 @@ function HomeContent() {
                       </div>
                     </div>
 
-                    <div>
+                    <div className="mt-6">
                       <div className="flex justify-between items-center mb-3">
                         <Label>年金管理</Label>
                     <div className="flex gap-2">
@@ -561,7 +561,7 @@ function HomeContent() {
                       </div>
                     </div>
 
-                    <div>
+                    <div className="mt-6">
                       <div className="flex justify-between items-center mb-3">
                         <Label>金融資産管理</Label>
                     <div className="flex gap-2">
@@ -719,7 +719,7 @@ function HomeContent() {
                       </div>
                     </div>
 
-                    <div>
+                    <div className="mt-6">
                       <div className="flex justify-between items-center mb-3">
                         <Label>ローン管理</Label>
                     <div className="flex gap-2">
