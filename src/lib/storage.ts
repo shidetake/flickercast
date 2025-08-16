@@ -116,10 +116,12 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
     'retirementAge',
     'assetHoldings',
     'loans',
+    'pensionPlans',
+    'specialExpenses',
+    'specialIncomes',
     'monthlyExpenses',
     'annualNetIncome',
     'postRetirementAnnualIncome',
-    'annualPensionAmount',
     'expectedAnnualReturn',
     'inflationRate',
     'lifeExpectancy'
@@ -139,7 +141,6 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
     'monthlyExpenses',
     'annualNetIncome',
     'postRetirementAnnualIncome',
-    'annualPensionAmount',
     'expectedAnnualReturn',
     'inflationRate',
     'lifeExpectancy'
@@ -228,6 +229,116 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
         balance: `${loan.balance} (${typeof loan.balance})`,
         interestRate: `${loan.interestRate} (${typeof loan.interestRate})`,
         monthlyPayment: `${loan.monthlyPayment} (${typeof loan.monthlyPayment})`
+      });
+      return false;
+    }
+  }
+  
+  // pensionPlansの配列チェック
+  if (!Array.isArray(data.pensionPlans)) {
+    console.error('バリデーションエラー: pensionPlansは配列である必要があります', data.pensionPlans);
+    return false;
+  }
+  
+  // 各pensionPlanの構造チェック
+  for (let i = 0; i < data.pensionPlans.length; i++) {
+    const pension = data.pensionPlans[i];
+    if (!pension || typeof pension !== 'object') {
+      console.error(`バリデーションエラー: pensionPlans[${i}]がオブジェクトではありません`, pension);
+      return false;
+    }
+    
+    const requiredPensionFields = ['id', 'name', 'annualAmount', 'startAge', 'endAge'];
+    for (const field of requiredPensionFields) {
+      if (!(field in pension)) {
+        console.error(`バリデーションエラー: pensionPlans[${i}].${field} が見つかりません`);
+        return false;
+      }
+    }
+    
+    if (typeof pension.id !== 'string' ||
+        typeof pension.name !== 'string' ||
+        typeof pension.annualAmount !== 'number' ||
+        typeof pension.startAge !== 'number' ||
+        typeof pension.endAge !== 'number') {
+      console.error(`バリデーションエラー: pensionPlans[${i}]のフィールド型が不正です`, {
+        id: `${pension.id} (${typeof pension.id})`,
+        name: `${pension.name} (${typeof pension.name})`,
+        annualAmount: `${pension.annualAmount} (${typeof pension.annualAmount})`,
+        startAge: `${pension.startAge} (${typeof pension.startAge})`,
+        endAge: `${pension.endAge} (${typeof pension.endAge})`
+      });
+      return false;
+    }
+  }
+  
+  // specialExpensesの配列チェック
+  if (!Array.isArray(data.specialExpenses)) {
+    console.error('バリデーションエラー: specialExpensesは配列である必要があります', data.specialExpenses);
+    return false;
+  }
+  
+  // 各specialExpenseの構造チェック
+  for (let i = 0; i < data.specialExpenses.length; i++) {
+    const expense = data.specialExpenses[i];
+    if (!expense || typeof expense !== 'object') {
+      console.error(`バリデーションエラー: specialExpenses[${i}]がオブジェクトではありません`, expense);
+      return false;
+    }
+    
+    const requiredExpenseFields = ['id', 'name', 'amount', 'targetAge'];
+    for (const field of requiredExpenseFields) {
+      if (!(field in expense)) {
+        console.error(`バリデーションエラー: specialExpenses[${i}].${field} が見つかりません`);
+        return false;
+      }
+    }
+    
+    if (typeof expense.id !== 'string' ||
+        typeof expense.name !== 'string' ||
+        typeof expense.amount !== 'number' ||
+        typeof expense.targetAge !== 'number') {
+      console.error(`バリデーションエラー: specialExpenses[${i}]のフィールド型が不正です`, {
+        id: `${expense.id} (${typeof expense.id})`,
+        name: `${expense.name} (${typeof expense.name})`,
+        amount: `${expense.amount} (${typeof expense.amount})`,
+        targetAge: `${expense.targetAge} (${typeof expense.targetAge})`
+      });
+      return false;
+    }
+  }
+  
+  // specialIncomesの配列チェック
+  if (!Array.isArray(data.specialIncomes)) {
+    console.error('バリデーションエラー: specialIncomesは配列である必要があります', data.specialIncomes);
+    return false;
+  }
+  
+  // 各specialIncomeの構造チェック
+  for (let i = 0; i < data.specialIncomes.length; i++) {
+    const income = data.specialIncomes[i];
+    if (!income || typeof income !== 'object') {
+      console.error(`バリデーションエラー: specialIncomes[${i}]がオブジェクトではありません`, income);
+      return false;
+    }
+    
+    const requiredIncomeFields = ['id', 'name', 'amount', 'targetAge'];
+    for (const field of requiredIncomeFields) {
+      if (!(field in income)) {
+        console.error(`バリデーションエラー: specialIncomes[${i}].${field} が見つかりません`);
+        return false;
+      }
+    }
+    
+    if (typeof income.id !== 'string' ||
+        typeof income.name !== 'string' ||
+        typeof income.amount !== 'number' ||
+        typeof income.targetAge !== 'number') {
+      console.error(`バリデーションエラー: specialIncomes[${i}]のフィールド型が不正です`, {
+        id: `${income.id} (${typeof income.id})`,
+        name: `${income.name} (${typeof income.name})`,
+        amount: `${income.amount} (${typeof income.amount})`,
+        targetAge: `${income.targetAge} (${typeof income.targetAge})`
       });
       return false;
     }
