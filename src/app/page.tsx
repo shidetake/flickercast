@@ -593,9 +593,10 @@ function HomeContent() {
                   <div className="space-y-3">
                     {/* ヘッダー行（年金プランが存在し、削除モードでない場合のみ表示） */}
                     {input.pensionPlans.length > 0 && !isPensionDeleteMode && (
-                      <div className="grid grid-cols-4 gap-3 mb-2">
+                      <div className="grid grid-cols-[1.5fr_1.5fr_1fr_1fr_1fr] gap-3 mb-2">
                         <Label className="text-sm font-medium">年金名</Label>
                         <Label className="text-sm font-medium">受給額 [万円/年]</Label>
+                        <Label className="text-sm font-medium">通貨</Label>
                         <Label className="text-sm font-medium">開始年齢</Label>
                         <Label className="text-sm font-medium">終了年齢</Label>
                       </div>
@@ -619,7 +620,7 @@ function HomeContent() {
                         </div>
                       ) : (
                         // 通常モード: すべての入力フィールドを表示（ラベルなし）
-                        <div key={plan.id} className="grid grid-cols-4 gap-3">
+                        <div key={plan.id} className="grid grid-cols-[1.5fr_1.5fr_1fr_1fr_1fr] gap-3">
                           <Input
                             placeholder="国民年金"
                             value={plan.name}
@@ -633,6 +634,13 @@ function HomeContent() {
                             min="0"
                             step="1"
                           />
+                          <select
+                            value="JPY"
+                            className="h-10 px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="JPY">JPY</option>
+                            <option value="USD">USD</option>
+                          </select>
                           <Input
                             type="number"
                             placeholder="65"
