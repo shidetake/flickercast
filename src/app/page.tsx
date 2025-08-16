@@ -386,14 +386,14 @@ function HomeContent() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
       {/* ヘッダー */}
       <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <h1 className="text-3xl font-bold text-gray-900">
             🔥 FIRE Simulator
           </h1>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* 入力フォーム */}
           <div className="lg:col-span-1">
@@ -947,7 +947,7 @@ function HomeContent() {
 
       {/* フッター */}
       <footer className="bg-white border-t mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <p className="text-gray-600">
               © 2024 FIRE Simulator. 投資判断は自己責任でお願いします。
