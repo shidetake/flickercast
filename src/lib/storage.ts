@@ -106,6 +106,7 @@ export function importFromJson(file: File): Promise<FireCalculationInput> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function validateFireCalculationInput(data: any): data is FireCalculationInput {
   if (!data || typeof data !== 'object') {
+    console.error('バリデーションエラー: データがオブジェクトではありません', data);
     return false;
   }
   
@@ -126,57 +127,112 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
   
   for (const field of requiredFields) {
     if (!(field in data)) {
+      console.error(`バリデーションエラー: 必須フィールド '${field}' が見つかりません`);
       return false;
     }
   }
   
   // 型チェック
-  if (typeof data.currentAge !== 'number' ||
-      typeof data.retirementAge !== 'number' ||
-      typeof data.monthlyExpenses !== 'number' ||
-      typeof data.annualNetIncome !== 'number' ||
-      typeof data.postRetirementAnnualIncome !== 'number' ||
-      typeof data.annualPensionAmount !== 'number' ||
-      typeof data.expectedAnnualReturn !== 'number' ||
-      typeof data.inflationRate !== 'number' ||
-      typeof data.lifeExpectancy !== 'number') {
-    return false;
+  const numberFields = [
+    'currentAge',
+    'retirementAge', 
+    'monthlyExpenses',
+    'annualNetIncome',
+    'postRetirementAnnualIncome',
+    'annualPensionAmount',
+    'expectedAnnualReturn',
+    'inflationRate',
+    'lifeExpectancy'
+  ];
+  
+  for (const field of numberFields) {
+    if (typeof data[field] !== 'number') {
+      console.error(`バリデーションエラー: フィールド '${field}' は数値である必要があります (実際の値: ${data[field]}, 型: ${typeof data[field]})`);
+      return false;
+    }
   }
   
   // assetHoldingsの配列チェック
   if (!Array.isArray(data.assetHoldings)) {
+    console.error('バリデーションエラー: assetHoldingsは配列である必要があります', data.assetHoldings);
     return false;
   }
   
   // 各assetHoldingの構造チェック
-  for (const holding of data.assetHoldings) {
-    if (!holding ||
-        typeof holding.id !== 'string' ||
+  for (let i = 0; i < data.assetHoldings.length; i++) {
+    const holding = data.assetHoldings[i];
+    if (!holding || typeof holding !== 'object') {
+      console.error(`バリデーションエラー: assetHoldings[${i}]がオブジェクトではありません`, holding);
+      return false;
+    }
+    
+    const requiredHoldingFields = ['id', 'name', 'quantity', 'pricePerUnit', 'currency'];
+    for (const field of requiredHoldingFields) {
+      if (!(field in holding)) {
+        console.error(`バリデーションエラー: assetHoldings[${i}].${field} が見つかりません`);
+        return false;
+      }
+    }
+    
+    if (typeof holding.id !== 'string' ||
         typeof holding.name !== 'string' ||
         typeof holding.quantity !== 'number' ||
         typeof holding.pricePerUnit !== 'number' ||
-        typeof holding.currency !== 'string' ||
-        !['JPY', 'USD'].includes(holding.currency)) {
+        typeof holding.currency !== 'string') {
+      console.error(`バリデーションエラー: assetHoldings[${i}]のフィールド型が不正です`, {
+        id: `${holding.id} (${typeof holding.id})`,
+        name: `${holding.name} (${typeof holding.name})`,
+        quantity: `${holding.quantity} (${typeof holding.quantity})`,
+        pricePerUnit: `${holding.pricePerUnit} (${typeof holding.pricePerUnit})`,
+        currency: `${holding.currency} (${typeof holding.currency})`
+      });
+      return false;
+    }
+    
+    if (!['JPY', 'USD'].includes(holding.currency)) {
+      console.error(`バリデーションエラー: assetHoldings[${i}].currency は 'JPY' または 'USD' である必要があります (実際の値: ${holding.currency})`);
       return false;
     }
   }
   
   // loansの配列チェック
   if (!Array.isArray(data.loans)) {
+    console.error('バリデーションエラー: loansは配列である必要があります', data.loans);
     return false;
   }
   
   // 各loanの構造チェック
-  for (const loan of data.loans) {
-    if (!loan ||
-        typeof loan.id !== 'string' ||
+  for (let i = 0; i < data.loans.length; i++) {
+    const loan = data.loans[i];
+    if (!loan || typeof loan !== 'object') {
+      console.error(`バリデーションエラー: loans[${i}]がオブジェクトではありません`, loan);
+      return false;
+    }
+    
+    const requiredLoanFields = ['id', 'name', 'balance', 'interestRate', 'monthlyPayment'];
+    for (const field of requiredLoanFields) {
+      if (!(field in loan)) {
+        console.error(`バリデーションエラー: loans[${i}].${field} が見つかりません`);
+        return false;
+      }
+    }
+    
+    if (typeof loan.id !== 'string' ||
         typeof loan.name !== 'string' ||
         typeof loan.balance !== 'number' ||
         typeof loan.interestRate !== 'number' ||
         typeof loan.monthlyPayment !== 'number') {
+      console.error(`バリデーションエラー: loans[${i}]のフィールド型が不正です`, {
+        id: `${loan.id} (${typeof loan.id})`,
+        name: `${loan.name} (${typeof loan.name})`,
+        balance: `${loan.balance} (${typeof loan.balance})`,
+        interestRate: `${loan.interestRate} (${typeof loan.interestRate})`,
+        monthlyPayment: `${loan.monthlyPayment} (${typeof loan.monthlyPayment})`
+      });
       return false;
     }
   }
   
+  console.log('バリデーション成功: データ形式は正しいです');
   return true;
 }
