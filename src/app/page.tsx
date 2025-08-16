@@ -398,9 +398,6 @@ function HomeContent() {
           {/* 入力フォーム */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                基本情報入力
-              </h2>
               
               <div className="space-y-6">
                 {/* 個人情報セクション */}
