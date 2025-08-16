@@ -8,7 +8,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { FireCalculator, FireCalculationInput } from '@/lib/fire-calculator';
 import FireProjectionChart from '@/components/charts/fire-projection-chart';
 import FireSummary from '@/components/dashboard/fire-summary';
-import { ChartDataPoint, FireMetrics, AssetHolding, Loan, PensionPlan } from '@/lib/types';
+import { ChartDataPoint, FireMetrics, AssetHolding, Loan, PensionPlan, SpecialExpense } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { saveToLocalStorage, loadFromLocalStorage, exportToJson, importFromJson } from '@/lib/storage';
 import { useToast, ToastProvider } from '@/lib/toast-context';
@@ -49,6 +49,9 @@ function HomeContent() {
     pensionPlans: [
       { id: '1', name: '', annualAmount: 0, startAge: 65, endAge: calculateLifeExpectancy(38) },
     ], // デフォルトは1つの空の年金
+    specialExpenses: [
+      { id: '1', name: '', amount: 0, targetAge: 40 },
+    ], // デフォルトは1つの空の特別支出
     monthlyExpenses: 300000, // 内部では円のまま
     annualNetIncome: 10000000, // 内部では円のまま（1000万円）
     postRetirementAnnualIncome: 0, // 内部では円のまま（0円）
@@ -61,9 +64,11 @@ function HomeContent() {
   const [nextAssetId, setNextAssetId] = useState(2); // 次に使用するAsset ID（デフォルトは1なので2から開始）
   const [nextLoanId, setNextLoanId] = useState(2); // 次に使用するLoan ID（デフォルトは1なので2から開始）
   const [nextPensionId, setNextPensionId] = useState(2); // 次に使用するPension ID（デフォルトは1なので2から開始）
+  const [nextSpecialExpenseId, setNextSpecialExpenseId] = useState(2); // 次に使用するSpecialExpense ID（デフォルトは1なので2から開始）
   const [isDeleteMode, setIsDeleteMode] = useState(false); // 削除モード状態
   const [isLoanDeleteMode, setIsLoanDeleteMode] = useState(false); // ローン削除モード状態
   const [isPensionDeleteMode, setIsPensionDeleteMode] = useState(false); // 年金削除モード状態
+  const [isSpecialExpenseDeleteMode, setIsSpecialExpenseDeleteMode] = useState(false); // 特別支出削除モード状態
 
   // 万円単位での表示用の値
   const [displayValues, setDisplayValues] = useState({
@@ -104,6 +109,13 @@ function HomeContent() {
     return maxId + 1;
   };
 
+  // 既存の特別支出IDから次のIDを計算
+  const calculateNextSpecialExpenseId = (specialExpenses: SpecialExpense[]): number => {
+    if (specialExpenses.length === 0) return 1;
+    const maxId = Math.max(...specialExpenses.map(expense => parseInt(expense.id) || 0));
+    return maxId + 1;
+  };
+
   // 為替レート取得関数
   const fetchExchangeRate = async () => {
     try {
@@ -133,6 +145,8 @@ function HomeContent() {
       setNextLoanId(calculateNextLoanId(savedData.loans || []));
       // nextPensionIdを適切に設定
       setNextPensionId(calculateNextPensionId(savedData.pensionPlans || []));
+      // nextSpecialExpenseIdを適切に設定
+      setNextSpecialExpenseId(calculateNextSpecialExpenseId(savedData.specialExpenses || []));
       
       // 表示値も更新
       setDisplayValues({
@@ -249,6 +263,37 @@ function HomeContent() {
     }));
   };
 
+  // 特別支出管理のヘルパー関数
+  const addSpecialExpense = () => {
+    const newSpecialExpense: SpecialExpense = {
+      id: nextSpecialExpenseId.toString(),
+      name: '',
+      amount: 0,
+      targetAge: input.currentAge + 5,
+    };
+    setInput(prev => ({
+      ...prev,
+      specialExpenses: [...prev.specialExpenses, newSpecialExpense]
+    }));
+    setNextSpecialExpenseId(prev => prev + 1);
+  };
+
+  const updateSpecialExpense = (id: string, field: keyof SpecialExpense, value: string | number) => {
+    setInput(prev => ({
+      ...prev,
+      specialExpenses: prev.specialExpenses.map(expense =>
+        expense.id === id ? { ...expense, [field]: value } : expense
+      )
+    }));
+  };
+
+  const removeSpecialExpense = (id: string) => {
+    setInput(prev => ({
+      ...prev,
+      specialExpenses: prev.specialExpenses.filter(expense => expense.id !== id)
+    }));
+  };
+
   // 総資産額を計算（統一関数を使用）
   const calculateTotalAssets = () => {
     return calculateTotalAssetsUnified(input.assetHoldings, exchangeRate, 'manyen');
@@ -317,6 +362,8 @@ function HomeContent() {
       setNextLoanId(calculateNextLoanId(importedData.loans || []));
       // nextPensionIdを適切に設定
       setNextPensionId(calculateNextPensionId(importedData.pensionPlans || []));
+      // nextSpecialExpenseIdを適切に設定
+      setNextSpecialExpenseId(calculateNextSpecialExpenseId(importedData.specialExpenses || []));
       
       // 表示値も更新
       setDisplayValues({
@@ -813,6 +860,87 @@ function HomeContent() {
                           総月間返済額: {calculateTotalMonthlyPayments().toFixed(1)}万円
                         </span>
                       </div>
+                    </div>
+
+                    <div className="mt-6">
+                      <div className="flex justify-between items-center mb-3">
+                        <Label>特別支出管理</Label>
+                    <div className="flex gap-2">
+                      <Button 
+                        type="button" 
+                        onClick={addSpecialExpense}
+                        size="sm"
+                        variant="outline"
+                        disabled={isSpecialExpenseDeleteMode}
+                      >
+                        追加
+                      </Button>
+                      <Button 
+                        type="button" 
+                        onClick={() => setIsSpecialExpenseDeleteMode(!isSpecialExpenseDeleteMode)}
+                        size="sm"
+                        variant={isSpecialExpenseDeleteMode ? "default" : "outline"}
+                      >
+                        {isSpecialExpenseDeleteMode ? '完了' : '削除'}
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {/* ヘッダー行（特別支出が存在し、削除モードでない場合のみ表示） */}
+                    {input.specialExpenses.length > 0 && !isSpecialExpenseDeleteMode && (
+                      <div className="grid grid-cols-3 gap-2 mb-2">
+                        <Label className="text-sm font-medium">支出名</Label>
+                        <Label className="text-sm font-medium">支出額 [万円]</Label>
+                        <Label className="text-sm font-medium">年齢</Label>
+                      </div>
+                    )}
+                    
+                    {input.specialExpenses.map((expense) => (
+                      isSpecialExpenseDeleteMode ? (
+                        // 削除モード: 支出名のみ表示、左側に赤い削除ボタン
+                        <div key={expense.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
+                          <Button 
+                            type="button"
+                            onClick={() => removeSpecialExpense(expense.id)}
+                            size="sm"
+                            className="w-5 h-5 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white flex-shrink-0"
+                          >
+                            <span className="text-sm font-bold">−</span>
+                          </Button>
+                          <span className="text-sm font-medium text-gray-900 truncate">
+                            {expense.name || '未設定'}
+                          </span>
+                        </div>
+                      ) : (
+                        // 通常モード: 全ての入力欄を表示
+                        <div key={expense.id} className="grid grid-cols-3 gap-2 items-center">
+                          <Input
+                            placeholder="結婚式"
+                            value={expense.name}
+                            onChange={(e) => updateSpecialExpense(expense.id, 'name', e.target.value)}
+                          />
+                          <Input
+                            type="number"
+                            placeholder="100"
+                            value={expense.amount ? (expense.amount / 10000) : ''}
+                            onChange={(e) => updateSpecialExpense(expense.id, 'amount', Number(e.target.value) * 10000)}
+                            min="0"
+                            step="1"
+                          />
+                          <Input
+                            type="number"
+                            placeholder="40"
+                            value={expense.targetAge ?? ''}
+                            onChange={(e) => updateSpecialExpense(expense.id, 'targetAge', Number(e.target.value))}
+                            min="18"
+                            max="100"
+                            step="1"
+                          />
+                        </div>
+                      )
+                    ))}
+                  </div>
                     </div>
                   </div>
                 </div>

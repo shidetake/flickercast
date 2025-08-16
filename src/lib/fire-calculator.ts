@@ -1,4 +1,4 @@
-import { AssetHolding, Loan, PensionPlan } from './types';
+import { AssetHolding, Loan, PensionPlan, SpecialExpense } from './types';
 import { calculateTotalAssets } from './asset-calculator';
 
 export interface FireCalculationInput {
@@ -7,6 +7,7 @@ export interface FireCalculationInput {
   assetHoldings: AssetHolding[]; // 銘柄保有情報
   loans: Loan[]; // ローン情報
   pensionPlans: PensionPlan[]; // 年金プラン情報
+  specialExpenses: SpecialExpense[]; // 特別支出情報
   monthlyExpenses: number;
   annualNetIncome: number; // 手取り年収（円）
   postRetirementAnnualIncome: number; // 退職後年収（円）
@@ -122,6 +123,7 @@ export class FireCalculator {
       assetHoldings,
       loans,
       pensionPlans,
+      specialExpenses,
       monthlyExpenses,
       annualNetIncome,
       postRetirementAnnualIncome,
@@ -163,6 +165,19 @@ export class FireCalculator {
       }, 0);
     });
 
+    // 特別支出スケジュールを年ごとに事前計算（インフレ調整含む）
+    const specialExpenseSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
+      const age = currentAge + year;
+      return specialExpenses.reduce((total, expense) => {
+        if (age === expense.targetAge) {
+          // インフレ調整：現在価値 → 将来価値
+          const inflationAdjustedAmount = this.adjustForInflation(expense.amount, inflationRate, year);
+          return total + inflationAdjustedAmount;
+        }
+        return total;
+      }, 0);
+    });
+
     const annualExpenses = monthlyExpenses * 12;
 
     // インフレ調整済みの年間支出を年ごとに事前計算
@@ -194,6 +209,7 @@ export class FireCalculator {
       const yearlyExpenses = expensesSchedule[year];
       const yearlyLoanPayments = Array.from(loanSchedules.values())
         .reduce((total, schedule) => total + (schedule[year] || 0), 0);
+      const yearlySpecialExpenses = specialExpenseSchedule[year];
       
       // 年間の資産変動を計算
       // 前年資産に年利を適用
@@ -201,14 +217,14 @@ export class FireCalculator {
       
       // 年間収支計算（統一ロジック）
       const totalIncome = yearlyWorkingIncome + yearlyPostRetirementIncome + yearlyPension;
-      const totalExpenses = yearlyExpenses + yearlyLoanPayments;
+      const totalExpenses = yearlyExpenses + yearlyLoanPayments + yearlySpecialExpenses;
       currentYearAssets += totalIncome - totalExpenses;
       
       const futureAssets = currentYearAssets;
       
       // FIRE達成判定: 資産が退職後の残り人生の支出を賄えるかチェック
       const yearsInRetirement = lifeExpectancy - retirementAge;
-      const totalAnnualExpenses = yearlyExpenses + yearlyLoanPayments;
+      const totalAnnualExpenses = yearlyExpenses + yearlyLoanPayments + yearlySpecialExpenses;
       const fireAchieved = futureAssets >= (totalAnnualExpenses * yearsInRetirement);
       
       // 初回のFIRE達成年を記録（退職年齢以内の場合のみ）
@@ -222,7 +238,7 @@ export class FireCalculator {
         year: year,
         age: age,
         assets: futureAssets,
-        expenses: annualExpenses + yearlyLoanPayments,
+        expenses: annualExpenses + yearlyLoanPayments + yearlySpecialExpenses,
         realExpenses: totalAnnualExpenses,
         netWorth: futureAssets,
         fireAchieved: fireAchieved,
@@ -234,9 +250,10 @@ export class FireCalculator {
     const finalExpenses = expensesSchedule[yearsToFire] || expensesSchedule[expensesSchedule.length - 1];
     const finalLoanPayments = Array.from(loanSchedules.values())
       .reduce((total, schedule) => total + (schedule[yearsToFire] || 0), 0);
+    const finalSpecialExpenses = specialExpenseSchedule[yearsToFire] || 0;
     // 退職後の残り人生の支出を賄える資産が必要
     const yearsInRetirement = lifeExpectancy - retirementAge;
-    const requiredAssets = (finalExpenses + finalLoanPayments) * yearsInRetirement;
+    const requiredAssets = (finalExpenses + finalLoanPayments + finalSpecialExpenses) * yearsInRetirement;
     const projectedAssets = this.calculateFutureValue(
       currentAssets,
       netMonthlySavings,

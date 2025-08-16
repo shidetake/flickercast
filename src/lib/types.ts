@@ -242,6 +242,14 @@ export interface Loan {
   monthlyPayment: number; // 月々返済額（円）
 }
 
+// 特別支出情報
+export interface SpecialExpense {
+  id: string;
+  name: string; // 特別支出名（結婚式、出産等）
+  amount: number; // 支出額（円、現在価値）
+  targetAge: number; // 支出予定年齢
+}
+
 // 年金プラン情報
 export interface PensionPlan {
   id: string;
