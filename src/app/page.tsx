@@ -573,6 +573,16 @@ function HomeContent() {
                   </div>
                   
                   <div className="space-y-2">
+                    {/* ヘッダー行（金融資産が存在し、削除モードでない場合のみ表示） */}
+                    {input.assetHoldings.length > 0 && !isDeleteMode && (
+                      <div className="grid grid-cols-4 gap-2 mb-2">
+                        <Label className="text-sm font-medium">銘柄名</Label>
+                        <Label className="text-sm font-medium">数量</Label>
+                        <Label className="text-sm font-medium">単価</Label>
+                        <Label className="text-sm font-medium">通貨</Label>
+                      </div>
+                    )}
+                    
                     {input.assetHoldings.map((holding) => (
                       isDeleteMode ? (
                         // 削除モード: 銘柄名のみ表示、左側に赤い削除ボタン
@@ -593,20 +603,20 @@ function HomeContent() {
                         // 通常モード: 全ての入力欄を表示
                         <div key={holding.id} className="grid grid-cols-4 gap-2 items-center">
                           <Input
-                            placeholder="銘柄名"
+                            placeholder="AAPL"
                             value={holding.name}
                             onChange={(e) => updateAssetHolding(holding.id, 'name', e.target.value)}
                           />
                           <Input
                             type="number"
-                            placeholder="数量"
+                            placeholder="100"
                             value={holding.quantity || ''}
                             onChange={(e) => updateAssetHolding(holding.id, 'quantity', Number(e.target.value))}
                             min="0"
                           />
                           <Input
                             type="number"
-                            placeholder={holding.currency === 'USD' ? '単価 [ドル]' : '単価 [円]'}
+                            placeholder="150"
                             value={holding.pricePerUnit || ''}
                             onChange={(e) => updateAssetHolding(holding.id, 'pricePerUnit', Number(e.target.value))}
                             min="0"
@@ -713,6 +723,16 @@ function HomeContent() {
                   </div>
                   
                   <div className="space-y-2">
+                    {/* ヘッダー行（ローンが存在し、削除モードでない場合のみ表示） */}
+                    {input.loans.length > 0 && !isLoanDeleteMode && (
+                      <div className="grid grid-cols-4 gap-2 mb-2">
+                        <Label className="text-sm font-medium">ローン名</Label>
+                        <Label className="text-sm font-medium">残高 [万円]</Label>
+                        <Label className="text-sm font-medium">金利 [%]</Label>
+                        <Label className="text-sm font-medium">月次返済額 [万円]</Label>
+                      </div>
+                    )}
+                    
                     {input.loans.map((loan) => (
                       isLoanDeleteMode ? (
                         // 削除モード: ローン名のみ表示、左側に赤い削除ボタン
@@ -733,13 +753,13 @@ function HomeContent() {
                         // 通常モード: 全ての入力欄を表示
                         <div key={loan.id} className="grid grid-cols-4 gap-2 items-center">
                           <Input
-                            placeholder="ローン名"
+                            placeholder="住宅ローン"
                             value={loan.name}
                             onChange={(e) => updateLoan(loan.id, 'name', e.target.value)}
                           />
                           <Input
                             type="number"
-                            placeholder="残高 [万円]"
+                            placeholder="2000"
                             value={loan.balance ? (loan.balance / 10000) : ''}
                             onChange={(e) => updateLoan(loan.id, 'balance', Number(e.target.value) * 10000)}
                             min="0"
@@ -747,7 +767,7 @@ function HomeContent() {
                           />
                           <Input
                             type="number"
-                            placeholder="金利 [%]"
+                            placeholder="3.5"
                             value={loan.interestRate ?? ''}
                             onChange={(e) => updateLoan(loan.id, 'interestRate', Number(e.target.value))}
                             min="0"
@@ -756,7 +776,7 @@ function HomeContent() {
                           />
                           <Input
                             type="number"
-                            placeholder="月返済額 [万円]"
+                            placeholder="10"
                             value={loan.monthlyPayment ? (loan.monthlyPayment / 10000) : ''}
                             onChange={(e) => updateLoan(loan.id, 'monthlyPayment', Number(e.target.value) * 10000)}
                             min="0"
