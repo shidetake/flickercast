@@ -43,8 +43,12 @@ function HomeContent() {
     assetHoldings: [
       { id: '1', name: '', quantity: 0, pricePerUnit: 0, currency: 'JPY' },
     ], // デフォルトは1つの空の銘柄
-    loans: [], // デフォルトは空のローン配列
-    pensionPlans: [], // デフォルトは空の年金配列
+    loans: [
+      { id: '1', name: '', balance: 0, interestRate: 0, monthlyPayment: 0 },
+    ], // デフォルトは1つの空のローン
+    pensionPlans: [
+      { id: '1', name: '', annualAmount: 0, startAge: 65, endAge: calculateLifeExpectancy(38) },
+    ], // デフォルトは1つの空の年金
     monthlyExpenses: 300000, // 内部では円のまま
     annualNetIncome: 10000000, // 内部では円のまま（1000万円）
     postRetirementAnnualIncome: 0, // 内部では円のまま（0円）
@@ -55,8 +59,8 @@ function HomeContent() {
 
   const [input, setInput] = useState<FireCalculationInput>(createDefaultInput());
   const [nextAssetId, setNextAssetId] = useState(2); // 次に使用するAsset ID（デフォルトは1なので2から開始）
-  const [nextLoanId, setNextLoanId] = useState(1); // 次に使用するLoan ID
-  const [nextPensionId, setNextPensionId] = useState(1); // 次に使用するPension ID
+  const [nextLoanId, setNextLoanId] = useState(2); // 次に使用するLoan ID（デフォルトは1なので2から開始）
+  const [nextPensionId, setNextPensionId] = useState(2); // 次に使用するPension ID（デフォルトは1なので2から開始）
   const [isDeleteMode, setIsDeleteMode] = useState(false); // 削除モード状態
   const [isLoanDeleteMode, setIsLoanDeleteMode] = useState(false); // ローン削除モード状態
   const [isPensionDeleteMode, setIsPensionDeleteMode] = useState(false); // 年金削除モード状態
