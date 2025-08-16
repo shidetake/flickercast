@@ -402,71 +402,83 @@ function HomeContent() {
                 基本情報入力
               </h2>
               
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="currentAge">現在年齢</Label>
-                    <Input
-                      id="currentAge"
-                      type="number"
-                      value={input.currentAge}
-                      onChange={(e) => handleInputChange('currentAge', Number(e.target.value))}
-                      min="18"
-                      max="100"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="retirementAge">退職希望年齢</Label>
-                    <Input
-                      id="retirementAge"
-                      type="number"
-                      value={input.retirementAge}
-                      onChange={(e) => handleInputChange('retirementAge', Number(e.target.value))}
-                      min="30"
-                      max="100"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="lifeExpectancy">想定寿命</Label>
-                    <Input
-                      id="lifeExpectancy"
-                      type="number"
-                      value={input.lifeExpectancy}
-                      onChange={(e) => handleInputChange('lifeExpectancy', Number(e.target.value))}
-                      min="70"
-                      max="120"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="annualNetIncome">手取り年収 [万円]</Label>
-                    <Input
-                      id="annualNetIncome"
-                      type="number"
-                      value={displayValues.annualNetIncome}
-                      onChange={(e) => handleDisplayValueChange('annualNetIncome', Number(e.target.value))}
-                      min="0"
-                      step="10"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="postRetirementAnnualIncome">退職後年収 [万円]</Label>
-                    <Input
-                      id="postRetirementAnnualIncome"
-                      type="number"
-                      value={displayValues.postRetirementAnnualIncome}
-                      onChange={(e) => handleDisplayValueChange('postRetirementAnnualIncome', Number(e.target.value))}
-                      min="0"
-                      step="10"
-                    />
+              <div className="space-y-6">
+                {/* 個人情報セクション */}
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <h3 className="text-sm font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                    👤 個人情報
+                  </h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="currentAge">現在年齢</Label>
+                      <Input
+                        id="currentAge"
+                        type="number"
+                        value={input.currentAge}
+                        onChange={(e) => handleInputChange('currentAge', Number(e.target.value))}
+                        min="18"
+                        max="100"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="retirementAge">退職希望年齢</Label>
+                      <Input
+                        id="retirementAge"
+                        type="number"
+                        value={input.retirementAge}
+                        onChange={(e) => handleInputChange('retirementAge', Number(e.target.value))}
+                        min="30"
+                        max="100"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lifeExpectancy">想定寿命</Label>
+                      <Input
+                        id="lifeExpectancy"
+                        type="number"
+                        value={input.lifeExpectancy}
+                        onChange={(e) => handleInputChange('lifeExpectancy', Number(e.target.value))}
+                        min="70"
+                        max="120"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <Label>年金管理</Label>
+                {/* 資産・収入セクション */}
+                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                  <h3 className="text-sm font-semibold text-green-800 mb-3 flex items-center gap-2">
+                    💰 資産・収入
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="annualNetIncome">手取り年収 [万円]</Label>
+                        <Input
+                          id="annualNetIncome"
+                          type="number"
+                          value={displayValues.annualNetIncome}
+                          onChange={(e) => handleDisplayValueChange('annualNetIncome', Number(e.target.value))}
+                          min="0"
+                          step="10"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="postRetirementAnnualIncome">退職後年収 [万円]</Label>
+                        <Input
+                          id="postRetirementAnnualIncome"
+                          type="number"
+                          value={displayValues.postRetirementAnnualIncome}
+                          onChange={(e) => handleDisplayValueChange('postRetirementAnnualIncome', Number(e.target.value))}
+                          min="0"
+                          step="10"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-3">
+                        <Label>年金管理</Label>
                     <div className="flex gap-2">
                       <Button 
                         type="button" 
@@ -549,12 +561,12 @@ function HomeContent() {
                         </div>
                       )
                     )}
-                  </div>
-                </div>
+                      </div>
+                    </div>
 
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <Label>金融資産管理</Label>
+                    <div>
+                      <div className="flex justify-between items-center mb-3">
+                        <Label>金融資産管理</Label>
                     <div className="flex gap-2">
                       <Button 
                         type="button" 
@@ -629,7 +641,7 @@ function HomeContent() {
                           <select
                             value={holding.currency || 'JPY'}
                             onChange={(e) => updateAssetHolding(holding.id, 'currency', e.target.value)}
-                            className="h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="h-10 px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
                             <option value="JPY">JPY</option>
                             <option value="USD">USD</option>
@@ -653,58 +665,66 @@ function HomeContent() {
                         '(USD/JPY: 取得失敗)'
                       )}
                     </span>
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="expectedReturn">期待年利回り [%]</Label>
-                  <Input
-                    id="expectedReturn"
-                    type="number"
-                    value={input.expectedAnnualReturn}
-                    onChange={(e) => handleInputChange('expectedAnnualReturn', Number(e.target.value))}
-                    min="0"
-                    max="30"
-                    step="0.1"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 h-6">
-                      <Label htmlFor="monthlyExpenses">月間支出 [万円]</Label>
+                      </div>
                     </div>
-                    <Input
-                      id="monthlyExpenses"
-                      type="number"
-                      value={displayValues.monthlyExpenses}
-                      onChange={(e) => handleDisplayValueChange('monthlyExpenses', Number(e.target.value))}
-                      min="0"
-                      step="0.1"
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 h-6">
-                      <Label htmlFor="inflationRate">インフレ率 [%]</Label>
-                      <Tooltip content="将来の支出がインフレ率に応じて増減します。下げると楽観的な想定に、上げると厳しめの想定になります。">
-                        <span className="w-4 h-4 bg-gray-500 text-white rounded-full flex items-center justify-center text-xs cursor-help">?</span>
-                      </Tooltip>
+
+                    <div>
+                      <Label htmlFor="expectedReturn">期待年利回り [%]</Label>
+                      <Input
+                        id="expectedReturn"
+                        type="number"
+                        value={input.expectedAnnualReturn}
+                        onChange={(e) => handleInputChange('expectedAnnualReturn', Number(e.target.value))}
+                        min="0"
+                        max="30"
+                        step="0.1"
+                      />
                     </div>
-                    <Input
-                      id="inflationRate"
-                      type="number"
-                      value={input.inflationRate}
-                      onChange={(e) => handleInputChange('inflationRate', Number(e.target.value))}
-                      min="0"
-                      max="15"
-                      step="0.1"
-                    />
                   </div>
                 </div>
 
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <Label>ローン管理</Label>
+                {/* 支出・負債セクション */}
+                <div className="bg-red-50 rounded-lg p-4 border border-red-200">
+                  <h3 className="text-sm font-semibold text-red-800 mb-3 flex items-center gap-2">
+                    💸 支出・負債
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 h-6">
+                          <Label htmlFor="monthlyExpenses">月間支出 [万円]</Label>
+                        </div>
+                        <Input
+                          id="monthlyExpenses"
+                          type="number"
+                          value={displayValues.monthlyExpenses}
+                          onChange={(e) => handleDisplayValueChange('monthlyExpenses', Number(e.target.value))}
+                          min="0"
+                          step="0.1"
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 h-6">
+                          <Label htmlFor="inflationRate">インフレ率 [%]</Label>
+                          <Tooltip content="将来の支出がインフレ率に応じて増減します。下げると楽観的な想定に、上げると厳しめの想定になります。">
+                            <span className="w-4 h-4 bg-gray-500 text-white rounded-full flex items-center justify-center text-xs cursor-help">?</span>
+                          </Tooltip>
+                        </div>
+                        <Input
+                          id="inflationRate"
+                          type="number"
+                          value={input.inflationRate}
+                          onChange={(e) => handleInputChange('inflationRate', Number(e.target.value))}
+                          min="0"
+                          max="15"
+                          step="0.1"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-3">
+                        <Label>ローン管理</Label>
                     <div className="flex gap-2">
                       <Button 
                         type="button" 
@@ -791,14 +811,14 @@ function HomeContent() {
                     ))}
                   </div>
                   
-                  <div className="mt-3 p-2 bg-gray-50 rounded">
-                    <span className="text-sm font-medium">
-                      総月間返済額: {calculateTotalMonthlyPayments().toFixed(1)}万円
-                    </span>
+                      <div className="mt-3 p-2 bg-gray-50 rounded">
+                        <span className="text-sm font-medium">
+                          総月間返済額: {calculateTotalMonthlyPayments().toFixed(1)}万円
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-
 
                 <Button
                   onClick={calculateFire}
