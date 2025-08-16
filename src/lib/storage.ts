@@ -1,6 +1,6 @@
 import { FireCalculationInput } from './fire-calculator';
 
-const STORAGE_KEY = 'fire-simulator-data';
+const STORAGE_KEY = 'flickercast-data';
 
 /**
  * ローカルストレージにデータを保存
@@ -55,7 +55,7 @@ export function exportToJson(data: FireCalculationInput): void {
     const now = new Date();
     const dateString = now.toLocaleDateString('sv-SE'); // YYYY-MM-DD
     const timeString = now.toLocaleTimeString('sv-SE').replace(/:/g, '-'); // HH-mm-ss
-    const filename = `fire-simulator-${dateString}_${timeString}.json`;
+    const filename = `flickercast-${dateString}_${timeString}.json`;
     
     const link = document.createElement('a');
     link.href = url;

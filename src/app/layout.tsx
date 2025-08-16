@@ -9,7 +9,7 @@ const notoSansJP = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
-  title: "FIRE Simulator - 経済的自立シミュレーター",
+  title: "flickercast - 経済的自立シミュレーター",
   description: "FIREに向けた資産運用と支出管理をシミュレートするWebアプリケーション",
   keywords: ["FIRE", "経済的自立", "早期退職", "資産運用", "シミュレーション"],
 };

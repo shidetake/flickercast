@@ -482,7 +482,7 @@ function HomeContent() {
       <header className="bg-white shadow-sm">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <h1 className="text-3xl font-bold text-gray-900">
-            🔥 FIRE Simulator
+            🔥 flickercast
           </h1>
         </div>
       </header>
@@ -1206,7 +1206,7 @@ function HomeContent() {
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <p className="text-gray-600">
-              © 2024 FIRE Simulator. 投資判断は自己責任でお願いします。
+              © 2025 flickercast.
             </p>
           </div>
         </div>
