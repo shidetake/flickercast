@@ -968,7 +968,7 @@ function HomeContent() {
                             onChange={(e) => updateLoan(loan.id, 'interestRate', Number(e.target.value))}
                             min="0"
                             max="30"
-                            step="0.1"
+                            step="0.01"
                           />
                           <Input
                             type="number"
