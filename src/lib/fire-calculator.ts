@@ -1,4 +1,4 @@
-import { AssetHolding, Loan, PensionPlan, SpecialExpense } from './types';
+import { AssetHolding, Loan, PensionPlan, SpecialExpense, SpecialIncome } from './types';
 import { calculateTotalAssets } from './asset-calculator';
 
 export interface FireCalculationInput {
@@ -8,6 +8,7 @@ export interface FireCalculationInput {
   loans: Loan[]; // ローン情報
   pensionPlans: PensionPlan[]; // 年金プラン情報
   specialExpenses: SpecialExpense[]; // 特別支出情報
+  specialIncomes: SpecialIncome[]; // 臨時収入情報
   monthlyExpenses: number;
   annualNetIncome: number; // 手取り年収（円）
   postRetirementAnnualIncome: number; // 退職後年収（円）
@@ -124,6 +125,7 @@ export class FireCalculator {
       loans,
       pensionPlans,
       specialExpenses,
+      specialIncomes,
       monthlyExpenses,
       annualNetIncome,
       postRetirementAnnualIncome,
@@ -178,6 +180,19 @@ export class FireCalculator {
       }, 0);
     });
 
+    // 臨時収入スケジュールを年ごとに事前計算（インフレ調整含む）
+    const specialIncomeSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
+      const age = currentAge + year;
+      return specialIncomes.reduce((total, income) => {
+        if (age === income.targetAge) {
+          // インフレ調整：現在価値 → 将来価値
+          const inflationAdjustedAmount = this.adjustForInflation(income.amount, inflationRate, year);
+          return total + inflationAdjustedAmount;
+        }
+        return total;
+      }, 0);
+    });
+
     const annualExpenses = monthlyExpenses * 12;
 
     // インフレ調整済みの年間支出を年ごとに事前計算
@@ -210,13 +225,14 @@ export class FireCalculator {
       const yearlyLoanPayments = Array.from(loanSchedules.values())
         .reduce((total, schedule) => total + (schedule[year] || 0), 0);
       const yearlySpecialExpenses = specialExpenseSchedule[year];
+      const yearlySpecialIncomes = specialIncomeSchedule[year];
       
       // 年間の資産変動を計算
       // 前年資産に年利を適用
       currentYearAssets = currentYearAssets * (1 + expectedAnnualReturn / 100);
       
       // 年間収支計算（統一ロジック）
-      const totalIncome = yearlyWorkingIncome + yearlyPostRetirementIncome + yearlyPension;
+      const totalIncome = yearlyWorkingIncome + yearlyPostRetirementIncome + yearlyPension + yearlySpecialIncomes;
       const totalExpenses = yearlyExpenses + yearlyLoanPayments + yearlySpecialExpenses;
       currentYearAssets += totalIncome - totalExpenses;
       

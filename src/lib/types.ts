@@ -250,6 +250,14 @@ export interface SpecialExpense {
   targetAge: number; // 支出予定年齢
 }
 
+// 臨時収入情報
+export interface SpecialIncome {
+  id: string;
+  name: string; // 臨時収入名（ボーナス、相続、退職金等）
+  amount: number; // 収入額（円、現在価値）
+  targetAge: number; // 収入予定年齢
+}
+
 // 年金プラン情報
 export interface PensionPlan {
   id: string;

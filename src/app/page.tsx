@@ -8,7 +8,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { FireCalculator, FireCalculationInput } from '@/lib/fire-calculator';
 import FireProjectionChart from '@/components/charts/fire-projection-chart';
 import FireSummary from '@/components/dashboard/fire-summary';
-import { ChartDataPoint, FireMetrics, AssetHolding, Loan, PensionPlan, SpecialExpense } from '@/lib/types';
+import { ChartDataPoint, FireMetrics, AssetHolding, Loan, PensionPlan, SpecialExpense, SpecialIncome } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { saveToLocalStorage, loadFromLocalStorage, exportToJson, importFromJson } from '@/lib/storage';
 import { useToast, ToastProvider } from '@/lib/toast-context';
@@ -52,6 +52,9 @@ function HomeContent() {
     specialExpenses: [
       { id: '1', name: '', amount: 0, targetAge: 40 },
     ], // デフォルトは1つの空の特別支出
+    specialIncomes: [
+      { id: '1', name: '', amount: 0, targetAge: 50 },
+    ], // デフォルトは1つの空の臨時収入
     monthlyExpenses: 300000, // 内部では円のまま
     annualNetIncome: 10000000, // 内部では円のまま（1000万円）
     postRetirementAnnualIncome: 0, // 内部では円のまま（0円）
@@ -65,10 +68,12 @@ function HomeContent() {
   const [nextLoanId, setNextLoanId] = useState(2); // 次に使用するLoan ID（デフォルトは1なので2から開始）
   const [nextPensionId, setNextPensionId] = useState(2); // 次に使用するPension ID（デフォルトは1なので2から開始）
   const [nextSpecialExpenseId, setNextSpecialExpenseId] = useState(2); // 次に使用するSpecialExpense ID（デフォルトは1なので2から開始）
+  const [nextSpecialIncomeId, setNextSpecialIncomeId] = useState(2); // 次に使用するSpecialIncome ID（デフォルトは1なので2から開始）
   const [isDeleteMode, setIsDeleteMode] = useState(false); // 削除モード状態
   const [isLoanDeleteMode, setIsLoanDeleteMode] = useState(false); // ローン削除モード状態
   const [isPensionDeleteMode, setIsPensionDeleteMode] = useState(false); // 年金削除モード状態
   const [isSpecialExpenseDeleteMode, setIsSpecialExpenseDeleteMode] = useState(false); // 特別支出削除モード状態
+  const [isSpecialIncomeDeleteMode, setIsSpecialIncomeDeleteMode] = useState(false); // 臨時収入削除モード状態
 
   // 万円単位での表示用の値
   const [displayValues, setDisplayValues] = useState({
@@ -116,6 +121,13 @@ function HomeContent() {
     return maxId + 1;
   };
 
+  // 既存の臨時収入IDから次のIDを計算
+  const calculateNextSpecialIncomeId = (specialIncomes: SpecialIncome[]): number => {
+    if (specialIncomes.length === 0) return 1;
+    const maxId = Math.max(...specialIncomes.map(income => parseInt(income.id) || 0));
+    return maxId + 1;
+  };
+
   // 為替レート取得関数
   const fetchExchangeRate = async () => {
     try {
@@ -147,6 +159,8 @@ function HomeContent() {
       setNextPensionId(calculateNextPensionId(savedData.pensionPlans || []));
       // nextSpecialExpenseIdを適切に設定
       setNextSpecialExpenseId(calculateNextSpecialExpenseId(savedData.specialExpenses || []));
+      // nextSpecialIncomeIdを適切に設定
+      setNextSpecialIncomeId(calculateNextSpecialIncomeId(savedData.specialIncomes || []));
       
       // 表示値も更新
       setDisplayValues({
@@ -294,6 +308,37 @@ function HomeContent() {
     }));
   };
 
+  // 臨時収入管理のヘルパー関数
+  const addSpecialIncome = () => {
+    const newSpecialIncome: SpecialIncome = {
+      id: nextSpecialIncomeId.toString(),
+      name: '',
+      amount: 0,
+      targetAge: input.currentAge + 10,
+    };
+    setInput(prev => ({
+      ...prev,
+      specialIncomes: [...prev.specialIncomes, newSpecialIncome]
+    }));
+    setNextSpecialIncomeId(prev => prev + 1);
+  };
+
+  const updateSpecialIncome = (id: string, field: keyof SpecialIncome, value: string | number) => {
+    setInput(prev => ({
+      ...prev,
+      specialIncomes: prev.specialIncomes.map(income =>
+        income.id === id ? { ...income, [field]: value } : income
+      )
+    }));
+  };
+
+  const removeSpecialIncome = (id: string) => {
+    setInput(prev => ({
+      ...prev,
+      specialIncomes: prev.specialIncomes.filter(income => income.id !== id)
+    }));
+  };
+
   // 総資産額を計算（統一関数を使用）
   const calculateTotalAssets = () => {
     return calculateTotalAssetsUnified(input.assetHoldings, exchangeRate, 'manyen');
@@ -364,6 +409,8 @@ function HomeContent() {
       setNextPensionId(calculateNextPensionId(importedData.pensionPlans || []));
       // nextSpecialExpenseIdを適切に設定
       setNextSpecialExpenseId(calculateNextSpecialExpenseId(importedData.specialExpenses || []));
+      // nextSpecialIncomeIdを適切に設定
+      setNextSpecialIncomeId(calculateNextSpecialIncomeId(importedData.specialIncomes || []));
       
       // 表示値も更新
       setDisplayValues({
@@ -723,6 +770,87 @@ function HomeContent() {
                         max="30"
                         step="0.1"
                       />
+                    </div>
+
+                    <div className="mt-6">
+                      <div className="flex justify-between items-center mb-3">
+                        <Label>臨時収入管理</Label>
+                    <div className="flex gap-2">
+                      <Button 
+                        type="button" 
+                        onClick={addSpecialIncome}
+                        size="sm"
+                        variant="outline"
+                        disabled={isSpecialIncomeDeleteMode}
+                      >
+                        追加
+                      </Button>
+                      <Button 
+                        type="button" 
+                        onClick={() => setIsSpecialIncomeDeleteMode(!isSpecialIncomeDeleteMode)}
+                        size="sm"
+                        variant={isSpecialIncomeDeleteMode ? "default" : "outline"}
+                      >
+                        {isSpecialIncomeDeleteMode ? '完了' : '削除'}
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {/* ヘッダー行（臨時収入が存在し、削除モードでない場合のみ表示） */}
+                    {input.specialIncomes.length > 0 && !isSpecialIncomeDeleteMode && (
+                      <div className="grid grid-cols-3 gap-2 mb-2">
+                        <Label className="text-sm font-medium">収入名</Label>
+                        <Label className="text-sm font-medium">収入額 [万円]</Label>
+                        <Label className="text-sm font-medium">年齢</Label>
+                      </div>
+                    )}
+                    
+                    {input.specialIncomes.map((income) => (
+                      isSpecialIncomeDeleteMode ? (
+                        // 削除モード: 収入名のみ表示、左側に赤い削除ボタン
+                        <div key={income.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
+                          <Button 
+                            type="button"
+                            onClick={() => removeSpecialIncome(income.id)}
+                            size="sm"
+                            className="w-5 h-5 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white flex-shrink-0"
+                          >
+                            <span className="text-sm font-bold">−</span>
+                          </Button>
+                          <span className="text-sm font-medium text-gray-900 truncate">
+                            {income.name || '未設定'}
+                          </span>
+                        </div>
+                      ) : (
+                        // 通常モード: 全ての入力欄を表示
+                        <div key={income.id} className="grid grid-cols-3 gap-2 items-center">
+                          <Input
+                            placeholder="退職金"
+                            value={income.name}
+                            onChange={(e) => updateSpecialIncome(income.id, 'name', e.target.value)}
+                          />
+                          <Input
+                            type="number"
+                            placeholder="500"
+                            value={income.amount ? (income.amount / 10000) : ''}
+                            onChange={(e) => updateSpecialIncome(income.id, 'amount', Number(e.target.value) * 10000)}
+                            min="0"
+                            step="1"
+                          />
+                          <Input
+                            type="number"
+                            placeholder="60"
+                            value={income.targetAge ?? ''}
+                            onChange={(e) => updateSpecialIncome(income.id, 'targetAge', Number(e.target.value))}
+                            min="18"
+                            max="100"
+                            step="1"
+                          />
+                        </div>
+                      )
+                    ))}
+                  </div>
                     </div>
                   </div>
                 </div>
