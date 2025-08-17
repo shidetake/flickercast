@@ -262,7 +262,8 @@ export interface SpecialIncome {
 export interface PensionPlan {
   id: string;
   name: string; // 年金名（国民年金、厚生年金、企業年金等）
-  annualAmount: number; // 年間受給額（円）
+  annualAmount: number; // 年間受給額（通貨単位）
+  currency: Currency; // 通貨種別
   startAge: number; // 受給開始年齢
   endAge: number; // 受給終了年齢
 }

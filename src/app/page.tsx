@@ -47,7 +47,7 @@ function HomeContent() {
       { id: '1', name: '', balance: 0, interestRate: 0, monthlyPayment: 0 },
     ], // デフォルトは1つの空のローン
     pensionPlans: [
-      { id: '1', name: '', annualAmount: 0, startAge: 65, endAge: calculateLifeExpectancy(38) },
+      { id: '1', name: '', annualAmount: 0, currency: 'JPY', startAge: 65, endAge: calculateLifeExpectancy(38) },
     ], // デフォルトは1つの空の年金
     specialExpenses: [
       { id: '1', name: '', amount: 0, targetAge: 40 },
@@ -219,6 +219,7 @@ function HomeContent() {
       id: nextPensionId.toString(),
       name: '',
       annualAmount: 0,
+      currency: 'JPY',
       startAge: 65,
       endAge: calculateLifeExpectancy(input.currentAge),
     };
@@ -595,7 +596,7 @@ function HomeContent() {
                     {input.pensionPlans.length > 0 && !isPensionDeleteMode && (
                       <div className="grid grid-cols-[1.5fr_1.5fr_1fr_1fr_1fr] gap-3 mb-2">
                         <Label className="text-sm font-medium">年金名</Label>
-                        <Label className="text-sm font-medium">受給額 [万円/年]</Label>
+                        <Label className="text-sm font-medium">受給額 [円・ドル/年]</Label>
                         <Label className="text-sm font-medium">通貨</Label>
                         <Label className="text-sm font-medium">開始年齢</Label>
                         <Label className="text-sm font-medium">終了年齢</Label>
@@ -628,14 +629,15 @@ function HomeContent() {
                           />
                           <Input
                             type="number"
-                            placeholder="0"
-                            value={plan.annualAmount / 10000}
-                            onChange={(e) => updatePensionPlan(plan.id, 'annualAmount', Number(e.target.value) * 10000)}
+                            placeholder={plan.currency === 'USD' ? '20000' : '2000000'}
+                            value={plan.annualAmount}
+                            onChange={(e) => updatePensionPlan(plan.id, 'annualAmount', Number(e.target.value))}
                             min="0"
                             step="1"
                           />
                           <select
-                            value="JPY"
+                            value={plan.currency || 'JPY'}
+                            onChange={(e) => updatePensionPlan(plan.id, 'currency', e.target.value)}
                             className="h-10 px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
                             <option value="JPY">JPY</option>

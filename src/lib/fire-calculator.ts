@@ -1,5 +1,5 @@
 import { AssetHolding, Loan, PensionPlan, SpecialExpense, SpecialIncome } from './types';
-import { calculateTotalAssets } from './asset-calculator';
+import { calculateTotalAssets, convertPensionToJPY } from './asset-calculator';
 
 export interface FireCalculationInput {
   currentAge: number;
@@ -158,12 +158,17 @@ export class FireCalculator {
       return age > retirementAge ? postRetirementAnnualIncome : 0;
     });
 
-    // 複数年金プランの統合スケジュールを年ごとに事前計算
+    // 複数年金プランの統合スケジュールを年ごとに事前計算（通貨換算含む）
     const pensionSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
       const age = currentAge + year;
       return pensionPlans.reduce((total, plan) => {
         const isPensionActive = age >= plan.startAge && age <= plan.endAge;
-        return total + (isPensionActive ? plan.annualAmount : 0);
+        if (isPensionActive) {
+          // 通貨換算して円ベースで統一
+          const convertedAmount = convertPensionToJPY(plan, exchangeRate);
+          return total + convertedAmount;
+        }
+        return total;
       }, 0);
     });
 
