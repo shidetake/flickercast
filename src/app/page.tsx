@@ -41,7 +41,7 @@ function HomeContent() {
     currentAge: 38,
     retirementAge: 65,
     assetHoldings: [
-      { id: '1', name: '', quantity: 0, pricePerUnit: 0, currency: 'JPY' },
+      { id: '1', name: '', quantity: 0, pricePerUnit: 0, currency: 'JPY', expectedReturn: 5 },
     ], // デフォルトは1つの空の銘柄
     loans: [
       { id: '1', name: '', balance: 0, interestRate: 0, monthlyPayment: 0 },
@@ -58,7 +58,6 @@ function HomeContent() {
     monthlyExpenses: 300000, // 内部では円のまま
     annualNetIncome: 10000000, // 内部では円のまま（1000万円）
     postRetirementAnnualIncome: 0, // 内部では円のまま（0円）
-    expectedAnnualReturn: 5,
     inflationRate: 2,
     lifeExpectancy: calculateLifeExpectancy(38),
   });
@@ -75,12 +74,6 @@ function HomeContent() {
   const [isSpecialExpenseDeleteMode, setIsSpecialExpenseDeleteMode] = useState(false); // 特別支出削除モード状態
   const [isSpecialIncomeDeleteMode, setIsSpecialIncomeDeleteMode] = useState(false); // 臨時収入削除モード状態
 
-  // 万円単位での表示用の値
-  const [displayValues, setDisplayValues] = useState({
-    monthlyExpenses: 30, // 30万円
-    annualNetIncome: 1000, // 1000万円
-    postRetirementAnnualIncome: 0, // 0万円
-  });
 
   const [isCalculating, setIsCalculating] = useState(false);
   const [results, setResults] = useState<{
@@ -162,12 +155,6 @@ function HomeContent() {
       // nextSpecialIncomeIdを適切に設定
       setNextSpecialIncomeId(calculateNextSpecialIncomeId(savedData.specialIncomes || []));
       
-      // 表示値も更新
-      setDisplayValues({
-        monthlyExpenses: savedData.monthlyExpenses / 10000,
-        annualNetIncome: savedData.annualNetIncome / 10000,
-        postRetirementAnnualIncome: savedData.postRetirementAnnualIncome / 10000,
-      });
     }
   }, []);
 
@@ -189,6 +176,7 @@ function HomeContent() {
       quantity: 0,
       pricePerUnit: 0,
       currency: 'JPY',
+      expectedReturn: 5,
     };
     setInput(prev => ({
       ...prev,
@@ -367,20 +355,6 @@ function HomeContent() {
     });
   };
 
-  const handleDisplayValueChange = (field: keyof typeof displayValues, value: number) => {
-    setDisplayValues(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    
-    // 金額フィールドは万円 → 円に変換
-    const actualValue = value * 10000;
-    
-    setInput(prev => ({
-      ...prev,
-      [field]: actualValue
-    }));
-  };
 
   // エクスポート機能
   const handleExport = () => {
@@ -413,12 +387,6 @@ function HomeContent() {
       // nextSpecialIncomeIdを適切に設定
       setNextSpecialIncomeId(calculateNextSpecialIncomeId(importedData.specialIncomes || []));
       
-      // 表示値も更新
-      setDisplayValues({
-        monthlyExpenses: importedData.monthlyExpenses / 10000,
-        annualNetIncome: importedData.annualNetIncome / 10000,
-        postRetirementAnnualIncome: importedData.postRetirementAnnualIncome / 10000,
-      });
       
       showSuccess('データを正常にインポートしました');
     } catch (error) {
@@ -549,8 +517,8 @@ function HomeContent() {
                         <Input
                           id="annualNetIncome"
                           type="number"
-                          value={displayValues.annualNetIncome}
-                          onChange={(e) => handleDisplayValueChange('annualNetIncome', Number(e.target.value))}
+                          value={input.annualNetIncome / 10000}
+                          onChange={(e) => handleInputChange('annualNetIncome', Number(e.target.value) * 10000)}
                           min="0"
                           step="10"
                         />
@@ -560,8 +528,8 @@ function HomeContent() {
                         <Input
                           id="postRetirementAnnualIncome"
                           type="number"
-                          value={displayValues.postRetirementAnnualIncome}
-                          onChange={(e) => handleDisplayValueChange('postRetirementAnnualIncome', Number(e.target.value))}
+                          value={input.postRetirementAnnualIncome / 10000}
+                          onChange={(e) => handleInputChange('postRetirementAnnualIncome', Number(e.target.value) * 10000)}
                           min="0"
                           step="10"
                         />
@@ -692,11 +660,12 @@ function HomeContent() {
                   <div className="space-y-2">
                     {/* ヘッダー行（金融資産が存在し、削除モードでない場合のみ表示） */}
                     {input.assetHoldings.length > 0 && !isDeleteMode && (
-                      <div className="grid grid-cols-4 gap-2 mb-2">
+                      <div className="grid grid-cols-5 gap-2 mb-2">
                         <Label className="text-sm font-medium">銘柄名</Label>
                         <Label className="text-sm font-medium">数量</Label>
                         <Label className="text-sm font-medium">単価</Label>
                         <Label className="text-sm font-medium">通貨</Label>
+                        <Label className="text-sm font-medium">利回り[%]</Label>
                       </div>
                     )}
                     
@@ -718,7 +687,7 @@ function HomeContent() {
                         </div>
                       ) : (
                         // 通常モード: 全ての入力欄を表示
-                        <div key={holding.id} className="grid grid-cols-4 gap-2 items-center">
+                        <div key={holding.id} className="grid grid-cols-5 gap-2 items-center">
                           <Input
                             placeholder="AAPL"
                             value={holding.name}
@@ -747,6 +716,15 @@ function HomeContent() {
                             <option value="JPY">JPY</option>
                             <option value="USD">USD</option>
                           </select>
+                          <Input
+                            type="number"
+                            placeholder="5"
+                            value={holding.expectedReturn ?? ''}
+                            onChange={(e) => updateAssetHolding(holding.id, 'expectedReturn', Number(e.target.value))}
+                            min="0"
+                            max="30"
+                            step="0.1"
+                          />
                         </div>
                       )
                     ))}
@@ -769,18 +747,6 @@ function HomeContent() {
                       </div>
                     </div>
 
-                    <div>
-                      <Label htmlFor="expectedReturn">期待年利回り [%]</Label>
-                      <Input
-                        id="expectedReturn"
-                        type="number"
-                        value={input.expectedAnnualReturn}
-                        onChange={(e) => handleInputChange('expectedAnnualReturn', Number(e.target.value))}
-                        min="0"
-                        max="30"
-                        step="0.1"
-                      />
-                    </div>
 
                     <div className="mt-6">
                       <div className="flex justify-between items-center mb-3">
@@ -879,8 +845,8 @@ function HomeContent() {
                         <Input
                           id="monthlyExpenses"
                           type="number"
-                          value={displayValues.monthlyExpenses}
-                          onChange={(e) => handleDisplayValueChange('monthlyExpenses', Number(e.target.value))}
+                          value={input.monthlyExpenses / 10000}
+                          onChange={(e) => handleInputChange('monthlyExpenses', Number(e.target.value) * 10000)}
                           min="0"
                           step="0.1"
                         />
@@ -1186,10 +1152,6 @@ function HomeContent() {
                         <div className="flex justify-between">
                           <span>達成までの年数:</span>
                           <span>{results.metrics.yearsToFire}年</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>期待年利回り:</span>
-                          <span>{input.expectedAnnualReturn}%</span>
                         </div>
                       </div>
                     </div>

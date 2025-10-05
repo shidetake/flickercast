@@ -231,6 +231,7 @@ export interface AssetHolding {
   quantity: number;
   pricePerUnit: number; // JPY: 円単位, USD: ドル単位
   currency: Currency; // 通貨種別
+  expectedReturn: number; // 期待年利回り（%）
 }
 
 // ローン情報

@@ -1,6 +1,14 @@
 import { AssetHolding, Loan, PensionPlan, SpecialExpense, SpecialIncome } from './types';
 import { calculateTotalAssets, convertPensionToJPY } from './asset-calculator';
 
+// 計算中の資産残高追跡用
+interface AssetBalance {
+  id: string;
+  currentValue: number; // 現在価値（円）
+  originalRatio: number; // 初期構成比
+  expectedReturn: number; // 個別利回り
+}
+
 export interface FireCalculationInput {
   currentAge: number;
   retirementAge: number;
@@ -12,7 +20,6 @@ export interface FireCalculationInput {
   monthlyExpenses: number;
   annualNetIncome: number; // 手取り年収（円）
   postRetirementAnnualIncome: number; // 退職後年収（円）
-  expectedAnnualReturn: number; // パーセント（例: 5 = 5%）
   inflationRate: number; // パーセント（例: 2 = 2%）
   lifeExpectancy: number;
   exchangeRate?: number | null; // USD/JPY為替レート
@@ -129,14 +136,23 @@ export class FireCalculator {
       monthlyExpenses,
       annualNetIncome,
       postRetirementAnnualIncome,
-      expectedAnnualReturn,
       inflationRate,
       lifeExpectancy,
       exchangeRate
     } = input;
 
-    // 銘柄保有情報から総資産額を計算（統一関数を使用、円単位）
-    const currentAssets = calculateTotalAssets(assetHoldings, exchangeRate, 'yen');
+    // 各資産の初期残高と構成比を計算
+    const totalAssetValue = calculateTotalAssets(assetHoldings, exchangeRate, 'yen');
+    const assetBalances: AssetBalance[] = assetHoldings.map(holding => {
+      const value = holding.quantity * holding.pricePerUnit;
+      const jpyValue = holding.currency === 'USD' && exchangeRate ? value * exchangeRate : value;
+      return {
+        id: holding.id,
+        currentValue: jpyValue,
+        originalRatio: totalAssetValue > 0 ? jpyValue / totalAssetValue : 0,
+        expectedReturn: holding.expectedReturn
+      };
+    });
 
     // 各ローンの年次返済スケジュールを事前計算
     const maxYearsToLife = lifeExpectancy - currentAge;
@@ -217,7 +233,7 @@ export class FireCalculator {
     const netMonthlySavings = monthlyNetIncome - monthlyExpenses - initialLoanPayments;
 
     // 年次計算（想定寿命まで）
-    let currentYearAssets = currentAssets;
+    let currentAssetBalances = [...assetBalances];
     
     for (let year = 0; year <= maxYearsToLife; year++) {
       const age = currentAge + year;
@@ -232,16 +248,38 @@ export class FireCalculator {
       const yearlySpecialExpenses = specialExpenseSchedule[year];
       const yearlySpecialIncomes = specialIncomeSchedule[year];
       
-      // 年間の資産変動を計算
-      // 前年資産に年利を適用
-      currentYearAssets = currentYearAssets * (1 + expectedAnnualReturn / 100);
+      // 1. 各資産に個別利回りを適用
+      currentAssetBalances = currentAssetBalances.map(asset => ({
+        ...asset,
+        currentValue: asset.currentValue > 0 ? asset.currentValue * (1 + asset.expectedReturn / 100) : asset.currentValue
+      }));
       
-      // 年間収支計算（統一ロジック）
+      // 2. 年間収支計算
       const totalIncome = yearlyWorkingIncome + yearlyPostRetirementIncome + yearlyPension + yearlySpecialIncomes;
       const totalExpenses = yearlyExpenses + yearlyLoanPayments + yearlySpecialExpenses;
-      currentYearAssets += totalIncome - totalExpenses;
+      const netCashFlow = totalIncome - totalExpenses;
       
-      const futureAssets = currentYearAssets;
+      // 3. 収支に応じて資産を調整
+      if (netCashFlow < 0) {
+        // 支出超過：各資産を初期構成比に応じて取り崩し
+        const totalCurrentAssets = currentAssetBalances.reduce((sum, asset) => sum + asset.currentValue, 0);
+        const withdrawalAmount = Math.abs(netCashFlow);
+        
+        if (totalCurrentAssets > 0) {
+          currentAssetBalances = currentAssetBalances.map(asset => ({
+            ...asset,
+            currentValue: Math.max(0, asset.currentValue - (withdrawalAmount * asset.originalRatio))
+          }));
+        }
+      } else if (netCashFlow > 0) {
+        // 収入超過：各資産を初期構成比に応じて増加
+        currentAssetBalances = currentAssetBalances.map(asset => ({
+          ...asset,
+          currentValue: asset.currentValue + (netCashFlow * asset.originalRatio)
+        }));
+      }
+      
+      const futureAssets = currentAssetBalances.reduce((sum, asset) => sum + asset.currentValue, 0);
       
       // FIRE達成判定: 資産が退職後の残り人生の支出を賄えるかチェック
       const yearsInRetirement = lifeExpectancy - retirementAge;
@@ -275,12 +313,9 @@ export class FireCalculator {
     // 退職後の残り人生の支出を賄える資産が必要
     const yearsInRetirement = lifeExpectancy - retirementAge;
     const requiredAssets = (finalExpenses + finalLoanPayments + finalSpecialExpenses) * yearsInRetirement;
-    const projectedAssets = this.calculateFutureValue(
-      currentAssets,
-      netMonthlySavings,
-      expectedAnnualReturn,
-      yearsToFire
-    );
+    
+    // 予測資産は最終年の総資産額
+    const projectedAssets = projections.length > 0 ? projections[projections.length - 1].assets : totalAssetValue;
 
     // 不足額計算（月次）
     const monthlyShortfall = isFireAchievable 
@@ -329,10 +364,14 @@ export class FireCalculator {
     returnChanges: number[]
   ): FireCalculationResult[] {
     return returnChanges.map(change => {
-      const newExpectedReturn = baseInput.expectedAnnualReturn + change;
+      // 全資産の利回りを一律で変更
+      const updatedAssetHoldings = baseInput.assetHoldings.map(holding => ({
+        ...holding,
+        expectedReturn: holding.expectedReturn + change
+      }));
       return this.calculateFire({
         ...baseInput,
-        expectedAnnualReturn: newExpectedReturn
+        assetHoldings: updatedAssetHoldings
       });
     });
   }

@@ -130,7 +130,7 @@ export class MonteCarloSimulator {
       currentAssets: calculateTotalAssets(baseInput.assetHoldings, baseInput.exchangeRate),
       monthlyExpenses: baseInput.monthlyExpenses,
       monthlySavings: (baseInput.annualNetIncome - baseInput.monthlyExpenses * 12) / 12,
-      expectedAnnualReturn: baseInput.expectedAnnualReturn,
+      expectedAnnualReturn: 0, // 個別利回り対応のため無効化
       returnVolatility,
       inflationRate: baseInput.inflationRate,
       inflationVolatility,
@@ -245,7 +245,7 @@ export class MonteCarloSimulator {
     return scenarios.map(scenario => {
       const adjustedInput = {
         ...baseInput,
-        expectedAnnualReturn: baseInput.expectedAnnualReturn + scenario.returnAdjustment
+        expectedAnnualReturn: 0 // 個別利回り対応のため無効化
       };
 
       const adjustedParameters = {
