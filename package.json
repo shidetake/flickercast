@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
+    "prebuild": "tsx scripts/update-symbols.ts",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "update-symbols": "tsx scripts/update-symbols.ts"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7",
@@ -29,6 +31,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.4.5",
     "tailwindcss": "^4",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }

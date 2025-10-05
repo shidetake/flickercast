@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { AutocompleteInput } from '@/components/ui/autocomplete-input';
 import { Label } from '@/components/ui/label';
 import { Tooltip } from '@/components/ui/tooltip';
 import { FireCalculator, FireCalculationInput } from '@/lib/fire-calculator';
@@ -14,8 +15,16 @@ import { saveToLocalStorage, loadFromLocalStorage, exportToJson, importFromJson 
 import { useToast, ToastProvider } from '@/lib/toast-context';
 import { calculateTotalAssets as calculateTotalAssetsUnified } from '@/lib/asset-calculator';
 
+interface StockSymbol {
+  symbol: string;
+  name: string;
+}
+
 function HomeContent() {
   const { showSuccess, showError } = useToast();
+
+  // 銘柄データの状態管理
+  const [stockSymbols, setStockSymbols] = useState<StockSymbol[]>([]);
 
   // 統計データに基づく想定寿命計算
   const calculateLifeExpectancy = (currentAge: number): number => {
@@ -161,6 +170,22 @@ function HomeContent() {
   // 為替レート取得
   useEffect(() => {
     fetchExchangeRate();
+  }, []);
+
+  // 銘柄データ取得
+  useEffect(() => {
+    const loadStockSymbols = async () => {
+      try {
+        const response = await fetch('/data/stock-symbols.json');
+        if (response.ok) {
+          const data = await response.json();
+          setStockSymbols(data);
+        }
+      } catch (error) {
+        console.error('銘柄データの読み込みに失敗:', error);
+      }
+    };
+    loadStockSymbols();
   }, []);
 
   // データ変更時にlocalStorageへ自動保存
@@ -688,10 +713,11 @@ function HomeContent() {
                       ) : (
                         // 通常モード: 全ての入力欄を表示
                         <div key={holding.id} className="grid grid-cols-5 gap-2 items-center">
-                          <Input
+                          <AutocompleteInput
                             placeholder="AAPL"
                             value={holding.name}
-                            onChange={(e) => updateAssetHolding(holding.id, 'name', e.target.value)}
+                            onChange={(value) => updateAssetHolding(holding.id, 'name', value)}
+                            symbols={stockSymbols}
                           />
                           <Input
                             type="number"

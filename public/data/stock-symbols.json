@@ -1,0 +1,318 @@
+[
+  {
+    "symbol": "AAPL",
+    "name": "Apple Inc."
+  },
+  {
+    "symbol": "MSFT",
+    "name": "Microsoft Corporation"
+  },
+  {
+    "symbol": "GOOGL",
+    "name": "Alphabet Inc."
+  },
+  {
+    "symbol": "AMZN",
+    "name": "Amazon.com Inc."
+  },
+  {
+    "symbol": "NVDA",
+    "name": "NVIDIA Corporation"
+  },
+  {
+    "symbol": "META",
+    "name": "Meta Platforms Inc."
+  },
+  {
+    "symbol": "TSLA",
+    "name": "Tesla Inc."
+  },
+  {
+    "symbol": "BRK.B",
+    "name": "Berkshire Hathaway Inc."
+  },
+  {
+    "symbol": "TSM",
+    "name": "Taiwan Semiconductor Manufacturing"
+  },
+  {
+    "symbol": "V",
+    "name": "Visa Inc."
+  },
+  {
+    "symbol": "JPM",
+    "name": "JPMorgan Chase & Co."
+  },
+  {
+    "symbol": "WMT",
+    "name": "Walmart Inc."
+  },
+  {
+    "symbol": "MA",
+    "name": "Mastercard Inc."
+  },
+  {
+    "symbol": "UNH",
+    "name": "UnitedHealth Group Inc."
+  },
+  {
+    "symbol": "JNJ",
+    "name": "Johnson & Johnson"
+  },
+  {
+    "symbol": "XOM",
+    "name": "Exxon Mobil Corporation"
+  },
+  {
+    "symbol": "PG",
+    "name": "Procter & Gamble Co."
+  },
+  {
+    "symbol": "HD",
+    "name": "The Home Depot Inc."
+  },
+  {
+    "symbol": "CVX",
+    "name": "Chevron Corporation"
+  },
+  {
+    "symbol": "MRK",
+    "name": "Merck & Co. Inc."
+  },
+  {
+    "symbol": "ABBV",
+    "name": "AbbVie Inc."
+  },
+  {
+    "symbol": "KO",
+    "name": "The Coca-Cola Company"
+  },
+  {
+    "symbol": "PEP",
+    "name": "PepsiCo Inc."
+  },
+  {
+    "symbol": "COST",
+    "name": "Costco Wholesale Corporation"
+  },
+  {
+    "symbol": "AVGO",
+    "name": "Broadcom Inc."
+  },
+  {
+    "symbol": "ADBE",
+    "name": "Adobe Inc."
+  },
+  {
+    "symbol": "MCD",
+    "name": "McDonald's Corporation"
+  },
+  {
+    "symbol": "CSCO",
+    "name": "Cisco Systems Inc."
+  },
+  {
+    "symbol": "TMO",
+    "name": "Thermo Fisher Scientific Inc."
+  },
+  {
+    "symbol": "ACN",
+    "name": "Accenture plc"
+  },
+  {
+    "symbol": "NFLX",
+    "name": "Netflix Inc."
+  },
+  {
+    "symbol": "CRM",
+    "name": "Salesforce Inc."
+  },
+  {
+    "symbol": "ORCL",
+    "name": "Oracle Corporation"
+  },
+  {
+    "symbol": "AMD",
+    "name": "Advanced Micro Devices Inc."
+  },
+  {
+    "symbol": "INTC",
+    "name": "Intel Corporation"
+  },
+  {
+    "symbol": "DIS",
+    "name": "The Walt Disney Company"
+  },
+  {
+    "symbol": "NKE",
+    "name": "NIKE Inc."
+  },
+  {
+    "symbol": "PYPL",
+    "name": "PayPal Holdings Inc."
+  },
+  {
+    "symbol": "QCOM",
+    "name": "QUALCOMM Inc."
+  },
+  {
+    "symbol": "BA",
+    "name": "The Boeing Company"
+  },
+  {
+    "symbol": "GE",
+    "name": "General Electric Company"
+  },
+  {
+    "symbol": "IBM",
+    "name": "International Business Machines"
+  },
+  {
+    "symbol": "UBER",
+    "name": "Uber Technologies Inc."
+  },
+  {
+    "symbol": "SHOP",
+    "name": "Shopify Inc."
+  },
+  {
+    "symbol": "SQ",
+    "name": "Block Inc."
+  },
+  {
+    "symbol": "COIN",
+    "name": "Coinbase Global Inc."
+  },
+  {
+    "symbol": "PLTR",
+    "name": "Palantir Technologies Inc."
+  },
+  {
+    "symbol": "SNOW",
+    "name": "Snowflake Inc."
+  },
+  {
+    "symbol": "RBLX",
+    "name": "Roblox Corporation"
+  },
+  {
+    "symbol": "ABNB",
+    "name": "Airbnb Inc."
+  },
+  {
+    "symbol": "VOO",
+    "name": "Vanguard S&P 500 ETF"
+  },
+  {
+    "symbol": "VTI",
+    "name": "Vanguard Total Stock Market ETF"
+  },
+  {
+    "symbol": "SPY",
+    "name": "SPDR S&P 500 ETF Trust"
+  },
+  {
+    "symbol": "QQQ",
+    "name": "Invesco QQQ Trust"
+  },
+  {
+    "symbol": "VT",
+    "name": "Vanguard Total World Stock ETF"
+  },
+  {
+    "symbol": "VEA",
+    "name": "Vanguard FTSE Developed Markets ETF"
+  },
+  {
+    "symbol": "VWO",
+    "name": "Vanguard FTSE Emerging Markets ETF"
+  },
+  {
+    "symbol": "AGG",
+    "name": "iShares Core U.S. Aggregate Bond ETF"
+  },
+  {
+    "symbol": "BND",
+    "name": "Vanguard Total Bond Market ETF"
+  },
+  {
+    "symbol": "7203.T",
+    "name": "トヨタ自動車"
+  },
+  {
+    "symbol": "9984.T",
+    "name": "ソフトバンクグループ"
+  },
+  {
+    "symbol": "6758.T",
+    "name": "ソニーグループ"
+  },
+  {
+    "symbol": "6861.T",
+    "name": "キーエンス"
+  },
+  {
+    "symbol": "8306.T",
+    "name": "三菱UFJフィナンシャル・グループ"
+  },
+  {
+    "symbol": "9433.T",
+    "name": "KDDI"
+  },
+  {
+    "symbol": "9432.T",
+    "name": "日本電信電話"
+  },
+  {
+    "symbol": "4502.T",
+    "name": "武田薬品工業"
+  },
+  {
+    "symbol": "6902.T",
+    "name": "デンソー"
+  },
+  {
+    "symbol": "8035.T",
+    "name": "東京エレクトロン"
+  },
+  {
+    "symbol": "6594.T",
+    "name": "日本電産"
+  },
+  {
+    "symbol": "4568.T",
+    "name": "第一三共"
+  },
+  {
+    "symbol": "6367.T",
+    "name": "ダイキン工業"
+  },
+  {
+    "symbol": "4063.T",
+    "name": "信越化学工業"
+  },
+  {
+    "symbol": "8058.T",
+    "name": "三菱商事"
+  },
+  {
+    "symbol": "2914.T",
+    "name": "JT (日本たばこ産業)"
+  },
+  {
+    "symbol": "7974.T",
+    "name": "任天堂"
+  },
+  {
+    "symbol": "9983.T",
+    "name": "ファーストリテイリング"
+  },
+  {
+    "symbol": "6098.T",
+    "name": "リクルートホールディングス"
+  },
+  {
+    "symbol": "4503.T",
+    "name": "アステラス製薬"
+  }
+]
