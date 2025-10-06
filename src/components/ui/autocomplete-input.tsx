@@ -125,7 +125,7 @@ const AutocompleteInput = React.forwardRef<HTMLInputElement, AutocompleteInputPr
 
         {/* ドロップダウンリスト */}
         {isFocused && hasUserTyped && isOpen && filteredSymbols.length > 0 && (
-          <div className="absolute z-50 mt-1 w-full rounded-md border border-gray-300 bg-white shadow-lg max-h-60 overflow-auto">
+          <div className="absolute z-50 mt-1 min-w-full w-max max-w-md rounded-md border border-gray-300 bg-white shadow-lg max-h-60 overflow-auto">
             {filteredSymbols.map((stock, index) => (
               <div
                 key={stock.symbol}
@@ -136,7 +136,7 @@ const AutocompleteInput = React.forwardRef<HTMLInputElement, AutocompleteInputPr
                 )}
               >
                 <div className="font-medium text-gray-900">{stock.symbol}</div>
-                <div className="text-xs text-gray-500 truncate">{stock.name}</div>
+                <div className="text-xs text-gray-500">{stock.name}</div>
               </div>
             ))}
           </div>
