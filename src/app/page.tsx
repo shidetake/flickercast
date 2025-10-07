@@ -20,6 +20,14 @@ interface StockSymbol {
   name: string;
 }
 
+// ティッカーシンボル（英字のみ）かどうかを判定
+function isTickerSymbol(symbol: string): boolean {
+  // .T などのサフィックスを除去
+  const baseSymbol = symbol.replace(/\.[A-Z]+$/i, '');
+  // 英字のみで構成されているか
+  return /^[A-Z]+$/i.test(baseSymbol);
+}
+
 function HomeContent() {
   const { showSuccess, showError } = useToast();
 
@@ -201,7 +209,9 @@ function HomeContent() {
       const found = stockSymbols.find(s => s.symbol === holding.name);
       if (found) {
         needsUpdate = true;
-        return { ...holding, name: found.name, symbol: found.symbol };
+        // ティッカーシンボルの場合はnameにsymbolを、それ以外はnameに会社名を保存
+        const displayName = isTickerSymbol(found.symbol) ? found.symbol : found.name;
+        return { ...holding, name: displayName, symbol: found.symbol };
       }
 
       return holding;
@@ -245,10 +255,13 @@ function HomeContent() {
 
   // サジェストから銘柄を選択した時のハンドラー
   const handleStockSelect = (id: string, stock: { symbol: string; name: string }) => {
+    // ティッカーシンボル（英字）の場合はnameにsymbolを、それ以外はnameに会社名を保存
+    const displayName = isTickerSymbol(stock.symbol) ? stock.symbol : stock.name;
+
     setInput(prev => ({
       ...prev,
       assetHoldings: prev.assetHoldings.map(holding =>
-        holding.id === id ? { ...holding, name: stock.name, symbol: stock.symbol } : holding
+        holding.id === id ? { ...holding, name: displayName, symbol: stock.symbol } : holding
       )
     }));
   };
@@ -263,10 +276,13 @@ function HomeContent() {
 
     if (found) {
       // 見つかった場合、nameとsymbolの両方を設定
+      // ティッカーシンボルの場合はnameにsymbolを、それ以外はnameに会社名を保存
+      const displayName = isTickerSymbol(found.symbol) ? found.symbol : found.name;
+
       setInput(prev => ({
         ...prev,
         assetHoldings: prev.assetHoldings.map(holding =>
-          holding.id === id ? { ...holding, name: found.name, symbol: found.symbol } : holding
+          holding.id === id ? { ...holding, name: displayName, symbol: found.symbol } : holding
         )
       }));
     }
