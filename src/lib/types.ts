@@ -227,7 +227,8 @@ export type Currency = 'JPY' | 'USD';
 // 銘柄保有情報
 export interface AssetHolding {
   id: string;
-  name: string;
+  name: string; // 表示用銘柄名（例: "DCダイワ外国株式"）
+  symbol?: string; // API用銘柄コード（例: "04313031"）、オプショナル
   quantity: number;
   pricePerUnit: number; // JPY: 円単位, USD: ドル単位
   currency: Currency; // 通貨種別

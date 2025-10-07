@@ -188,6 +188,30 @@ function HomeContent() {
     loadStockSymbols();
   }, []);
 
+  // マイグレーション: stockSymbols読み込み後、既存データのnameにsymbolが入っている場合に変換
+  useEffect(() => {
+    if (stockSymbols.length === 0) return;
+
+    let needsUpdate = false;
+    const updatedHoldings = input.assetHoldings.map(holding => {
+      // symbolフィールドが既に存在する場合はスキップ
+      if (holding.symbol) return holding;
+
+      // nameにsymbolっぽい値（JSONに存在する）が入っている場合
+      const found = stockSymbols.find(s => s.symbol === holding.name);
+      if (found) {
+        needsUpdate = true;
+        return { ...holding, name: found.name, symbol: found.symbol };
+      }
+
+      return holding;
+    });
+
+    if (needsUpdate) {
+      setInput(prev => ({ ...prev, assetHoldings: updatedHoldings }));
+    }
+  }, [stockSymbols]); // inputは依存から除外（無限ループ防止）
+
   // データ変更時にlocalStorageへ自動保存
   useEffect(() => {
     saveToLocalStorage(input);
@@ -217,6 +241,36 @@ function HomeContent() {
         holding.id === id ? { ...holding, [field]: value } : holding
       )
     }));
+  };
+
+  // サジェストから銘柄を選択した時のハンドラー
+  const handleStockSelect = (id: string, stock: { symbol: string; name: string }) => {
+    setInput(prev => ({
+      ...prev,
+      assetHoldings: prev.assetHoldings.map(holding =>
+        holding.id === id ? { ...holding, name: stock.name, symbol: stock.symbol } : holding
+      )
+    }));
+  };
+
+  // 入力欄からフォーカスが外れた時、自由記述をチェック
+  const handleStockNameBlur = (id: string, inputValue: string) => {
+    // JSONに存在するか検索（symbol or name で完全一致）
+    const found = stockSymbols.find(
+      s => s.symbol.toLowerCase() === inputValue.toLowerCase() ||
+           s.name.toLowerCase() === inputValue.toLowerCase()
+    );
+
+    if (found) {
+      // 見つかった場合、nameとsymbolの両方を設定
+      setInput(prev => ({
+        ...prev,
+        assetHoldings: prev.assetHoldings.map(holding =>
+          holding.id === id ? { ...holding, name: found.name, symbol: found.symbol } : holding
+        )
+      }));
+    }
+    // 見つからない場合は何もしない（カスタム銘柄として扱う）
   };
 
   const removeAssetHolding = (id: string) => {
@@ -717,6 +771,8 @@ function HomeContent() {
                             placeholder="AAPL"
                             value={holding.name}
                             onChange={(value) => updateAssetHolding(holding.id, 'name', value)}
+                            onSelect={(stock) => handleStockSelect(holding.id, stock)}
+                            onBlur={() => handleStockNameBlur(holding.id, holding.name)}
                             symbols={stockSymbols}
                           />
                           <Input

@@ -12,11 +12,12 @@ export interface AutocompleteInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   value: string;
   onChange: (value: string) => void;
+  onSelect?: (stock: StockSymbol) => void; // サジェストから選択した時のコールバック
   symbols?: StockSymbol[];
 }
 
 const AutocompleteInput = React.forwardRef<HTMLInputElement, AutocompleteInputProps>(
-  ({ className, value, onChange, symbols = [], ...props }, ref) => {
+  ({ className, value, onChange, onSelect, symbols = [], ...props }, ref) => {
     const [isOpen, setIsOpen] = React.useState(false);
     const [isFocused, setIsFocused] = React.useState(false);
     const [hasUserTyped, setHasUserTyped] = React.useState(false);
@@ -81,7 +82,12 @@ const AutocompleteInput = React.forwardRef<HTMLInputElement, AutocompleteInputPr
         case 'Enter':
           e.preventDefault();
           if (selectedIndex >= 0 && selectedIndex < filteredSymbols.length) {
-            onChange(filteredSymbols[selectedIndex].symbol);
+            const selectedStock = filteredSymbols[selectedIndex];
+            if (onSelect) {
+              onSelect(selectedStock);
+            } else {
+              onChange(selectedStock.symbol);
+            }
             setIsOpen(false);
           }
           break;
@@ -93,11 +99,15 @@ const AutocompleteInput = React.forwardRef<HTMLInputElement, AutocompleteInputPr
     };
 
     // 候補選択
-    const handleSelectSymbol = (e: React.MouseEvent, symbol: string) => {
+    const handleSelectSymbol = (e: React.MouseEvent, stock: StockSymbol) => {
       e.preventDefault();
       e.stopPropagation();
       setIsOpen(false);
-      onChange(symbol);
+      if (onSelect) {
+        onSelect(stock); // サジェストから選択した場合はonSelectを呼ぶ
+      } else {
+        onChange(stock.symbol); // 後方互換性のため
+      }
     };
 
     return (
@@ -129,7 +139,7 @@ const AutocompleteInput = React.forwardRef<HTMLInputElement, AutocompleteInputPr
             {filteredSymbols.map((stock, index) => (
               <div
                 key={stock.symbol}
-                onMouseDown={(e) => handleSelectSymbol(e, stock.symbol)}
+                onMouseDown={(e) => handleSelectSymbol(e, stock)}
                 className={cn(
                   'px-3 py-2 cursor-pointer text-sm hover:bg-blue-50',
                   index === selectedIndex && 'bg-blue-100'
