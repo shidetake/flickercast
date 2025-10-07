@@ -37,9 +37,8 @@ const AutocompleteInput = React.forwardRef<HTMLInputElement, AutocompleteInputPr
       const filtered = symbols
         .filter(
           (stock) =>
-            stock.symbol.toLowerCase() !== searchTerm && // 完全一致を除外
-            (stock.symbol.toLowerCase().includes(searchTerm) ||
-            stock.name.toLowerCase().includes(searchTerm))
+            stock.symbol.toLowerCase().includes(searchTerm) ||
+            stock.name.toLowerCase().includes(searchTerm)
         )
         .slice(0, 10); // 最大10件表示
 
