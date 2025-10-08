@@ -839,12 +839,12 @@ function HomeContent() {
                   <div className="space-y-2">
                     {/* ヘッダー行（金融資産が存在し、削除モードでない場合のみ表示） */}
                     {input.assetHoldings.length > 0 && !isDeleteMode && (
-                      <div className="grid grid-cols-5 gap-2 mb-2">
+                      <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr] gap-2 mb-2">
                         <Label className="text-sm font-medium">銘柄名</Label>
                         <Label className="text-sm font-medium">数量</Label>
                         <Label className="text-sm font-medium">単価</Label>
                         <Label className="text-sm font-medium">通貨</Label>
-                        <Label className="text-sm font-medium">利回り[%]</Label>
+                        <Label className="text-sm font-medium">利回り</Label>
                       </div>
                     )}
                     
@@ -866,7 +866,7 @@ function HomeContent() {
                         </div>
                       ) : (
                         // 通常モード: 全ての入力欄を表示
-                        <div key={holding.id} className="grid grid-cols-5 gap-2 items-center">
+                        <div key={holding.id} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr] gap-2 items-center">
                           <AutocompleteInput
                             placeholder="AAPL"
                             value={holding.name}
@@ -881,6 +881,7 @@ function HomeContent() {
                             value={holding.quantity || ''}
                             onChange={(e) => updateAssetHolding(holding.id, 'quantity', Number(e.target.value))}
                             min="0"
+                            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <Input
                             type="number"
@@ -889,24 +890,31 @@ function HomeContent() {
                             onChange={(e) => updateAssetHolding(holding.id, 'pricePerUnit', Number(e.target.value))}
                             min="0"
                             step="0.1"
+                            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <select
                             value={holding.currency || 'JPY'}
                             onChange={(e) => updateAssetHolding(holding.id, 'currency', e.target.value)}
-                            className="h-10 px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="h-10 px-1 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-w-0"
                           >
                             <option value="JPY">JPY</option>
                             <option value="USD">USD</option>
                           </select>
-                          <Input
-                            type="number"
-                            placeholder="5"
-                            value={holding.expectedReturn ?? ''}
-                            onChange={(e) => updateAssetHolding(holding.id, 'expectedReturn', Number(e.target.value))}
-                            min="0"
-                            max="30"
-                            step="0.1"
-                          />
+                          <div className="relative">
+                            <Input
+                              type="number"
+                              placeholder="5"
+                              value={holding.expectedReturn ?? ''}
+                              onChange={(e) => updateAssetHolding(holding.id, 'expectedReturn', Number(e.target.value))}
+                              min="0"
+                              max="30"
+                              step="0.1"
+                              className="pr-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
+                              %
+                            </span>
+                          </div>
                         </div>
                       )
                     ))}
