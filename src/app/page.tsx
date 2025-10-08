@@ -173,47 +173,46 @@ function HomeContent() {
       setNextSpecialIncomeId(calculateNextSpecialIncomeId(savedData.specialIncomes || []));
 
       // 株価自動取得（localStorageロード完了後）
-      const fetchStockPrices = async () => {
-        // symbolが設定されている銘柄を抽出
-        const symbolsToFetch = savedData.assetHoldings
-          .filter(h => h.symbol)
-          .map(h => h.symbol!);
+      const symbolsToFetch = savedData.assetHoldings
+        .filter(h => h.symbol)
+        .map(h => h.symbol!);
 
-        if (symbolsToFetch.length === 0) return;
+      if (symbolsToFetch.length > 0) {
+        // 共通化した関数を使用（ただしこの時点では定義されていないので、直接実装）
+        const fetchInitialPrices = async () => {
+          try {
+            const response = await fetch(`/api/stock-price?symbols=${symbolsToFetch.join(',')}`);
+            if (!response.ok) {
+              console.log('株価取得失敗:', response.status);
+              return;
+            }
 
-        try {
-          const response = await fetch(`/api/stock-price?symbols=${symbolsToFetch.join(',')}`);
-          if (!response.ok) {
-            console.log('株価取得失敗:', response.status);
-            return;
+            const data = await response.json();
+            if (data.prices && data.prices.length > 0) {
+              setInput(prev => ({
+                ...prev,
+                assetHoldings: prev.assetHoldings.map(holding => {
+                  if (!holding.symbol) return holding;
+
+                  const priceData = data.prices.find((p: { symbol: string }) => p.symbol === holding.symbol);
+                  if (priceData) {
+                    return {
+                      ...holding,
+                      pricePerUnit: priceData.price,
+                      currency: priceData.currency,
+                    };
+                  }
+                  return holding;
+                })
+              }));
+            }
+          } catch (error) {
+            console.log('株価取得エラー:', error);
           }
+        };
 
-          const data = await response.json();
-          if (data.prices && data.prices.length > 0) {
-            // 取得した株価で更新
-            setInput(prev => ({
-              ...prev,
-              assetHoldings: prev.assetHoldings.map(holding => {
-                if (!holding.symbol) return holding;
-
-                const priceData = data.prices.find((p: { symbol: string }) => p.symbol === holding.symbol);
-                if (priceData) {
-                  return {
-                    ...holding,
-                    pricePerUnit: priceData.price,
-                    currency: priceData.currency,
-                  };
-                }
-                return holding;
-              })
-            }));
-          }
-        } catch (error) {
-          console.log('株価取得エラー:', error);
-        }
-      };
-
-      fetchStockPrices();
+        fetchInitialPrices();
+      }
     }
   }, []);
 
@@ -269,6 +268,42 @@ function HomeContent() {
     saveToLocalStorage(input);
   }, [input]);
 
+  // 株価取得関数（共通化）
+  const fetchStockPricesForSymbols = async (symbols: string[]) => {
+    if (symbols.length === 0) return;
+
+    try {
+      const response = await fetch(`/api/stock-price?symbols=${symbols.join(',')}`);
+      if (!response.ok) {
+        console.log('株価取得失敗:', response.status);
+        return;
+      }
+
+      const data = await response.json();
+      if (data.prices && data.prices.length > 0) {
+        // 取得した株価で更新
+        setInput(prev => ({
+          ...prev,
+          assetHoldings: prev.assetHoldings.map(holding => {
+            if (!holding.symbol) return holding;
+
+            const priceData = data.prices.find((p: { symbol: string }) => p.symbol === holding.symbol);
+            if (priceData) {
+              return {
+                ...holding,
+                pricePerUnit: priceData.price,
+                currency: priceData.currency,
+              };
+            }
+            return holding;
+          })
+        }));
+      }
+    } catch (error) {
+      console.log('株価取得エラー:', error);
+    }
+  };
+
   // 金融資産管理のヘルパー関数
   const addAssetHolding = () => {
     const newHolding: AssetHolding = {
@@ -296,7 +331,7 @@ function HomeContent() {
   };
 
   // サジェストから銘柄を選択した時のハンドラー
-  const handleStockSelect = (id: string, stock: { symbol: string; name: string }) => {
+  const handleStockSelect = async (id: string, stock: { symbol: string; name: string }) => {
     // ティッカーシンボル（英字）の場合はnameにsymbolを、それ以外はnameに会社名を保存
     const displayName = isTickerSymbol(stock.symbol) ? stock.symbol : stock.name;
 
@@ -306,10 +341,13 @@ function HomeContent() {
         holding.id === id ? { ...holding, name: displayName, symbol: stock.symbol } : holding
       )
     }));
+
+    // 株価を自動取得
+    await fetchStockPricesForSymbols([stock.symbol]);
   };
 
   // 入力欄からフォーカスが外れた時、自由記述をチェック
-  const handleStockNameBlur = (id: string, inputValue: string) => {
+  const handleStockNameBlur = async (id: string, inputValue: string) => {
     // JSONに存在するか検索（symbol or name で完全一致）
     const found = stockSymbols.find(
       s => s.symbol.toLowerCase() === inputValue.toLowerCase() ||
@@ -327,6 +365,9 @@ function HomeContent() {
           holding.id === id ? { ...holding, name: displayName, symbol: found.symbol } : holding
         )
       }));
+
+      // 株価を自動取得
+      await fetchStockPricesForSymbols([found.symbol]);
     }
     // 見つからない場合は何もしない（カスタム銘柄として扱う）
   };
