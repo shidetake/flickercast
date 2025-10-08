@@ -1,13 +1,27 @@
 import { YahooFinanceData, BojInflationData, AlphaVantageData } from './types';
 
+// ティッカーシンボル（英字のみ）かどうかを判定
+function isTickerSymbol(symbol: string): boolean {
+  const baseSymbol = symbol.replace(/\.[A-Z]+$/i, '');
+  return /^[A-Z]+$/i.test(baseSymbol);
+}
+
 // Yahoo Finance API (無料版)
 export class YahooFinanceAPI {
   private static readonly BASE_URL = 'https://query1.finance.yahoo.com/v8/finance/chart';
 
   static async getStockPrice(symbol: string): Promise<YahooFinanceData | null> {
     try {
-      // 日本株の場合は .T を追加
-      const formattedSymbol = symbol.includes('.T') ? symbol : `${symbol}.T`;
+      // US株（英字のみ）の場合: そのまま
+      // 日本株（数字コード）の場合: .T を追加
+      let formattedSymbol: string;
+      if (isTickerSymbol(symbol)) {
+        // US株: そのまま
+        formattedSymbol = symbol;
+      } else {
+        // 日本株: .T を追加（既に.Tがある場合はそのまま）
+        formattedSymbol = symbol.includes('.T') ? symbol : `${symbol}.T`;
+      }
       
       const response = await fetch(`${this.BASE_URL}/${formattedSymbol}`);
       

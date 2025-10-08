@@ -160,7 +160,7 @@ function HomeContent() {
     const savedData = loadFromLocalStorage();
     if (savedData) {
       setInput(savedData);
-      
+
       // nextAssetIdを適切に設定
       setNextAssetId(calculateNextAssetId(savedData.assetHoldings));
       // nextLoanIdを適切に設定
@@ -171,7 +171,49 @@ function HomeContent() {
       setNextSpecialExpenseId(calculateNextSpecialExpenseId(savedData.specialExpenses || []));
       // nextSpecialIncomeIdを適切に設定
       setNextSpecialIncomeId(calculateNextSpecialIncomeId(savedData.specialIncomes || []));
-      
+
+      // 株価自動取得（localStorageロード完了後）
+      const fetchStockPrices = async () => {
+        // symbolが設定されている銘柄を抽出
+        const symbolsToFetch = savedData.assetHoldings
+          .filter(h => h.symbol)
+          .map(h => h.symbol!);
+
+        if (symbolsToFetch.length === 0) return;
+
+        try {
+          const response = await fetch(`/api/stock-price?symbols=${symbolsToFetch.join(',')}`);
+          if (!response.ok) {
+            console.log('株価取得失敗:', response.status);
+            return;
+          }
+
+          const data = await response.json();
+          if (data.prices && data.prices.length > 0) {
+            // 取得した株価で更新
+            setInput(prev => ({
+              ...prev,
+              assetHoldings: prev.assetHoldings.map(holding => {
+                if (!holding.symbol) return holding;
+
+                const priceData = data.prices.find((p: { symbol: string }) => p.symbol === holding.symbol);
+                if (priceData) {
+                  return {
+                    ...holding,
+                    pricePerUnit: priceData.price,
+                    currency: priceData.currency,
+                  };
+                }
+                return holding;
+              })
+            }));
+          }
+        } catch (error) {
+          console.log('株価取得エラー:', error);
+        }
+      };
+
+      fetchStockPrices();
     }
   }, []);
 
@@ -295,6 +337,7 @@ function HomeContent() {
       assetHoldings: prev.assetHoldings.filter(holding => holding.id !== id)
     }));
   };
+
 
   // 年金管理のヘルパー関数
   const addPensionPlan = () => {
