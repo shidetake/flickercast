@@ -13,23 +13,9 @@ interface CachedStockPrices {
   lastUpdated: Date;
 }
 
-interface MutualFundConfig {
-  url: string;
-  method: 'nikkei';
-}
-
 let stockPricesCache: CachedStockPrices | null = null;
 const CACHE_DURATION = 60 * 60 * 1000; // 1時間（株式・ETF）
 const MUTUAL_FUND_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24時間（投資信託）
-
-// 投資信託のスクレイピング設定（協会コード → URL/メソッドマッピング）
-const MUTUAL_FUND_SCRAPING_CONFIG: Record<string, MutualFundConfig> = {
-  '89311199': { // SBI・V・S&P500インデックス・ファンド
-    url: 'https://www.nikkei.com/nkd/fund/?fcode=89311199',
-    method: 'nikkei'
-  },
-  // 他の投資信託も追加可能
-};
 
 // ティッカーシンボル（英字のみ）かどうかを判定
 function isTickerSymbol(symbol: string): boolean {
@@ -37,9 +23,9 @@ function isTickerSymbol(symbol: string): boolean {
   return /^[A-Z]+$/i.test(baseSymbol);
 }
 
-// 投資信託かどうかを判定（協会コード: 8桁の数字）
-function isMutualFund(symbol: string): boolean {
-  return /^\d{8}$/.test(symbol);
+// 投資信託かどうかを判定（協会コード: 8桁の英数字）
+function isMutualFundCode(symbol: string): boolean {
+  return /^[0-9A-F]{8}$/i.test(symbol);
 }
 
 // 日経のページから投資信託の基準価額をスクレイピング
@@ -105,17 +91,9 @@ async function scrapeNikkeiMutualFund(url: string): Promise<number | null> {
 
 // 投資信託の価格を取得（スクレイピング）
 async function getMutualFundPrice(symbol: string): Promise<StockPriceData | null> {
-  const config = MUTUAL_FUND_SCRAPING_CONFIG[symbol];
-  if (!config) {
-    console.log('Mutual fund config not found:', symbol);
-    return null;
-  }
-
-  let price: number | null = null;
-
-  if (config.method === 'nikkei') {
-    price = await scrapeNikkeiMutualFund(config.url);
-  }
+  // URL動的生成（マッピングテーブル不要）
+  const url = `https://www.nikkei.com/nkd/fund/?fcode=${symbol}`;
+  const price = await scrapeNikkeiMutualFund(url);
 
   if (price === null) {
     return null;
@@ -168,9 +146,9 @@ export async function GET(request: Request) {
       }
     }
 
-    // 銘柄を投資信託と株式に分類
-    const mutualFundSymbols = symbols.filter(s => isMutualFund(s));
-    const stockSymbols = symbols.filter(s => !isMutualFund(s));
+    // 銘柄を投資信託と株式に分類（事前に判定して無駄なAPI呼び出しを回避）
+    const mutualFundSymbols = symbols.filter(s => isMutualFundCode(s));
+    const stockSymbols = symbols.filter(s => !isMutualFundCode(s));
 
     const prices: StockPriceData[] = [];
 
