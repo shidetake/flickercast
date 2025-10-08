@@ -650,36 +650,54 @@ function HomeContent() {
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="currentAge">現在年齢</Label>
-                      <Input
-                        id="currentAge"
-                        type="number"
-                        value={input.currentAge}
-                        onChange={(e) => handleInputChange('currentAge', Number(e.target.value))}
-                        min="18"
-                        max="100"
-                      />
+                      <div className="relative">
+                        <Input
+                          id="currentAge"
+                          type="number"
+                          value={input.currentAge}
+                          onChange={(e) => handleInputChange('currentAge', Number(e.target.value))}
+                          min="18"
+                          max="100"
+                          className="pr-8"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
+                          歳
+                        </span>
+                      </div>
                     </div>
                     <div>
                       <Label htmlFor="retirementAge">退職希望年齢</Label>
-                      <Input
-                        id="retirementAge"
-                        type="number"
-                        value={input.retirementAge}
-                        onChange={(e) => handleInputChange('retirementAge', Number(e.target.value))}
-                        min="30"
-                        max="100"
-                      />
+                      <div className="relative">
+                        <Input
+                          id="retirementAge"
+                          type="number"
+                          value={input.retirementAge}
+                          onChange={(e) => handleInputChange('retirementAge', Number(e.target.value))}
+                          min="30"
+                          max="100"
+                          className="pr-8"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
+                          歳
+                        </span>
+                      </div>
                     </div>
                     <div>
                       <Label htmlFor="lifeExpectancy">想定寿命</Label>
-                      <Input
-                        id="lifeExpectancy"
-                        type="number"
-                        value={input.lifeExpectancy}
-                        onChange={(e) => handleInputChange('lifeExpectancy', Number(e.target.value))}
-                        min="70"
-                        max="120"
-                      />
+                      <div className="relative">
+                        <Input
+                          id="lifeExpectancy"
+                          type="number"
+                          value={input.lifeExpectancy}
+                          onChange={(e) => handleInputChange('lifeExpectancy', Number(e.target.value))}
+                          min="70"
+                          max="120"
+                          className="pr-8"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
+                          歳
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1004,15 +1022,21 @@ function HomeContent() {
                             min="0"
                             step="1"
                           />
-                          <Input
-                            type="number"
-                            placeholder="60"
-                            value={income.targetAge ?? ''}
-                            onChange={(e) => updateSpecialIncome(income.id, 'targetAge', Number(e.target.value))}
-                            min="18"
-                            max="100"
-                            step="1"
-                          />
+                          <div className="relative">
+                            <Input
+                              type="number"
+                              placeholder="60"
+                              value={income.targetAge ?? ''}
+                              onChange={(e) => updateSpecialIncome(income.id, 'targetAge', Number(e.target.value))}
+                              min="18"
+                              max="100"
+                              step="1"
+                              className="pr-8"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
+                              歳
+                            </span>
+                          </div>
                         </div>
                       )
                     ))}
@@ -1236,15 +1260,21 @@ function HomeContent() {
                             min="0"
                             step="1"
                           />
-                          <Input
-                            type="number"
-                            placeholder="40"
-                            value={expense.targetAge ?? ''}
-                            onChange={(e) => updateSpecialExpense(expense.id, 'targetAge', Number(e.target.value))}
-                            min="18"
-                            max="100"
-                            step="1"
-                          />
+                          <div className="relative">
+                            <Input
+                              type="number"
+                              placeholder="40"
+                              value={expense.targetAge ?? ''}
+                              onChange={(e) => updateSpecialExpense(expense.id, 'targetAge', Number(e.target.value))}
+                              min="18"
+                              max="100"
+                              step="1"
+                              className="pr-8"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
+                              歳
+                            </span>
+                          </div>
                         </div>
                       )
                     ))}
