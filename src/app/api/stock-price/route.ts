@@ -8,9 +8,15 @@ interface StockPriceData {
   currency: 'JPY' | 'USD';
 }
 
+interface CachedPriceData {
+  symbol: string;
+  price: number;
+  currency: 'JPY' | 'USD';
+  cachedAt: Date;  // 個別キャッシュ時刻
+}
+
 interface CachedStockPrices {
-  prices: StockPriceData[];
-  lastUpdated: Date;
+  prices: CachedPriceData[];
 }
 
 let stockPricesCache: CachedStockPrices | null = null;
@@ -128,20 +134,26 @@ export async function GET(request: Request) {
       });
     }
 
-    // キャッシュが有効かチェック
-    if (stockPricesCache &&
-        (Date.now() - stockPricesCache.lastUpdated.getTime()) < CACHE_DURATION) {
-      // キャッシュされた銘柄のみをフィルタリング
-      const cachedPrices = stockPricesCache.prices.filter(p =>
-        symbols.includes(p.symbol) || symbols.some(s => p.symbol.includes(s))
-      );
+    // キャッシュが有効かチェック（銘柄ごとに個別判定）
+    if (stockPricesCache) {
+      const now = Date.now();
+      const validCachedPrices = stockPricesCache.prices.filter(p => {
+        // リクエストされた銘柄に含まれるか
+        const isRequested = symbols.includes(p.symbol) || symbols.some(s => p.symbol.includes(s));
+        if (!isRequested) return false;
 
-      // 全ての要求された銘柄がキャッシュにある場合
-      if (cachedPrices.length === symbols.length) {
+        // キャッシュ有効期限判定（投資信託は24時間、株式は1時間）
+        const isMutualFund = isMutualFundCode(p.symbol);
+        const duration = isMutualFund ? MUTUAL_FUND_CACHE_DURATION : CACHE_DURATION;
+        return (now - p.cachedAt.getTime()) < duration;
+      });
+
+      // 全ての要求された銘柄が有効なキャッシュにある場合
+      if (validCachedPrices.length === symbols.length) {
         return NextResponse.json({
-          prices: cachedPrices,
+          prices: validCachedPrices.map(({ symbol, price, currency }) => ({ symbol, price, currency })),
           cached: true,
-          lastUpdated: stockPricesCache.lastUpdated,
+          lastUpdated: new Date(),
         });
       }
     }
@@ -190,12 +202,26 @@ export async function GET(request: Request) {
       prices.push(...mutualFundPrices);
     }
 
-    // キャッシュを更新
+    // キャッシュを更新（個別タイムスタンプ付き）
     const now = new Date();
-    stockPricesCache = {
-      prices,
-      lastUpdated: now,
-    };
+    const cachedPrices: CachedPriceData[] = prices.map(p => ({
+      ...p,
+      cachedAt: now,
+    }));
+
+    // 既存キャッシュと統合（古いデータを保持しつつ、新しいデータで上書き）
+    if (stockPricesCache) {
+      const existingPrices = stockPricesCache.prices.filter(
+        existing => !prices.some(newPrice => newPrice.symbol === existing.symbol)
+      );
+      stockPricesCache = {
+        prices: [...existingPrices, ...cachedPrices],
+      };
+    } else {
+      stockPricesCache = {
+        prices: cachedPrices,
+      };
+    }
 
     return NextResponse.json({
       prices,
