@@ -1043,20 +1043,26 @@ function HomeContent() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2 h-6">
-                          <Label htmlFor="inflationRate">インフレ率 [%]</Label>
+                          <Label htmlFor="inflationRate">インフレ率</Label>
                           <Tooltip content="将来の支出がインフレ率に応じて増減します。下げると楽観的な想定に、上げると厳しめの想定になります。">
                             <span className="w-4 h-4 bg-gray-500 text-white rounded-full flex items-center justify-center text-xs cursor-help">?</span>
                           </Tooltip>
                         </div>
-                        <Input
-                          id="inflationRate"
-                          type="number"
-                          value={input.inflationRate}
-                          onChange={(e) => handleInputChange('inflationRate', Number(e.target.value))}
-                          min="0"
-                          max="15"
-                          step="0.1"
-                        />
+                        <div className="relative">
+                          <Input
+                            id="inflationRate"
+                            type="number"
+                            value={input.inflationRate}
+                            onChange={(e) => handleInputChange('inflationRate', Number(e.target.value))}
+                            min="0"
+                            max="15"
+                            step="0.1"
+                            className="pr-8"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
+                            %
+                          </span>
+                        </div>
                       </div>
                     </div>
 
@@ -1087,11 +1093,11 @@ function HomeContent() {
                   <div className="space-y-2">
                     {/* ヘッダー行（ローンが存在し、削除モードでない場合のみ表示） */}
                     {input.loans.length > 0 && !isLoanDeleteMode && (
-                      <div className="grid grid-cols-4 gap-2 mb-2">
+                      <div className="grid grid-cols-[1.5fr_0.9fr_0.9fr_1.1fr] gap-2 mb-2">
                         <Label className="text-sm font-medium">ローン名</Label>
                         <Label className="text-sm font-medium">残高 [万円]</Label>
-                        <Label className="text-sm font-medium">金利 [%]</Label>
-                        <Label className="text-sm font-medium">返済額 [万円/月]</Label>
+                        <Label className="text-sm font-medium">金利</Label>
+                        <Label className="text-sm font-medium">月返済 [万円]</Label>
                       </div>
                     )}
                     
@@ -1113,7 +1119,7 @@ function HomeContent() {
                         </div>
                       ) : (
                         // 通常モード: 全ての入力欄を表示
-                        <div key={loan.id} className="grid grid-cols-4 gap-2 items-center">
+                        <div key={loan.id} className="grid grid-cols-[1.5fr_0.9fr_0.9fr_1fr] gap-2 items-center">
                           <Input
                             placeholder="住宅ローン"
                             value={loan.name}
@@ -1126,16 +1132,23 @@ function HomeContent() {
                             onChange={(e) => updateLoan(loan.id, 'balance', Number(e.target.value) * 10000)}
                             min="0"
                             step="1"
+                            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
-                          <Input
-                            type="number"
-                            placeholder="3.5"
-                            value={loan.interestRate ?? ''}
-                            onChange={(e) => updateLoan(loan.id, 'interestRate', Number(e.target.value))}
-                            min="0"
-                            max="30"
-                            step="0.01"
-                          />
+                          <div className="relative">
+                            <Input
+                              type="number"
+                              placeholder="3.5"
+                              value={loan.interestRate ?? ''}
+                              onChange={(e) => updateLoan(loan.id, 'interestRate', Number(e.target.value))}
+                              min="0"
+                              max="30"
+                              step="0.01"
+                              className="pr-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
+                              %
+                            </span>
+                          </div>
                           <Input
                             type="number"
                             placeholder="10"
@@ -1143,6 +1156,7 @@ function HomeContent() {
                             onChange={(e) => updateLoan(loan.id, 'monthlyPayment', Number(e.target.value) * 10000)}
                             min="0"
                             step="0.1"
+                            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                         </div>
                       )
