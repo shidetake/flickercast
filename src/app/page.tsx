@@ -451,7 +451,6 @@ function HomeContent() {
       id: nextSpecialExpenseId.toString(),
       name: '',
       amount: 0,
-      targetAge: input.currentAge + 5,
     };
     setInput(prev => ({
       ...prev,
@@ -482,7 +481,6 @@ function HomeContent() {
       id: nextSpecialIncomeId.toString(),
       name: '',
       amount: 0,
-      targetAge: input.currentAge + 10,
     };
     setInput(prev => ({
       ...prev,
@@ -1025,7 +1023,7 @@ function HomeContent() {
                           <div className="relative">
                             <Input
                               type="number"
-                              placeholder="60"
+                              placeholder={input.currentAge > 0 ? input.currentAge.toString() : "50"}
                               value={income.targetAge ?? ''}
                               onChange={(e) => updateSpecialIncome(income.id, 'targetAge', Number(e.target.value))}
                               min="18"
@@ -1263,7 +1261,7 @@ function HomeContent() {
                           <div className="relative">
                             <Input
                               type="number"
-                              placeholder="40"
+                              placeholder={input.currentAge > 0 ? input.currentAge.toString() : "50"}
                               value={expense.targetAge ?? ''}
                               onChange={(e) => updateSpecialExpense(expense.id, 'targetAge', Number(e.target.value))}
                               min="18"
