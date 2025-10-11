@@ -67,7 +67,7 @@ function HomeContent() {
       { id: '1', name: '', currency: 'JPY', startAge: 65, endAge: calculateLifeExpectancy(38) },
     ], // デフォルトは1つの空の年金
     specialExpenses: [
-      { id: '1', name: '', amount: 0, targetAge: 40 },
+      { id: '1', name: '', amount: 0 },
     ], // デフォルトは1つの空の特別支出
     specialIncomes: [
       { id: '1', name: '', amount: 0 },
