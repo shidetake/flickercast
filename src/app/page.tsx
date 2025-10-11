@@ -58,10 +58,10 @@ function HomeContent() {
     currentAge: 38,
     retirementAge: 65,
     assetHoldings: [
-      { id: '1', name: '', quantity: 0, pricePerUnit: 0, currency: 'JPY', expectedReturn: 5 },
+      { id: '1', name: '', quantity: 0, pricePerUnit: 0, currency: 'JPY' },
     ], // デフォルトは1つの空の銘柄
     loans: [
-      { id: '1', name: '', balance: 0, interestRate: 0, monthlyPayment: 0 },
+      { id: '1', name: '', balance: 0, monthlyPayment: 0 },
     ], // デフォルトは1つの空のローン
     pensionPlans: [
       { id: '1', name: '', annualAmount: 0, currency: 'JPY', startAge: 65, endAge: calculateLifeExpectancy(38) },
@@ -312,7 +312,6 @@ function HomeContent() {
       quantity: 0,
       pricePerUnit: 0,
       currency: 'JPY',
-      expectedReturn: 5,
     };
     setInput(prev => ({
       ...prev,
@@ -418,7 +417,6 @@ function HomeContent() {
       id: nextLoanId.toString(),
       name: '',
       balance: 0,
-      interestRate: 0,
       monthlyPayment: 0,
     };
     setInput(prev => ({
@@ -1158,7 +1156,7 @@ function HomeContent() {
                           <div className="relative">
                             <Input
                               type="number"
-                              placeholder="3.5"
+                              placeholder="0.1"
                               value={loan.interestRate ?? ''}
                               onChange={(e) => updateLoan(loan.id, 'interestRate', Number(e.target.value))}
                               min="0"
