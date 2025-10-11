@@ -385,7 +385,6 @@ function HomeContent() {
     const newPensionPlan: PensionPlan = {
       id: nextPensionId.toString(),
       name: '',
-      annualAmount: 0,
       currency: 'JPY',
       startAge: 65,
       endAge: calculateLifeExpectancy(input.currentAge),
@@ -759,7 +758,7 @@ function HomeContent() {
                     {input.pensionPlans.length > 0 && !isPensionDeleteMode && (
                       <div className="grid grid-cols-[1.5fr_1.5fr_1fr_1fr_1fr] gap-3 mb-2">
                         <Label className="text-sm font-medium">年金名</Label>
-                        <Label className="text-sm font-medium">受給額 [円・ドル/年]</Label>
+                        <Label className="text-sm font-medium">年受給額</Label>
                         <Label className="text-sm font-medium">通貨</Label>
                         <Label className="text-sm font-medium">開始年齢</Label>
                         <Label className="text-sm font-medium">終了年齢</Label>
@@ -792,8 +791,8 @@ function HomeContent() {
                           />
                           <Input
                             type="number"
-                            placeholder={plan.currency === 'USD' ? '20000' : '2000000'}
-                            value={plan.annualAmount}
+                            placeholder="1800000"
+                            value={plan.annualAmount ?? ''}
                             onChange={(e) => updatePensionPlan(plan.id, 'annualAmount', Number(e.target.value))}
                             min="0"
                             step="1"
@@ -801,7 +800,7 @@ function HomeContent() {
                           <select
                             value={plan.currency || 'JPY'}
                             onChange={(e) => updatePensionPlan(plan.id, 'currency', e.target.value)}
-                            className="h-10 px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="h-10 px-1 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-w-0"
                           >
                             <option value="JPY">JPY</option>
                             <option value="USD">USD</option>
