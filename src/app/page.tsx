@@ -64,7 +64,7 @@ function HomeContent() {
       { id: '1', name: '', balance: 0, monthlyPayment: 0 },
     ], // デフォルトは1つの空のローン
     pensionPlans: [
-      { id: '1', name: '', annualAmount: 0, currency: 'JPY', startAge: 65, endAge: calculateLifeExpectancy(38) },
+      { id: '1', name: '', currency: 'JPY', startAge: 65, endAge: calculateLifeExpectancy(38) },
     ], // デフォルトは1つの空の年金
     specialExpenses: [
       { id: '1', name: '', amount: 0, targetAge: 40 },
