@@ -122,7 +122,6 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
     'monthlyExpenses',
     'annualNetIncome',
     'postRetirementAnnualIncome',
-    'expectedAnnualReturn',
     'inflationRate',
     'lifeExpectancy'
   ];
@@ -137,11 +136,10 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
   // 型チェック
   const numberFields = [
     'currentAge',
-    'retirementAge', 
+    'retirementAge',
     'monthlyExpenses',
     'annualNetIncome',
     'postRetirementAnnualIncome',
-    'expectedAnnualReturn',
     'inflationRate',
     'lifeExpectancy'
   ];
@@ -174,7 +172,7 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
         return false;
       }
     }
-    
+
     if (typeof holding.id !== 'string' ||
         typeof holding.name !== 'string' ||
         typeof holding.quantity !== 'number' ||
@@ -187,6 +185,12 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
         pricePerUnit: `${holding.pricePerUnit} (${typeof holding.pricePerUnit})`,
         currency: `${holding.currency} (${typeof holding.currency})`
       });
+      return false;
+    }
+
+    // expectedReturnはオプショナル、存在する場合は数値チェック
+    if ('expectedReturn' in holding && typeof holding.expectedReturn !== 'number') {
+      console.error(`バリデーションエラー: assetHoldings[${i}].expectedReturn は数値である必要があります (実際の値: ${holding.expectedReturn}, 型: ${typeof holding.expectedReturn})`);
       return false;
     }
     
@@ -210,26 +214,30 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
       return false;
     }
     
-    const requiredLoanFields = ['id', 'name', 'balance', 'interestRate', 'monthlyPayment'];
+    const requiredLoanFields = ['id', 'name', 'balance', 'monthlyPayment'];
     for (const field of requiredLoanFields) {
       if (!(field in loan)) {
         console.error(`バリデーションエラー: loans[${i}].${field} が見つかりません`);
         return false;
       }
     }
-    
+
     if (typeof loan.id !== 'string' ||
         typeof loan.name !== 'string' ||
         typeof loan.balance !== 'number' ||
-        typeof loan.interestRate !== 'number' ||
         typeof loan.monthlyPayment !== 'number') {
       console.error(`バリデーションエラー: loans[${i}]のフィールド型が不正です`, {
         id: `${loan.id} (${typeof loan.id})`,
         name: `${loan.name} (${typeof loan.name})`,
         balance: `${loan.balance} (${typeof loan.balance})`,
-        interestRate: `${loan.interestRate} (${typeof loan.interestRate})`,
         monthlyPayment: `${loan.monthlyPayment} (${typeof loan.monthlyPayment})`
       });
+      return false;
+    }
+
+    // interestRateはオプショナル、存在する場合は数値チェック
+    if ('interestRate' in loan && typeof loan.interestRate !== 'number') {
+      console.error(`バリデーションエラー: loans[${i}].interestRate は数値である必要があります (実際の値: ${loan.interestRate}, 型: ${typeof loan.interestRate})`);
       return false;
     }
   }
