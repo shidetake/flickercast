@@ -70,7 +70,7 @@ function HomeContent() {
       { id: '1', name: '', amount: 0, targetAge: 40 },
     ], // デフォルトは1つの空の特別支出
     specialIncomes: [
-      { id: '1', name: '', amount: 0, targetAge: 50 },
+      { id: '1', name: '', amount: 0 },
     ], // デフォルトは1つの空の臨時収入
     monthlyExpenses: 300000, // 内部では円のまま
     annualNetIncome: 10000000, // 内部では円のまま（1000万円）
