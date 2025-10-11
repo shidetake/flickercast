@@ -256,26 +256,30 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
       return false;
     }
     
-    const requiredPensionFields = ['id', 'name', 'annualAmount', 'startAge', 'endAge'];
+    const requiredPensionFields = ['id', 'name', 'startAge', 'endAge'];
     for (const field of requiredPensionFields) {
       if (!(field in pension)) {
         console.error(`バリデーションエラー: pensionPlans[${i}].${field} が見つかりません`);
         return false;
       }
     }
-    
+
     if (typeof pension.id !== 'string' ||
         typeof pension.name !== 'string' ||
-        typeof pension.annualAmount !== 'number' ||
         typeof pension.startAge !== 'number' ||
         typeof pension.endAge !== 'number') {
       console.error(`バリデーションエラー: pensionPlans[${i}]のフィールド型が不正です`, {
         id: `${pension.id} (${typeof pension.id})`,
         name: `${pension.name} (${typeof pension.name})`,
-        annualAmount: `${pension.annualAmount} (${typeof pension.annualAmount})`,
         startAge: `${pension.startAge} (${typeof pension.startAge})`,
         endAge: `${pension.endAge} (${typeof pension.endAge})`
       });
+      return false;
+    }
+
+    // annualAmountはオプショナル、存在する場合は数値チェック
+    if ('annualAmount' in pension && typeof pension.annualAmount !== 'number') {
+      console.error(`バリデーションエラー: pensionPlans[${i}].annualAmount は数値である必要があります (実際の値: ${pension.annualAmount}, 型: ${typeof pension.annualAmount})`);
       return false;
     }
   }
@@ -294,24 +298,28 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
       return false;
     }
     
-    const requiredExpenseFields = ['id', 'name', 'amount', 'targetAge'];
+    const requiredExpenseFields = ['id', 'name', 'amount'];
     for (const field of requiredExpenseFields) {
       if (!(field in expense)) {
         console.error(`バリデーションエラー: specialExpenses[${i}].${field} が見つかりません`);
         return false;
       }
     }
-    
+
     if (typeof expense.id !== 'string' ||
         typeof expense.name !== 'string' ||
-        typeof expense.amount !== 'number' ||
-        typeof expense.targetAge !== 'number') {
+        typeof expense.amount !== 'number') {
       console.error(`バリデーションエラー: specialExpenses[${i}]のフィールド型が不正です`, {
         id: `${expense.id} (${typeof expense.id})`,
         name: `${expense.name} (${typeof expense.name})`,
-        amount: `${expense.amount} (${typeof expense.amount})`,
-        targetAge: `${expense.targetAge} (${typeof expense.targetAge})`
+        amount: `${expense.amount} (${typeof expense.amount})`
       });
+      return false;
+    }
+
+    // targetAgeはオプショナル、存在する場合は数値チェック
+    if ('targetAge' in expense && typeof expense.targetAge !== 'number') {
+      console.error(`バリデーションエラー: specialExpenses[${i}].targetAge は数値である必要があります (実際の値: ${expense.targetAge}, 型: ${typeof expense.targetAge})`);
       return false;
     }
   }
@@ -330,24 +338,28 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
       return false;
     }
     
-    const requiredIncomeFields = ['id', 'name', 'amount', 'targetAge'];
+    const requiredIncomeFields = ['id', 'name', 'amount'];
     for (const field of requiredIncomeFields) {
       if (!(field in income)) {
         console.error(`バリデーションエラー: specialIncomes[${i}].${field} が見つかりません`);
         return false;
       }
     }
-    
+
     if (typeof income.id !== 'string' ||
         typeof income.name !== 'string' ||
-        typeof income.amount !== 'number' ||
-        typeof income.targetAge !== 'number') {
+        typeof income.amount !== 'number') {
       console.error(`バリデーションエラー: specialIncomes[${i}]のフィールド型が不正です`, {
         id: `${income.id} (${typeof income.id})`,
         name: `${income.name} (${typeof income.name})`,
-        amount: `${income.amount} (${typeof income.amount})`,
-        targetAge: `${income.targetAge} (${typeof income.targetAge})`
+        amount: `${income.amount} (${typeof income.amount})`
       });
+      return false;
+    }
+
+    // targetAgeはオプショナル、存在する場合は数値チェック
+    if ('targetAge' in income && typeof income.targetAge !== 'number') {
+      console.error(`バリデーションエラー: specialIncomes[${i}].targetAge は数値である必要があります (実際の値: ${income.targetAge}, 型: ${typeof income.targetAge})`);
       return false;
     }
   }
