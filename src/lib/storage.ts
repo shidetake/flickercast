@@ -117,11 +117,10 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
     'assetHoldings',
     'loans',
     'pensionPlans',
+    'salaryPlans',
     'specialExpenses',
     'specialIncomes',
     'monthlyExpenses',
-    'annualNetIncome',
-    'postRetirementAnnualIncome',
     'inflationRate',
     'lifeExpectancy'
   ];
@@ -138,8 +137,6 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
     'currentAge',
     'retirementAge',
     'monthlyExpenses',
-    'annualNetIncome',
-    'postRetirementAnnualIncome',
     'inflationRate',
     'lifeExpectancy'
   ];
@@ -247,7 +244,7 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
     console.error('バリデーションエラー: pensionPlansは配列である必要があります', data.pensionPlans);
     return false;
   }
-  
+
   // 各pensionPlanの構造チェック
   for (let i = 0; i < data.pensionPlans.length; i++) {
     const pension = data.pensionPlans[i];
@@ -255,7 +252,7 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
       console.error(`バリデーションエラー: pensionPlans[${i}]がオブジェクトではありません`, pension);
       return false;
     }
-    
+
     const requiredPensionFields = ['id', 'name', 'startAge', 'endAge'];
     for (const field of requiredPensionFields) {
       if (!(field in pension)) {
@@ -283,7 +280,49 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
       return false;
     }
   }
-  
+
+  // salaryPlansの配列チェック
+  if (!Array.isArray(data.salaryPlans)) {
+    console.error('バリデーションエラー: salaryPlansは配列である必要があります', data.salaryPlans);
+    return false;
+  }
+
+  // 各salaryPlanの構造チェック
+  for (let i = 0; i < data.salaryPlans.length; i++) {
+    const salary = data.salaryPlans[i];
+    if (!salary || typeof salary !== 'object') {
+      console.error(`バリデーションエラー: salaryPlans[${i}]がオブジェクトではありません`, salary);
+      return false;
+    }
+
+    const requiredSalaryFields = ['id', 'name', 'startAge', 'endAge'];
+    for (const field of requiredSalaryFields) {
+      if (!(field in salary)) {
+        console.error(`バリデーションエラー: salaryPlans[${i}].${field} が見つかりません`);
+        return false;
+      }
+    }
+
+    if (typeof salary.id !== 'string' ||
+        typeof salary.name !== 'string' ||
+        typeof salary.startAge !== 'number' ||
+        typeof salary.endAge !== 'number') {
+      console.error(`バリデーションエラー: salaryPlans[${i}]のフィールド型が不正です`, {
+        id: `${salary.id} (${typeof salary.id})`,
+        name: `${salary.name} (${typeof salary.name})`,
+        startAge: `${salary.startAge} (${typeof salary.startAge})`,
+        endAge: `${salary.endAge} (${typeof salary.endAge})`
+      });
+      return false;
+    }
+
+    // annualAmountはオプショナル、存在する場合は数値チェック
+    if ('annualAmount' in salary && typeof salary.annualAmount !== 'number') {
+      console.error(`バリデーションエラー: salaryPlans[${i}].annualAmount は数値である必要があります (実際の値: ${salary.annualAmount}, 型: ${typeof salary.annualAmount})`);
+      return false;
+    }
+  }
+
   // specialExpensesの配列チェック
   if (!Array.isArray(data.specialExpenses)) {
     console.error('バリデーションエラー: specialExpensesは配列である必要があります', data.specialExpenses);

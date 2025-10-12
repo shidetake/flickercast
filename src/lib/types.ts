@@ -232,7 +232,7 @@ export interface AssetHolding {
   quantity: number;
   pricePerUnit: number; // JPY: 円単位, USD: ドル単位
   currency: Currency; // 通貨種別
-  expectedReturn: number; // 期待年利回り（%）
+  expectedReturn?: number; // 期待年利回り（%）
 }
 
 // ローン情報
@@ -240,7 +240,7 @@ export interface Loan {
   id: string;
   name: string; // ローン名（住宅ローン、車のローン等）
   balance: number; // 残高（円）
-  interestRate: number; // 金利（%）
+  interestRate?: number; // 金利（%）
   monthlyPayment: number; // 月々返済額（円）
 }
 
@@ -249,7 +249,7 @@ export interface SpecialExpense {
   id: string;
   name: string; // 特別支出名（結婚式、出産等）
   amount: number; // 支出額（円、現在価値）
-  targetAge: number; // 支出予定年齢
+  targetAge?: number; // 支出予定年齢
 }
 
 // 臨時収入情報
@@ -257,17 +257,26 @@ export interface SpecialIncome {
   id: string;
   name: string; // 臨時収入名（ボーナス、相続、退職金等）
   amount: number; // 収入額（円、現在価値）
-  targetAge: number; // 収入予定年齢
+  targetAge?: number; // 収入予定年齢
 }
 
 // 年金プラン情報
 export interface PensionPlan {
   id: string;
   name: string; // 年金名（国民年金、厚生年金、企業年金等）
-  annualAmount: number; // 年間受給額（通貨単位）
+  annualAmount?: number; // 年間受給額（通貨単位）
   currency: Currency; // 通貨種別
   startAge: number; // 受給開始年齢
   endAge: number; // 受給終了年齢
+}
+
+// 給与プラン情報
+export interface SalaryPlan {
+  id: string;
+  name: string; // 給与名（基本給、副業等）
+  annualAmount?: number; // 年間支給額（円）
+  startAge: number; // 支給開始年齢
+  endAge: number; // 支給終了年齢
 }
 
 // チャート用データ型

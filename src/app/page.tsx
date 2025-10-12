@@ -9,7 +9,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { FireCalculator, FireCalculationInput } from '@/lib/fire-calculator';
 import FireProjectionChart from '@/components/charts/fire-projection-chart';
 import FireSummary from '@/components/dashboard/fire-summary';
-import { ChartDataPoint, FireMetrics, AssetHolding, Loan, PensionPlan, SpecialExpense, SpecialIncome } from '@/lib/types';
+import { ChartDataPoint, FireMetrics, AssetHolding, Loan, PensionPlan, SalaryPlan, SpecialExpense, SpecialIncome } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { saveToLocalStorage, loadFromLocalStorage, exportToJson, importFromJson } from '@/lib/storage';
 import { useToast, ToastProvider } from '@/lib/toast-context';
@@ -66,6 +66,9 @@ function HomeContent() {
     pensionPlans: [
       { id: '1', name: '', currency: 'JPY', startAge: 65, endAge: calculateLifeExpectancy(38) },
     ], // デフォルトは1つの空の年金
+    salaryPlans: [
+      { id: '1', name: '', startAge: 38, endAge: 65 },
+    ], // デフォルトは1つの空の給与
     specialExpenses: [
       { id: '1', name: '', amount: 0 },
     ], // デフォルトは1つの空の特別支出
@@ -73,8 +76,6 @@ function HomeContent() {
       { id: '1', name: '', amount: 0 },
     ], // デフォルトは1つの空の臨時収入
     monthlyExpenses: 300000, // 内部では円のまま
-    annualNetIncome: 10000000, // 内部では円のまま（1000万円）
-    postRetirementAnnualIncome: 0, // 内部では円のまま（0円）
     inflationRate: 2,
     lifeExpectancy: calculateLifeExpectancy(38),
   });
@@ -83,11 +84,13 @@ function HomeContent() {
   const [nextAssetId, setNextAssetId] = useState(2); // 次に使用するAsset ID（デフォルトは1なので2から開始）
   const [nextLoanId, setNextLoanId] = useState(2); // 次に使用するLoan ID（デフォルトは1なので2から開始）
   const [nextPensionId, setNextPensionId] = useState(2); // 次に使用するPension ID（デフォルトは1なので2から開始）
+  const [nextSalaryId, setNextSalaryId] = useState(2); // 次に使用するSalary ID（デフォルトは1なので2から開始）
   const [nextSpecialExpenseId, setNextSpecialExpenseId] = useState(2); // 次に使用するSpecialExpense ID（デフォルトは1なので2から開始）
   const [nextSpecialIncomeId, setNextSpecialIncomeId] = useState(2); // 次に使用するSpecialIncome ID（デフォルトは1なので2から開始）
   const [isDeleteMode, setIsDeleteMode] = useState(false); // 削除モード状態
   const [isLoanDeleteMode, setIsLoanDeleteMode] = useState(false); // ローン削除モード状態
   const [isPensionDeleteMode, setIsPensionDeleteMode] = useState(false); // 年金削除モード状態
+  const [isSalaryDeleteMode, setIsSalaryDeleteMode] = useState(false); // 給与削除モード状態
   const [isSpecialExpenseDeleteMode, setIsSpecialExpenseDeleteMode] = useState(false); // 特別支出削除モード状態
   const [isSpecialIncomeDeleteMode, setIsSpecialIncomeDeleteMode] = useState(false); // 臨時収入削除モード状態
 
@@ -121,6 +124,13 @@ function HomeContent() {
   const calculateNextPensionId = (pensionPlans: PensionPlan[]): number => {
     if (pensionPlans.length === 0) return 1;
     const maxId = Math.max(...pensionPlans.map(plan => parseInt(plan.id) || 0));
+    return maxId + 1;
+  };
+
+  // 既存の給与IDから次のIDを計算
+  const calculateNextSalaryId = (salaryPlans: SalaryPlan[]): number => {
+    if (salaryPlans.length === 0) return 1;
+    const maxId = Math.max(...salaryPlans.map(plan => parseInt(plan.id) || 0));
     return maxId + 1;
   };
 
@@ -167,6 +177,8 @@ function HomeContent() {
       setNextLoanId(calculateNextLoanId(savedData.loans || []));
       // nextPensionIdを適切に設定
       setNextPensionId(calculateNextPensionId(savedData.pensionPlans || []));
+      // nextSalaryIdを適切に設定
+      setNextSalaryId(calculateNextSalaryId(savedData.salaryPlans || []));
       // nextSpecialExpenseIdを適切に設定
       setNextSpecialExpenseId(calculateNextSpecialExpenseId(savedData.specialExpenses || []));
       // nextSpecialIncomeIdを適切に設定
@@ -411,6 +423,37 @@ function HomeContent() {
     }));
   };
 
+  // 給与管理のヘルパー関数
+  const addSalaryPlan = () => {
+    const newSalaryPlan: SalaryPlan = {
+      id: nextSalaryId.toString(),
+      name: '',
+      startAge: input.currentAge,
+      endAge: input.retirementAge,
+    };
+    setInput(prev => ({
+      ...prev,
+      salaryPlans: [...prev.salaryPlans, newSalaryPlan]
+    }));
+    setNextSalaryId(prev => prev + 1);
+  };
+
+  const updateSalaryPlan = (id: string, field: keyof SalaryPlan, value: string | number) => {
+    setInput(prev => ({
+      ...prev,
+      salaryPlans: prev.salaryPlans.map(plan =>
+        plan.id === id ? { ...plan, [field]: value } : plan
+      )
+    }));
+  };
+
+  const removeSalaryPlan = (id: string) => {
+    setInput(prev => ({
+      ...prev,
+      salaryPlans: prev.salaryPlans.filter(plan => plan.id !== id)
+    }));
+  };
+
   // ローン管理のヘルパー関数
   const addLoan = () => {
     const newLoan: Loan = {
@@ -549,19 +592,21 @@ function HomeContent() {
     try {
       const importedData = await importFromJson(file);
       setInput(importedData);
-      
+
       // nextAssetIdを適切に設定
       setNextAssetId(calculateNextAssetId(importedData.assetHoldings));
       // nextLoanIdを適切に設定
       setNextLoanId(calculateNextLoanId(importedData.loans || []));
       // nextPensionIdを適切に設定
       setNextPensionId(calculateNextPensionId(importedData.pensionPlans || []));
+      // nextSalaryIdを適切に設定
+      setNextSalaryId(calculateNextSalaryId(importedData.salaryPlans || []));
       // nextSpecialExpenseIdを適切に設定
       setNextSpecialExpenseId(calculateNextSpecialExpenseId(importedData.specialExpenses || []));
       // nextSpecialIncomeIdを適切に設定
       setNextSpecialIncomeId(calculateNextSpecialIncomeId(importedData.specialIncomes || []));
-      
-      
+
+
       showSuccess('データを正常にインポートしました');
     } catch (error) {
       console.error('インポートエラー:', error);
@@ -703,28 +748,91 @@ function HomeContent() {
                     💰 資産・収入
                   </h3>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="annualNetIncome">手取り年収 [万円]</Label>
-                        <Input
-                          id="annualNetIncome"
-                          type="number"
-                          value={input.annualNetIncome / 10000}
-                          onChange={(e) => handleInputChange('annualNetIncome', Number(e.target.value) * 10000)}
-                          min="0"
-                          step="10"
-                        />
+                    <div>
+                      <div className="flex justify-between items-center mb-3">
+                        <Label>給与管理</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        onClick={addSalaryPlan}
+                        size="sm"
+                        variant="outline"
+                        disabled={isSalaryDeleteMode}
+                      >
+                        追加
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => setIsSalaryDeleteMode(!isSalaryDeleteMode)}
+                        size="sm"
+                        variant={isSalaryDeleteMode ? "default" : "outline"}
+                      >
+                        {isSalaryDeleteMode ? '完了' : '削除'}
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    {/* ヘッダー行（給与プランが存在し、削除モードでない場合のみ表示） */}
+                    {input.salaryPlans.length > 0 && !isSalaryDeleteMode && (
+                      <div className="grid grid-cols-[2fr_1.2fr_1fr_1fr] gap-3 mb-2">
+                        <Label className="text-sm font-medium">会社名</Label>
+                        <Label className="text-sm font-medium">年収 [万円]</Label>
+                        <Label className="text-sm font-medium">開始年齢</Label>
+                        <Label className="text-sm font-medium">終了年齢</Label>
                       </div>
-                      <div>
-                        <Label htmlFor="postRetirementAnnualIncome">退職後年収 [万円]</Label>
-                        <Input
-                          id="postRetirementAnnualIncome"
-                          type="number"
-                          value={input.postRetirementAnnualIncome / 10000}
-                          onChange={(e) => handleInputChange('postRetirementAnnualIncome', Number(e.target.value) * 10000)}
-                          min="0"
-                          step="10"
-                        />
+                    )}
+
+                    {input.salaryPlans.map((plan) =>
+                      isSalaryDeleteMode ? (
+                        // 削除モード: 会社名のみ表示、左側に赤い削除ボタン
+                        <div key={plan.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
+                          <Button
+                            type="button"
+                            onClick={() => removeSalaryPlan(plan.id)}
+                            size="sm"
+                            className="w-5 h-5 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white flex-shrink-0"
+                          >
+                            <span className="text-sm font-bold">−</span>
+                          </Button>
+                          <span className="text-sm font-medium text-gray-900 truncate">
+                            {plan.name || '未設定'}
+                          </span>
+                        </div>
+                      ) : (
+                        // 通常モード: すべての入力フィールドを表示（ラベルなし）
+                        <div key={plan.id} className="grid grid-cols-[2fr_1.2fr_1fr_1fr] gap-3">
+                          <Input
+                            placeholder="トヨタ自動車"
+                            value={plan.name}
+                            onChange={(e) => updateSalaryPlan(plan.id, 'name', e.target.value)}
+                          />
+                          <Input
+                            type="number"
+                            placeholder="1000"
+                            value={plan.annualAmount ? (plan.annualAmount / 10000) : ''}
+                            onChange={(e) => updateSalaryPlan(plan.id, 'annualAmount', Number(e.target.value) * 10000)}
+                            min="0"
+                            step="1"
+                          />
+                          <Input
+                            type="number"
+                            placeholder="38"
+                            value={plan.startAge}
+                            onChange={(e) => updateSalaryPlan(plan.id, 'startAge', Number(e.target.value))}
+                            min="0"
+                            step="1"
+                          />
+                          <Input
+                            type="number"
+                            placeholder="65"
+                            value={plan.endAge}
+                            onChange={(e) => updateSalaryPlan(plan.id, 'endAge', Number(e.target.value))}
+                            min="0"
+                            step="1"
+                          />
+                        </div>
+                      )
+                    )}
                       </div>
                     </div>
 

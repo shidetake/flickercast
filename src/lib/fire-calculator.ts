@@ -1,5 +1,5 @@
-import { AssetHolding, Loan, PensionPlan, SpecialExpense, SpecialIncome } from './types';
-import { calculateTotalAssets, convertPensionToJPY } from './asset-calculator';
+import { AssetHolding, Loan, PensionPlan, SalaryPlan, SpecialExpense, SpecialIncome } from './types';
+import { calculateTotalAssets, convertPensionToJPY, convertSalaryToJPY } from './asset-calculator';
 
 // 計算中の資産残高追跡用
 interface AssetBalance {
@@ -15,11 +15,10 @@ export interface FireCalculationInput {
   assetHoldings: AssetHolding[]; // 銘柄保有情報
   loans: Loan[]; // ローン情報
   pensionPlans: PensionPlan[]; // 年金プラン情報
+  salaryPlans: SalaryPlan[]; // 給与プラン情報
   specialExpenses: SpecialExpense[]; // 特別支出情報
   specialIncomes: SpecialIncome[]; // 臨時収入情報
   monthlyExpenses: number;
-  annualNetIncome: number; // 手取り年収（円）
-  postRetirementAnnualIncome: number; // 退職後年収（円）
   inflationRate: number; // パーセント（例: 2 = 2%）
   lifeExpectancy: number;
   exchangeRate?: number | null; // USD/JPY為替レート
@@ -95,7 +94,7 @@ export class FireCalculator {
   static calculateLoanPaymentSchedule(loan: Loan, maxYears: number): number[] {
     const schedule: number[] = new Array(maxYears).fill(0);
     let remainingBalance = loan.balance;
-    const monthlyRate = loan.interestRate / 100 / 12;
+    const monthlyRate = (loan.interestRate ?? 0) / 100 / 12;
     
     for (let year = 0; year < maxYears; year++) {
       // 残高がゼロになったら以降の年は0円
@@ -131,11 +130,10 @@ export class FireCalculator {
       assetHoldings,
       loans,
       pensionPlans,
+      salaryPlans,
       specialExpenses,
       specialIncomes,
       monthlyExpenses,
-      annualNetIncome,
-      postRetirementAnnualIncome,
       inflationRate,
       lifeExpectancy,
       exchangeRate
@@ -150,7 +148,7 @@ export class FireCalculator {
         id: holding.id,
         currentValue: jpyValue,
         originalRatio: totalAssetValue > 0 ? jpyValue / totalAssetValue : 0,
-        expectedReturn: holding.expectedReturn
+        expectedReturn: holding.expectedReturn ?? 0
       };
     });
 
@@ -162,16 +160,17 @@ export class FireCalculator {
       loanSchedules.set(loan.id, schedule);
     });
 
-    // 現役時代の年収を年ごとに事前計算
-    const workingIncomeSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
+    // 複数給与プランの統合スケジュールを年ごとに事前計算
+    const salarySchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
       const age = currentAge + year;
-      return age <= retirementAge ? annualNetIncome : 0;
-    });
-
-    // 退職後の年収を年ごとに事前計算
-    const postRetirementIncomeSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
-      const age = currentAge + year;
-      return age > retirementAge ? postRetirementAnnualIncome : 0;
+      return salaryPlans.reduce((total, plan) => {
+        const isSalaryActive = age >= plan.startAge && age <= plan.endAge;
+        if (isSalaryActive) {
+          const amount = convertSalaryToJPY(plan);
+          return total + amount;
+        }
+        return total;
+      }, 0);
     });
 
     // 複数年金プランの統合スケジュールを年ごとに事前計算（通貨換算含む）
@@ -192,7 +191,7 @@ export class FireCalculator {
     const specialExpenseSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
       const age = currentAge + year;
       return specialExpenses.reduce((total, expense) => {
-        if (age === expense.targetAge) {
+        if (expense.targetAge !== undefined && age === expense.targetAge) {
           // インフレ調整：現在価値 → 将来価値
           const inflationAdjustedAmount = this.adjustForInflation(expense.amount, inflationRate, year);
           return total + inflationAdjustedAmount;
@@ -205,7 +204,7 @@ export class FireCalculator {
     const specialIncomeSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
       const age = currentAge + year;
       return specialIncomes.reduce((total, income) => {
-        if (age === income.targetAge) {
+        if (income.targetAge !== undefined && age === income.targetAge) {
           // インフレ調整：現在価値 → 将来価値
           const inflationAdjustedAmount = this.adjustForInflation(income.amount, inflationRate, year);
           return total + inflationAdjustedAmount;
@@ -222,40 +221,34 @@ export class FireCalculator {
     });
     const maxYearsToRetirement = retirementAge - currentAge;
     const projections: YearlyProjection[] = [];
-    
+
     let fireAge = retirementAge;
     let yearsToFire = maxYearsToRetirement;
     let isFireAchievable = false;
-
-    // 手取り年収から月間収入を計算し、実質月間貯蓄額を算出
-    const monthlyNetIncome = annualNetIncome / 12;
-    const initialLoanPayments = loans.reduce((total, loan) => total + loan.monthlyPayment, 0);
-    const netMonthlySavings = monthlyNetIncome - monthlyExpenses - initialLoanPayments;
 
     // 年次計算（想定寿命まで）
     let currentAssetBalances = [...assetBalances];
     
     for (let year = 0; year <= maxYearsToLife; year++) {
       const age = currentAge + year;
-      
+
       // 事前計算済みスケジュールから各年の値を取得
-      const yearlyWorkingIncome = workingIncomeSchedule[year];
-      const yearlyPostRetirementIncome = postRetirementIncomeSchedule[year];
+      const yearlySalary = salarySchedule[year];
       const yearlyPension = pensionSchedule[year];
       const yearlyExpenses = expensesSchedule[year];
       const yearlyLoanPayments = Array.from(loanSchedules.values())
         .reduce((total, schedule) => total + (schedule[year] || 0), 0);
       const yearlySpecialExpenses = specialExpenseSchedule[year];
       const yearlySpecialIncomes = specialIncomeSchedule[year];
-      
+
       // 1. 各資産に個別利回りを適用
       currentAssetBalances = currentAssetBalances.map(asset => ({
         ...asset,
         currentValue: asset.currentValue > 0 ? asset.currentValue * (1 + asset.expectedReturn / 100) : asset.currentValue
       }));
-      
+
       // 2. 年間収支計算
-      const totalIncome = yearlyWorkingIncome + yearlyPostRetirementIncome + yearlyPension + yearlySpecialIncomes;
+      const totalIncome = yearlySalary + yearlyPension + yearlySpecialIncomes;
       const totalExpenses = yearlyExpenses + yearlyLoanPayments + yearlySpecialExpenses;
       const netCashFlow = totalIncome - totalExpenses;
       
@@ -342,16 +335,21 @@ export class FireCalculator {
 
   /**
    * 貯蓄率変更のインパクト分析
+   * Note: 給与プランベースに変更されたため、この関数は廃止予定
    */
   static analyzeSavingsRateImpact(
     baseInput: FireCalculationInput,
     savingsRateChanges: number[]
   ): FireCalculationResult[] {
     return savingsRateChanges.map(change => {
-      const newAnnualNetIncome = baseInput.annualNetIncome * (1 + change / 100);
+      // 全ての給与プランの金額を一律で変更
+      const updatedSalaryPlans = baseInput.salaryPlans.map(plan => ({
+        ...plan,
+        annualAmount: (plan.annualAmount ?? 0) * (1 + change / 100)
+      }));
       return this.calculateFire({
         ...baseInput,
-        annualNetIncome: newAnnualNetIncome
+        salaryPlans: updatedSalaryPlans
       });
     });
   }
@@ -367,7 +365,7 @@ export class FireCalculator {
       // 全資産の利回りを一律で変更
       const updatedAssetHoldings = baseInput.assetHoldings.map(holding => ({
         ...holding,
-        expectedReturn: holding.expectedReturn + change
+        expectedReturn: (holding.expectedReturn ?? 0) + change
       }));
       return this.calculateFire({
         ...baseInput,

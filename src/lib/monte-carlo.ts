@@ -1,6 +1,6 @@
 import { FireCalculationInput, YearlyProjection } from './fire-calculator';
 import { MonteCarloResult } from './types';
-import { calculateTotalAssets } from './asset-calculator';
+import { calculateTotalAssets, convertSalaryToJPY } from './asset-calculator';
 
 export interface MonteCarloParameters {
   simulations: number; // シミュレーション回数
@@ -124,12 +124,21 @@ export class MonteCarloSimulator {
       inflationVolatility,
     } = parameters;
 
+    // 現在年齢で有効な給与プランから合計年収を計算
+    const totalAnnualSalary = baseInput.salaryPlans.reduce((total, plan) => {
+      const isActive = baseInput.currentAge >= plan.startAge && baseInput.currentAge <= plan.endAge;
+      if (isActive) {
+        return total + convertSalaryToJPY(plan);
+      }
+      return total;
+    }, 0);
+
     const simulationParams: MonteCarloSimulation = {
       currentAge: baseInput.currentAge,
       retirementAge: baseInput.retirementAge,
       currentAssets: calculateTotalAssets(baseInput.assetHoldings, baseInput.exchangeRate),
       monthlyExpenses: baseInput.monthlyExpenses,
-      monthlySavings: (baseInput.annualNetIncome - baseInput.monthlyExpenses * 12) / 12,
+      monthlySavings: (totalAnnualSalary - baseInput.monthlyExpenses * 12) / 12,
       expectedAnnualReturn: 0, // 個別利回り対応のため無効化
       returnVolatility,
       inflationRate: baseInput.inflationRate,

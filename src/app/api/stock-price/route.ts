@@ -175,7 +175,7 @@ export async function GET(request: Request) {
           result.symbol.includes(s) || s.includes(result.symbol.replace(/\.[A-Z]+$/i, ''))
         ) || result.symbol;
 
-        const currency = isTickerSymbol(originalSymbol) ? 'USD' : 'JPY';
+        const currency: 'JPY' | 'USD' = isTickerSymbol(originalSymbol) ? 'USD' : 'JPY';
 
         return {
           symbol: originalSymbol,
@@ -237,7 +237,7 @@ export async function GET(request: Request) {
       return NextResponse.json({
         prices: stockPricesCache.prices,
         cached: true,
-        lastUpdated: stockPricesCache.lastUpdated,
+        lastUpdated: new Date(),
         warning: 'API呼び出し中にエラーが発生したため、キャッシュされた株価を返しています',
       });
     }

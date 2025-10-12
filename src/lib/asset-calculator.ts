@@ -1,4 +1,4 @@
-import { AssetHolding, PensionPlan } from './types';
+import { AssetHolding, PensionPlan, SalaryPlan } from './types';
 
 /**
  * 資産保有情報から総資産額を計算する統一関数
@@ -45,12 +45,25 @@ export function convertPensionToJPY(
   // デフォルト為替レート（APIが利用できない場合の代替値）
   const defaultExchangeRate = 150;
   const currentExchangeRate = exchangeRate ?? defaultExchangeRate;
-  
+
+  const amount = pensionPlan.annualAmount ?? 0;
+
   // 通貨に応じて円換算
   if (pensionPlan.currency === 'USD') {
-    return pensionPlan.annualAmount * currentExchangeRate;
+    return amount * currentExchangeRate;
   } else {
     // JPY年金の場合、そのまま返す
-    return pensionPlan.annualAmount;
+    return amount;
   }
+}
+
+/**
+ * 給与支給額を取得する関数
+ * @param salaryPlan - 給与プラン情報
+ * @returns 年間支給額（円）
+ */
+export function convertSalaryToJPY(
+  salaryPlan: SalaryPlan
+): number {
+  return salaryPlan.annualAmount ?? 0;
 }

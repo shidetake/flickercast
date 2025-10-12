@@ -9,7 +9,7 @@ interface StockSymbol {
 }
 
 export interface AutocompleteInputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'onSelect'> {
   value: string;
   onChange: (value: string) => void;
   onSelect?: (stock: StockSymbol) => void; // サジェストから選択した時のコールバック
