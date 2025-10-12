@@ -11,7 +11,6 @@ interface AssetBalance {
 
 export interface FireCalculationInput {
   currentAge: number;
-  retirementAge: number;
   assetHoldings: AssetHolding[]; // 銘柄保有情報
   loans: Loan[]; // ローン情報
   pensionPlans: PensionPlan[]; // 年金プラン情報
@@ -126,7 +125,6 @@ export class FireCalculator {
   static calculateFire(input: FireCalculationInput): FireCalculationResult {
     const {
       currentAge,
-      retirementAge,
       assetHoldings,
       loans,
       pensionPlans,
@@ -219,11 +217,10 @@ export class FireCalculator {
     const expensesSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
       return this.adjustForInflation(annualExpenses, inflationRate, year);
     });
-    const maxYearsToRetirement = retirementAge - currentAge;
     const projections: YearlyProjection[] = [];
 
-    let fireAge = retirementAge;
-    let yearsToFire = maxYearsToRetirement;
+    let fireAge = 0;
+    let yearsToFire = 0;
     let isFireAchievable = false;
 
     // 年次計算（想定寿命まで）
@@ -288,14 +285,13 @@ export class FireCalculator {
       }
       
       const futureAssets = currentAssetBalances.reduce((sum, asset) => sum + asset.currentValue, 0);
-      
-      // FIRE達成判定: 資産が退職後の残り人生の支出を賄えるかチェック
-      const yearsInRetirement = lifeExpectancy - retirementAge;
+
+      // FIRE達成判定: 資産がその年の支出を賄えるかチェック
       const totalAnnualExpenses = yearlyExpenses + yearlyLoanPayments + yearlySpecialExpenses;
-      const fireAchieved = futureAssets >= (totalAnnualExpenses * yearsInRetirement);
-      
-      // 初回のFIRE達成年を記録（退職年齢以内の場合のみ）
-      if (fireAchieved && !isFireAchievable && age <= retirementAge) {
+      const fireAchieved = futureAssets >= totalAnnualExpenses;
+
+      // 初回のFIRE達成年を記録
+      if (fireAchieved && !isFireAchievable) {
         isFireAchievable = true;
         fireAge = age;
         yearsToFire = year;
@@ -318,9 +314,8 @@ export class FireCalculator {
     const finalLoanPayments = Array.from(loanSchedules.values())
       .reduce((total, schedule) => total + (schedule[yearsToFire] || 0), 0);
     const finalSpecialExpenses = specialExpenseSchedule[yearsToFire] || 0;
-    // 退職後の残り人生の支出を賄える資産が必要
-    const yearsInRetirement = lifeExpectancy - retirementAge;
-    const requiredAssets = (finalExpenses + finalLoanPayments + finalSpecialExpenses) * yearsInRetirement;
+    // 想定寿命時点での年間支出が賄える資産が必要
+    const requiredAssets = finalExpenses + finalLoanPayments + finalSpecialExpenses;
     
     // 予測資産は最終年の総資産額
     const projectedAssets = projections.length > 0 ? projections[projections.length - 1].assets : totalAssetValue;

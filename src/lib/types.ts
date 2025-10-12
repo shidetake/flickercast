@@ -80,7 +80,6 @@ export interface Scenario {
   inflationRate: number;
   expectedReturn: number;
   currentAge: number;
-  retirementAge: number;
   lifeExpectancy: number;
   isActive: boolean;
   createdAt: Date;
@@ -116,7 +115,6 @@ export interface UserProfile {
   email: string;
   name?: string;
   currentAge: number;
-  retirementAge: number;
   lifeExpectancy: number;
 }
 
@@ -193,7 +191,6 @@ export interface ScenarioFormData {
   inflationRate: number;
   expectedReturn: number;
   currentAge: number;
-  retirementAge: number;
   lifeExpectancy: number;
 }
 

@@ -11,7 +11,6 @@ export interface MonteCarloParameters {
 
 export interface MonteCarloSimulation {
   currentAge: number;
-  retirementAge: number;
   currentAssets: number;
   monthlyExpenses: number;
   monthlySavings: number;
@@ -42,7 +41,6 @@ export class MonteCarloSimulator {
   private static runSingleSimulation(params: MonteCarloSimulation): YearlyProjection[] {
     const {
       currentAge,
-      retirementAge,
       currentAssets,
       monthlyExpenses,
       monthlySavings,
@@ -75,21 +73,18 @@ export class MonteCarloSimulator {
       
       // インフレ調整後の支出
       const realAnnualExpenses = annualExpenses * Math.pow(1 + yearlyInflation, year);
-      
-      // FIRE達成判定: 資産が退職後の残り人生の支出を賐えるかチェック
-      const yearsInRetirement = lifeExpectancy - retirementAge;
-      const requiredAssets = realAnnualExpenses * yearsInRetirement;
-      
-      // 退職前：貯蓄フェーズ
-      if (age < retirementAge) {
-        // 資産成長 + 年間貯蓄
+
+      // 貯蓄があれば貯蓄フェーズ、なければ引き出しフェーズ
+      if (monthlySavings > 0) {
+        // 貯蓄フェーズ: 資産成長 + 年間貯蓄
         assets = assets * (1 + yearlyReturn) + annualSavings;
       } else {
-        // 退職後：引き出しフェーズ
+        // 引き出しフェーズ: 資産成長 - 支出
         assets = assets * (1 + yearlyReturn) - realAnnualExpenses;
       }
 
-      const fireAchieved = assets >= requiredAssets;
+      // FIRE達成判定: 資産がその年の支出を賄えるかチェック
+      const fireAchieved = assets >= realAnnualExpenses;
 
       projections.push({
         year,
@@ -135,7 +130,6 @@ export class MonteCarloSimulator {
 
     const simulationParams: MonteCarloSimulation = {
       currentAge: baseInput.currentAge,
-      retirementAge: baseInput.retirementAge,
       currentAssets: calculateTotalAssets(baseInput.assetHoldings, baseInput.exchangeRate),
       monthlyExpenses: baseInput.monthlyExpenses,
       monthlySavings: (totalAnnualSalary - baseInput.monthlyExpenses * 12) / 12,
@@ -163,7 +157,7 @@ export class MonteCarloSimulator {
       results.push({
         percentile,
         projections: percentileData,
-        successProbability: this.calculateSuccessProbability(allSimulations, baseInput.retirementAge - baseInput.currentAge)
+        successProbability: this.calculateSuccessProbability(allSimulations)
       });
     });
 
@@ -213,18 +207,14 @@ export class MonteCarloSimulator {
    * FIRE成功確率を計算
    */
   private static calculateSuccessProbability(
-    simulations: YearlyProjection[][],
-    retirementYears: number
+    simulations: YearlyProjection[][]
   ): number {
     const successfulSimulations = simulations.filter(simulation => {
-      const retirementPoint = simulation[retirementYears];
-      if (!retirementPoint) return false;
+      // 最終年まで資産が枯渇しない
+      const lastYear = simulation[simulation.length - 1];
+      if (!lastYear) return false;
 
-      // 退職時点でFIRE達成かつ、その後10年間資産が枯渇しない
-      const tenYearsLater = Math.min(retirementYears + 10, simulation.length - 1);
-      const stillSolvent = simulation[tenYearsLater]?.assets > 0;
-
-      return retirementPoint.fireAchieved && stillSolvent;
+      return lastYear.assets > 0;
     });
 
     return (successfulSimulations.length / simulations.length) * 100;
@@ -271,39 +261,4 @@ export class MonteCarloSimulator {
     });
   }
 
-  /**
-   * 早期退職リスク分析
-   */
-  static analyzeEarlyRetirementRisk(
-    baseInput: FireCalculationInput,
-    retirementAges: number[]
-  ): Array<{
-    retirementAge: number;
-    successProbability: number;
-    medianAssets: number;
-  }> {
-    const baseParameters: MonteCarloParameters = {
-      simulations: 1000,
-      returnVolatility: 15,
-      inflationVolatility: 1,
-      sequenceOfReturnsRisk: true,
-    };
-
-    return retirementAges.map(retirementAge => {
-      const adjustedInput = {
-        ...baseInput,
-        retirementAge
-      };
-
-      const results = this.runSimulation(adjustedInput, baseParameters);
-      const medianResult = results.find(r => r.percentile === 50);
-      const retirementPoint = medianResult?.projections.find(p => p.age === retirementAge);
-
-      return {
-        retirementAge,
-        successProbability: medianResult?.successProbability || 0,
-        medianAssets: retirementPoint?.assets || 0
-      };
-    });
-  }
 }

@@ -113,7 +113,6 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
   // 必須フィールドの存在チェック
   const requiredFields = [
     'currentAge',
-    'retirementAge',
     'assetHoldings',
     'loans',
     'pensionPlans',
@@ -135,7 +134,6 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
   // 型チェック
   const numberFields = [
     'currentAge',
-    'retirementAge',
     'monthlyExpenses',
     'inflationRate',
     'lifeExpectancy'

@@ -56,7 +56,6 @@ function HomeContent() {
   // デフォルト値を生成する関数
   const createDefaultInput = (): FireCalculationInput => ({
     currentAge: 38,
-    retirementAge: 65,
     assetHoldings: [
       { id: '1', name: '', quantity: 0, pricePerUnit: 0, currency: 'JPY' },
     ], // デフォルトは1つの空の銘柄
@@ -429,7 +428,7 @@ function HomeContent() {
       id: nextSalaryId.toString(),
       name: '',
       startAge: input.currentAge,
-      endAge: input.retirementAge,
+      endAge: 65,
     };
     setInput(prev => ({
       ...prev,
@@ -687,7 +686,7 @@ function HomeContent() {
                   <h3 className="text-sm font-semibold text-blue-800 mb-3 flex items-center gap-2">
                     👤 個人情報
                   </h3>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="currentAge">現在年齢</Label>
                       <div className="relative">
@@ -697,23 +696,6 @@ function HomeContent() {
                           value={input.currentAge}
                           onChange={(e) => handleInputChange('currentAge', Number(e.target.value))}
                           min="18"
-                          max="100"
-                          className="pr-8"
-                        />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
-                          歳
-                        </span>
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="retirementAge">退職希望年齢</Label>
-                      <div className="relative">
-                        <Input
-                          id="retirementAge"
-                          type="number"
-                          value={input.retirementAge}
-                          onChange={(e) => handleInputChange('retirementAge', Number(e.target.value))}
-                          min="30"
                           max="100"
                           className="pr-8"
                         />
@@ -1464,10 +1446,6 @@ function HomeContent() {
                         <div className="flex justify-between">
                           <span>現在年齢:</span>
                           <span>{input.currentAge}歳</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>退職希望年齢:</span>
-                          <span>{input.retirementAge}歳</span>
                         </div>
                         <div className="flex justify-between">
                           <span>現在の資産:</span>
