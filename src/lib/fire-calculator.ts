@@ -257,7 +257,7 @@ export class FireCalculator {
         // 支出超過：各資産を初期構成比に応じて取り崩し
         const totalCurrentAssets = currentAssetBalances.reduce((sum, asset) => sum + asset.currentValue, 0);
         const withdrawalAmount = Math.abs(netCashFlow);
-        
+
         if (totalCurrentAssets > 0) {
           currentAssetBalances = currentAssetBalances.map(asset => ({
             ...asset,
@@ -266,10 +266,21 @@ export class FireCalculator {
         }
       } else if (netCashFlow > 0) {
         // 収入超過：各資産を初期構成比に応じて増加
-        currentAssetBalances = currentAssetBalances.map(asset => ({
-          ...asset,
-          currentValue: asset.currentValue + (netCashFlow * asset.originalRatio)
-        }));
+        const totalOriginalRatio = assetBalances.reduce((sum, asset) => sum + asset.originalRatio, 0);
+
+        if (totalOriginalRatio > 0) {
+          // 通常ケース：初期資産がある場合、構成比に応じて分配
+          currentAssetBalances = currentAssetBalances.map(asset => ({
+            ...asset,
+            currentValue: asset.currentValue + (netCashFlow * asset.originalRatio)
+          }));
+        } else {
+          // 初期資産がない場合：最初の資産に全額追加（現金として扱う）
+          currentAssetBalances = currentAssetBalances.map((asset, index) => ({
+            ...asset,
+            currentValue: index === 0 ? asset.currentValue + netCashFlow : asset.currentValue
+          }));
+        }
       }
       
       const futureAssets = currentAssetBalances.reduce((sum, asset) => sum + asset.currentValue, 0);
