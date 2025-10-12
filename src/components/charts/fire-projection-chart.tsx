@@ -36,7 +36,7 @@ export default function FireProjectionChart({
     // 万円単位で表示
     const amountInManYen = tickItem / 10000;
     if (amountInManYen >= 10000) {
-      return `${(amountInManYen / 10000).toFixed(0)}億円`;
+      return `${(amountInManYen / 10000).toFixed(1)}億円`;
     }
     if (amountInManYen >= 1) {
       return `${amountInManYen.toFixed(0)}万円`;
