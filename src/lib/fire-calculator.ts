@@ -254,15 +254,19 @@ export class FireCalculator {
       
       // 3. 収支に応じて資産を調整
       if (netCashFlow < 0) {
-        // 支出超過：各資産を初期構成比に応じて取り崩し
+        // 支出超過：各資産を現在の構成比に応じて取り崩し
         const totalCurrentAssets = currentAssetBalances.reduce((sum, asset) => sum + asset.currentValue, 0);
         const withdrawalAmount = Math.abs(netCashFlow);
 
         if (totalCurrentAssets > 0) {
-          currentAssetBalances = currentAssetBalances.map(asset => ({
-            ...asset,
-            currentValue: Math.max(0, asset.currentValue - (withdrawalAmount * asset.originalRatio))
-          }));
+          // 現在の資産構成比を計算
+          currentAssetBalances = currentAssetBalances.map(asset => {
+            const currentRatio = asset.currentValue / totalCurrentAssets;
+            return {
+              ...asset,
+              currentValue: Math.max(0, asset.currentValue - (withdrawalAmount * currentRatio))
+            };
+          });
         }
       } else if (netCashFlow > 0) {
         // 収入超過：各資産を初期構成比に応じて増加
