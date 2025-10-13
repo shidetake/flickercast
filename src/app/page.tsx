@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AutocompleteInput } from '@/components/ui/autocomplete-input';
@@ -93,14 +93,6 @@ function HomeContent() {
   const [isSpecialExpenseDeleteMode, setIsSpecialExpenseDeleteMode] = useState(false); // 特別支出削除モード状態
   const [isSpecialIncomeDeleteMode, setIsSpecialIncomeDeleteMode] = useState(false); // 臨時収入削除モード状態
 
-
-  const [isCalculating, setIsCalculating] = useState(false);
-  const [results, setResults] = useState<{
-    chartData: ChartDataPoint[];
-    metrics: FireMetrics;
-    requiredAssets: number;
-  } | null>(null);
-  
   // USD/JPY為替レート関連の状態
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [exchangeRateLoading, setExchangeRateLoading] = useState(true);
@@ -616,16 +608,18 @@ function HomeContent() {
     event.target.value = '';
   };
 
-  const calculateFire = async () => {
-    setIsCalculating(true);
-    
+  // リアルタイム計算：入力値が変更されたら自動的に再計算
+  const results = useMemo(() => {
+    // 為替レート読み込み中はnullを返す
+    if (exchangeRateLoading) return null;
+
     try {
       // FIRE計算実行（為替レートを含む）
       const fireResult = FireCalculator.calculateFire({
         ...input,
         exchangeRate: exchangeRate
       });
-      
+
       // チャート用データに変換
       const chartData: ChartDataPoint[] = fireResult.projections.map(projection => ({
         year: projection.year + new Date().getFullYear(),
@@ -651,17 +645,16 @@ function HomeContent() {
         monthlyDeficit: fireResult.monthlyShortfall,
       };
 
-      setResults({
+      return {
         chartData,
         metrics,
         requiredAssets: fireResult.requiredAssets,
-      });
+      };
     } catch (error) {
       console.error('Calculation error:', error);
-    } finally {
-      setIsCalculating(false);
+      return null;
     }
-  };
+  }, [input, exchangeRate, exchangeRateLoading]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
@@ -1368,15 +1361,6 @@ function HomeContent() {
                   </div>
                 </div>
 
-                <Button
-                  onClick={calculateFire}
-                  disabled={isCalculating}
-                  className="w-full"
-                  size="lg"
-                >
-                  {isCalculating ? '計算中...' : 'FIRE達成度を計算'}
-                </Button>
-
                 {/* データ管理セクション */}
                 <div className="border-t pt-4">
                   <h3 className="text-sm font-semibold text-gray-700 mb-3">データ管理</h3>
@@ -1475,12 +1459,12 @@ function HomeContent() {
               </>
             ) : (
               <div className="bg-white rounded-lg shadow-md p-12 text-center">
-                <div className="text-6xl mb-4">📊</div>
+                <div className="text-6xl mb-4">⏳</div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  FIRE計算を実行してください
+                  データ読み込み中...
                 </h2>
                 <p className="text-gray-600">
-                  左側のフォームに情報を入力して、「FIRE達成度を計算」ボタンをクリックしてください。
+                  為替レート情報を取得しています
                 </p>
               </div>
             )}
