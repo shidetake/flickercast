@@ -556,12 +556,61 @@ function HomeContent() {
         ...prev,
         [field]: value
       };
-      
+
       // 現在年齢が変更された場合、想定寿命も自動更新
       if (field === 'currentAge') {
         updated.lifeExpectancy = calculateLifeExpectancy(value);
+
+        // 元の年齢範囲と新しい年齢範囲
+        const oldRange = prev.lifeExpectancy - prev.currentAge;
+        const newRange = updated.lifeExpectancy - value;
+
+        // expenseSegments の相対位置を保持しながら調整
+        updated.expenseSegments = prev.expenseSegments.map(seg => {
+          // 元の範囲での相対位置を計算（0.0 ~ 1.0）
+          const startRatio = (seg.startAge - prev.currentAge) / oldRange;
+          const endRatio = (seg.endAge - prev.currentAge) / oldRange;
+
+          // 新しい範囲で同じ相対位置に配置
+          return {
+            ...seg,
+            startAge: Math.round(value + startRatio * newRange),
+            endAge: Math.round(value + endRatio * newRange),
+          };
+        });
+
+        // 区間が空になった場合はデフォルト区間を追加
+        if (updated.expenseSegments.length === 0) {
+          updated.expenseSegments = [
+            { id: Date.now().toString(), startAge: value, endAge: updated.lifeExpectancy, monthlyExpenses: 0 }
+          ];
+        }
       }
-      
+
+      // 想定寿命が変更された場合、expenseSegments を調整
+      if (field === 'lifeExpectancy') {
+        updated.expenseSegments = prev.expenseSegments
+          .filter(seg => seg.startAge < value) // 範囲外を除外
+          .map((seg, index, arr) => {
+            // 最後の区間は新しい lifeExpectancy で終了
+            if (index === arr.length - 1) {
+              seg.endAge = value;
+            }
+            // 終了年齢が新しい寿命を超える場合は調整
+            if (seg.endAge > value) {
+              seg.endAge = value;
+            }
+            return seg;
+          });
+
+        // 区間が空になった場合はデフォルト区間を追加
+        if (updated.expenseSegments.length === 0) {
+          updated.expenseSegments = [
+            { id: Date.now().toString(), startAge: prev.currentAge, endAge: value, monthlyExpenses: 0 }
+          ];
+        }
+      }
+
       return updated;
     });
   };
