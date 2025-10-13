@@ -751,7 +751,7 @@ function HomeContent() {
                     {input.salaryPlans.length > 0 && !isSalaryDeleteMode && (
                       <div className="grid grid-cols-[2fr_1.2fr_1fr_1fr] gap-3 mb-2">
                         <Label className="text-sm font-medium">会社名</Label>
-                        <Label className="text-sm font-medium">年収 [万円]</Label>
+                        <Label className="text-sm font-medium">手取り年収[万円]</Label>
                         <Label className="text-sm font-medium">開始年齢</Label>
                         <Label className="text-sm font-medium">退職年齢</Label>
                       </div>
