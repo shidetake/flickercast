@@ -1,4 +1,4 @@
-import { AssetHolding, Loan, PensionPlan, SalaryPlan, SpecialExpense, SpecialIncome } from './types';
+import { AssetHolding, Loan, PensionPlan, SalaryPlan, SpecialExpense, SpecialIncome, ExpenseSegment } from './types';
 import { calculateTotalAssets, convertPensionToJPY, convertSalaryToJPY } from './asset-calculator';
 
 // 計算中の資産残高追跡用
@@ -17,7 +17,7 @@ export interface FireCalculationInput {
   salaryPlans: SalaryPlan[]; // 給与プラン情報
   specialExpenses: SpecialExpense[]; // 特別支出情報
   specialIncomes: SpecialIncome[]; // 臨時収入情報
-  monthlyExpenses: number;
+  expenseSegments: ExpenseSegment[]; // 年齢区分別月間支出
   inflationRate: number; // パーセント（例: 2 = 2%）
   lifeExpectancy: number;
   exchangeRate?: number | null; // USD/JPY為替レート
@@ -42,6 +42,19 @@ export interface YearlyProjection {
   netWorth: number;
   fireAchieved: boolean;
   yearsToFire: number;
+}
+
+/**
+ * 年齢に応じた月間支出額を取得
+ */
+function getMonthlyExpensesForAge(
+  age: number,
+  segments: ExpenseSegment[]
+): number {
+  const segment = segments.find(
+    s => age >= s.startAge && age < s.endAge
+  );
+  return segment?.monthlyExpenses ?? 0;
 }
 
 /**
@@ -131,7 +144,7 @@ export class FireCalculator {
       salaryPlans,
       specialExpenses,
       specialIncomes,
-      monthlyExpenses,
+      expenseSegments,
       inflationRate,
       lifeExpectancy,
       exchangeRate
@@ -211,10 +224,11 @@ export class FireCalculator {
       }, 0);
     });
 
-    const annualExpenses = monthlyExpenses * 12;
-
-    // インフレ調整済みの年間支出を年ごとに事前計算
+    // インフレ調整済みの年間支出を年ごとに事前計算（年齢別支出を考慮）
     const expensesSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
+      const age = currentAge + year;
+      const monthlyExpenses = getMonthlyExpensesForAge(age, expenseSegments);
+      const annualExpenses = monthlyExpenses * 12;
       return this.adjustForInflation(annualExpenses, inflationRate, year);
     });
     const projections: YearlyProjection[] = [];
@@ -297,11 +311,15 @@ export class FireCalculator {
         yearsToFire = year;
       }
 
+      // 現在の年齢での月間支出（表示用、インフレ調整なし）
+      const currentMonthlyExpenses = getMonthlyExpensesForAge(age, expenseSegments);
+      const currentAnnualExpenses = currentMonthlyExpenses * 12;
+
       projections.push({
         year: year,
         age: age,
         assets: futureAssets,
-        expenses: annualExpenses + yearlyLoanPayments + yearlySpecialExpenses,
+        expenses: currentAnnualExpenses + yearlyLoanPayments + yearlySpecialExpenses,
         realExpenses: totalAnnualExpenses,
         netWorth: futureAssets,
         fireAchieved: fireAchieved,

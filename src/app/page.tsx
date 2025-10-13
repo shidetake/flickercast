@@ -9,7 +9,8 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { FireCalculator, FireCalculationInput } from '@/lib/fire-calculator';
 import FireProjectionChart from '@/components/charts/fire-projection-chart';
 import FireSummary from '@/components/dashboard/fire-summary';
-import { ChartDataPoint, FireMetrics, AssetHolding, Loan, PensionPlan, SalaryPlan, SpecialExpense, SpecialIncome } from '@/lib/types';
+import { ChartDataPoint, FireMetrics, AssetHolding, Loan, PensionPlan, SalaryPlan, SpecialExpense, SpecialIncome, ExpenseSegment } from '@/lib/types';
+import { ExpenseTimeline } from '@/components/expense/expense-timeline';
 import { formatCurrency } from '@/lib/utils';
 import { saveToLocalStorage, loadFromLocalStorage, exportToJson, importFromJson } from '@/lib/storage';
 import { useToast, ToastProvider } from '@/lib/toast-context';
@@ -74,7 +75,9 @@ function HomeContent() {
     specialIncomes: [
       { id: '1', name: '', amount: 0 },
     ], // デフォルトは1つの空の臨時収入
-    monthlyExpenses: 0, // 内部では円のまま
+    expenseSegments: [
+      { id: '1', startAge: 38, endAge: calculateLifeExpectancy(38), monthlyExpenses: 0 },
+    ], // デフォルトは1つの区間
     inflationRate: 2,
     lifeExpectancy: calculateLifeExpectancy(38),
   });
@@ -631,9 +634,14 @@ function HomeContent() {
       }));
 
       // メトリクス計算
-      const annualExpenses = input.monthlyExpenses * 12;
+      // 現在年齢での月間支出を取得
+      const currentSegment = input.expenseSegments.find(
+        s => input.currentAge >= s.startAge && input.currentAge < s.endAge
+      );
+      const currentMonthlyExpenses = currentSegment?.monthlyExpenses ?? 0;
+      const annualExpenses = currentMonthlyExpenses * 12;
       const currentAssets = calculateTotalAssets() * 10000; // 万円 → 円に変換
-      const currentFireNumber = currentAssets / annualExpenses;
+      const currentFireNumber = annualExpenses > 0 ? currentAssets / annualExpenses : 0;
       const requiredFireNumber = 25; // 4%ルール
       const fireProgress = Math.min((currentFireNumber / requiredFireNumber) * 100, 100);
 
@@ -1153,16 +1161,11 @@ function HomeContent() {
                   </h3>
                   <div className="space-y-4">
                     <div>
-                      <div className="flex items-center gap-2 h-6">
-                        <Label htmlFor="monthlyExpenses">月間支出 [万円]</Label>
-                      </div>
-                      <Input
-                        id="monthlyExpenses"
-                        type="number"
-                        value={input.monthlyExpenses / 10000}
-                        onChange={(e) => handleInputChange('monthlyExpenses', Number(e.target.value) * 10000)}
-                        min="0"
-                        step="0.1"
+                      <ExpenseTimeline
+                        segments={input.expenseSegments}
+                        currentAge={input.currentAge}
+                        lifeExpectancy={input.lifeExpectancy}
+                        onSegmentsChange={(segments) => setInput(prev => ({ ...prev, expenseSegments: segments }))}
                       />
                     </div>
 
@@ -1435,7 +1438,9 @@ function HomeContent() {
                         </div>
                         <div className="flex justify-between">
                           <span>年間支出:</span>
-                          <span>{formatCurrency(input.monthlyExpenses * 12)}</span>
+                          <span>{formatCurrency(
+                            (input.expenseSegments.find(s => input.currentAge >= s.startAge && input.currentAge < s.endAge)?.monthlyExpenses ?? 0) * 12
+                          )}</span>
                         </div>
                       </div>
                     </div>

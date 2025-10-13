@@ -128,11 +128,17 @@ export class MonteCarloSimulator {
       return total;
     }, 0);
 
+    // 現在年齢での月間支出を取得
+    const currentSegment = baseInput.expenseSegments.find(
+      s => baseInput.currentAge >= s.startAge && baseInput.currentAge < s.endAge
+    );
+    const currentMonthlyExpenses = currentSegment?.monthlyExpenses ?? 0;
+
     const simulationParams: MonteCarloSimulation = {
       currentAge: baseInput.currentAge,
       currentAssets: calculateTotalAssets(baseInput.assetHoldings, baseInput.exchangeRate),
-      monthlyExpenses: baseInput.monthlyExpenses,
-      monthlySavings: (totalAnnualSalary - baseInput.monthlyExpenses * 12) / 12,
+      monthlyExpenses: currentMonthlyExpenses,
+      monthlySavings: (totalAnnualSalary - currentMonthlyExpenses * 12) / 12,
       expectedAnnualReturn: 0, // 個別利回り対応のため無効化
       returnVolatility,
       inflationRate: baseInput.inflationRate,

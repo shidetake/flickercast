@@ -119,7 +119,7 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
     'salaryPlans',
     'specialExpenses',
     'specialIncomes',
-    'monthlyExpenses',
+    'expenseSegments',
     'inflationRate',
     'lifeExpectancy'
   ];
@@ -134,7 +134,6 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
   // 型チェック
   const numberFields = [
     'currentAge',
-    'monthlyExpenses',
     'inflationRate',
     'lifeExpectancy'
   ];
@@ -374,7 +373,7 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
       console.error(`バリデーションエラー: specialIncomes[${i}]がオブジェクトではありません`, income);
       return false;
     }
-    
+
     const requiredIncomeFields = ['id', 'name', 'amount'];
     for (const field of requiredIncomeFields) {
       if (!(field in income)) {
@@ -400,7 +399,43 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
       return false;
     }
   }
-  
+
+  // expenseSegmentsの配列チェック
+  if (!Array.isArray(data.expenseSegments)) {
+    console.error('バリデーションエラー: expenseSegmentsは配列である必要があります', data.expenseSegments);
+    return false;
+  }
+
+  // 各expenseSegmentの構造チェック
+  for (let i = 0; i < data.expenseSegments.length; i++) {
+    const segment = data.expenseSegments[i];
+    if (!segment || typeof segment !== 'object') {
+      console.error(`バリデーションエラー: expenseSegments[${i}]がオブジェクトではありません`, segment);
+      return false;
+    }
+
+    const requiredSegmentFields = ['id', 'startAge', 'endAge', 'monthlyExpenses'];
+    for (const field of requiredSegmentFields) {
+      if (!(field in segment)) {
+        console.error(`バリデーションエラー: expenseSegments[${i}].${field} が見つかりません`);
+        return false;
+      }
+    }
+
+    if (typeof segment.id !== 'string' ||
+        typeof segment.startAge !== 'number' ||
+        typeof segment.endAge !== 'number' ||
+        typeof segment.monthlyExpenses !== 'number') {
+      console.error(`バリデーションエラー: expenseSegments[${i}]のフィールド型が不正です`, {
+        id: `${segment.id} (${typeof segment.id})`,
+        startAge: `${segment.startAge} (${typeof segment.startAge})`,
+        endAge: `${segment.endAge} (${typeof segment.endAge})`,
+        monthlyExpenses: `${segment.monthlyExpenses} (${typeof segment.monthlyExpenses})`
+      });
+      return false;
+    }
+  }
+
   console.log('バリデーション成功: データ形式は正しいです');
   return true;
 }

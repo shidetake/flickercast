@@ -276,6 +276,14 @@ export interface SalaryPlan {
   endAge: number; // 支給終了年齢
 }
 
+// 支出区間情報（年齢別月間支出）
+export interface ExpenseSegment {
+  id: string;
+  startAge: number; // 開始年齢
+  endAge: number; // 終了年齢
+  monthlyExpenses: number; // 月間支出額（円単位）
+}
+
 // チャート用データ型
 export interface ChartDataPoint {
   year: number;
