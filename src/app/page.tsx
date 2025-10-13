@@ -760,7 +760,7 @@ function HomeContent() {
                         <Label className="text-sm font-medium">会社名</Label>
                         <Label className="text-sm font-medium">年収 [万円]</Label>
                         <Label className="text-sm font-medium">開始年齢</Label>
-                        <Label className="text-sm font-medium">終了年齢</Label>
+                        <Label className="text-sm font-medium">退職年齢</Label>
                       </div>
                     )}
 
