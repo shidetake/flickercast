@@ -674,10 +674,10 @@ function HomeContent() {
             <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
               
               <div className="space-y-6">
-                {/* 個人情報セクション */}
+                {/* 基本設定セクション */}
                 <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                   <h3 className="text-sm font-semibold text-blue-800 mb-3 flex items-center gap-2">
-                    👤 個人情報
+                    ⚙️ 基本設定
                   </h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -711,6 +711,29 @@ function HomeContent() {
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
                           歳
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 h-6">
+                        <Label htmlFor="inflationRate">インフレ率</Label>
+                        <Tooltip content="将来の支出・収入・資産がインフレ率に応じて増減します。下げると楽観的な想定に、上げると厳しめの想定になります。" position="left">
+                          <span className="w-4 h-4 bg-gray-500 text-white rounded-full flex items-center justify-center text-xs cursor-help">?</span>
+                        </Tooltip>
+                      </div>
+                      <div className="relative">
+                        <Input
+                          id="inflationRate"
+                          type="number"
+                          value={input.inflationRate}
+                          onChange={(e) => handleInputChange('inflationRate', Number(e.target.value))}
+                          min="0"
+                          max="15"
+                          step="0.1"
+                          className="pr-8"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
+                          %
                         </span>
                       </div>
                     </div>
@@ -1129,43 +1152,18 @@ function HomeContent() {
                     💸 支出・負債
                   </h3>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <div className="flex items-center gap-2 h-6">
-                          <Label htmlFor="monthlyExpenses">月間支出 [万円]</Label>
-                        </div>
-                        <Input
-                          id="monthlyExpenses"
-                          type="number"
-                          value={input.monthlyExpenses / 10000}
-                          onChange={(e) => handleInputChange('monthlyExpenses', Number(e.target.value) * 10000)}
-                          min="0"
-                          step="0.1"
-                        />
+                    <div>
+                      <div className="flex items-center gap-2 h-6">
+                        <Label htmlFor="monthlyExpenses">月間支出 [万円]</Label>
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2 h-6">
-                          <Label htmlFor="inflationRate">インフレ率</Label>
-                          <Tooltip content="将来の支出がインフレ率に応じて増減します。下げると楽観的な想定に、上げると厳しめの想定になります。">
-                            <span className="w-4 h-4 bg-gray-500 text-white rounded-full flex items-center justify-center text-xs cursor-help">?</span>
-                          </Tooltip>
-                        </div>
-                        <div className="relative">
-                          <Input
-                            id="inflationRate"
-                            type="number"
-                            value={input.inflationRate}
-                            onChange={(e) => handleInputChange('inflationRate', Number(e.target.value))}
-                            min="0"
-                            max="15"
-                            step="0.1"
-                            className="pr-8"
-                          />
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
-                            %
-                          </span>
-                        </div>
-                      </div>
+                      <Input
+                        id="monthlyExpenses"
+                        type="number"
+                        value={input.monthlyExpenses / 10000}
+                        onChange={(e) => handleInputChange('monthlyExpenses', Number(e.target.value) * 10000)}
+                        min="0"
+                        step="0.1"
+                      />
                     </div>
 
                     <div className="mt-6">
