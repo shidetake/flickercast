@@ -74,7 +74,7 @@ function HomeContent() {
     specialIncomes: [
       { id: '1', name: '', amount: 0 },
     ], // デフォルトは1つの空の臨時収入
-    monthlyExpenses: 300000, // 内部では円のまま
+    monthlyExpenses: 0, // 内部では円のまま
     inflationRate: 2,
     lifeExpectancy: calculateLifeExpectancy(38),
   });
