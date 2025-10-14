@@ -1055,7 +1055,7 @@ function HomeContent() {
                             value={holding.quantity || ''}
                             onChange={(e) => updateAssetHolding(holding.id, 'quantity', Number(e.target.value))}
                             min="0"
-                            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            noSpinner
                           />
                           <Input
                             type="number"
@@ -1064,7 +1064,7 @@ function HomeContent() {
                             onChange={(e) => updateAssetHolding(holding.id, 'pricePerUnit', Number(e.target.value))}
                             min="0"
                             step="0.1"
-                            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            noSpinner
                           />
                           <select
                             value={holding.currency || 'JPY'}
@@ -1083,7 +1083,8 @@ function HomeContent() {
                               min="0"
                               max="30"
                               step="0.1"
-                              className="pr-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              className="pr-8"
+                              noSpinner
                             />
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
                               %
@@ -1282,7 +1283,7 @@ function HomeContent() {
                             onChange={(e) => updateLoan(loan.id, 'balance', Number(e.target.value) * 10000)}
                             min="0"
                             step="1"
-                            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            noSpinner
                           />
                           <div className="relative">
                             <Input
@@ -1293,7 +1294,8 @@ function HomeContent() {
                               min="0"
                               max="30"
                               step="0.01"
-                              className="pr-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              className="pr-8"
+                              noSpinner
                             />
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
                               %
@@ -1306,7 +1308,7 @@ function HomeContent() {
                             onChange={(e) => updateLoan(loan.id, 'monthlyPayment', Number(e.target.value) * 10000)}
                             min="0"
                             step="0.1"
-                            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            noSpinner
                           />
                         </div>
                       )
