@@ -866,6 +866,7 @@ function HomeContent() {
                             onChange={(e) => updateSalaryPlan(plan.id, 'annualAmount', Number(e.target.value) * 10000)}
                             min="0"
                             step="1"
+                            noSpinner
                           />
                           <Input
                             type="number"
@@ -955,6 +956,7 @@ function HomeContent() {
                             onChange={(e) => updatePensionPlan(plan.id, 'annualAmount', Number(e.target.value))}
                             min="0"
                             step="1"
+                            noSpinner
                           />
                           <select
                             value={plan.currency || 'JPY'}
@@ -1178,6 +1180,7 @@ function HomeContent() {
                             onChange={(e) => updateSpecialIncome(income.id, 'amount', Number(e.target.value) * 10000)}
                             min="0"
                             step="1"
+                            noSpinner
                           />
                           <div className="relative">
                             <Input
@@ -1387,6 +1390,7 @@ function HomeContent() {
                             onChange={(e) => updateSpecialExpense(expense.id, 'amount', Number(e.target.value) * 10000)}
                             min="0"
                             step="1"
+                            noSpinner
                           />
                           <div className="relative">
                             <Input
