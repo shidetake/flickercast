@@ -346,9 +346,10 @@ export function ExpenseTimeline({
         </div>
       )}
 
-      <p className="text-xs text-gray-500">
-        ※ ▲をドラッグして年齢境界を調整 / 区間をクリックして支出額を編集
-      </p>
+      <div className="text-xs text-gray-500">
+        <div>▲をドラッグして年齢境界を調整</div>
+        <div>区間をクリックして支出額を編集</div>
+      </div>
     </div>
   );
 }
