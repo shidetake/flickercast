@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { ExpenseSegment } from '@/lib/types';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 interface ExpenseTimelineProps {
   segments: ExpenseSegment[];
@@ -182,12 +183,13 @@ export function ExpenseTimeline({
     <div className="space-y-3">
       <div className="flex justify-between items-center">
         <span className="text-sm font-medium text-gray-700">月間支出管理</span>
-        <button
+        <Button
           onClick={handleAddDivider}
-          className="text-sm px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+          size="sm"
+          variant="outline"
         >
-          + 区切り追加
-        </button>
+          区切り追加
+        </Button>
       </div>
 
       <svg
