@@ -277,7 +277,9 @@ export function ExpenseTimeline({
                 y2={margin.top + 60}
                 stroke="#333"
                 strokeWidth="2"
-                pointerEvents="none"
+                onPointerDown={() => handleDividerPointerDown(index)}
+                className="cursor-ew-resize"
+                style={{ touchAction: 'none' }}
               />
 
               {/* ドラッグハンドル（三角形） */}
