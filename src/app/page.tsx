@@ -561,23 +561,21 @@ function HomeContent() {
       if (field === 'currentAge') {
         updated.lifeExpectancy = calculateLifeExpectancy(value);
 
-        // 元の年齢範囲と新しい年齢範囲
-        const oldRange = prev.lifeExpectancy - prev.currentAge;
-        const newRange = updated.lifeExpectancy - value;
-
-        // expenseSegments の相対位置を保持しながら調整
-        updated.expenseSegments = prev.expenseSegments.map(seg => {
-          // 元の範囲での相対位置を計算（0.0 ~ 1.0）
-          const startRatio = (seg.startAge - prev.currentAge) / oldRange;
-          const endRatio = (seg.endAge - prev.currentAge) / oldRange;
-
-          // 新しい範囲で同じ相対位置に配置
-          return {
-            ...seg,
-            startAge: Math.round(value + startRatio * newRange),
-            endAge: Math.round(value + endRatio * newRange),
-          };
-        });
+        // 範囲外になった区間を調整（年齢は固定のまま）
+        updated.expenseSegments = prev.expenseSegments
+          .filter(seg => seg.endAge > value) // 終了年齢が新現在年齢より後の区間のみ残す
+          .map((seg, index, arr) => {
+            let adjustedSeg = { ...seg };
+            // 最初の区間の開始年齢を常に新現在年齢に調整
+            if (index === 0) {
+              adjustedSeg.startAge = value;
+            }
+            // 最後の区間の終了年齢を新寿命に調整
+            if (index === arr.length - 1) {
+              adjustedSeg.endAge = updated.lifeExpectancy;
+            }
+            return adjustedSeg;
+          });
 
         // 区間が空になった場合はデフォルト区間を追加
         if (updated.expenseSegments.length === 0) {
