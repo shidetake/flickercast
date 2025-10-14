@@ -280,31 +280,19 @@ export function ExpenseTimeline({
                 pointerEvents="none"
               />
 
-              {/* ドラッグハンドル */}
+              {/* ドラッグハンドル（三角形） */}
               <g
                 onPointerDown={() => handleDividerPointerDown(index)}
                 className="cursor-ew-resize"
                 style={{ touchAction: 'none' }}
               >
-                <circle
-                  cx={x}
-                  cy={margin.top + 70}
-                  r="8"
-                  fill="#fff"
+                <polygon
+                  points={`${x},${margin.top + 60} ${x - 6},${margin.top + 72} ${x + 6},${margin.top + 72}`}
+                  fill="#333"
                   stroke="#333"
                   strokeWidth="2"
-                  className="hover:fill-blue-100 transition"
+                  className="hover:fill-blue-500 transition"
                 />
-                <text
-                  x={x}
-                  cy={margin.top + 73}
-                  fontSize="10"
-                  fill="#333"
-                  textAnchor="middle"
-                  pointerEvents="none"
-                >
-                  ▼
-                </text>
               </g>
 
               {/* 削除ボタン（編集モード時は常時表示、通常時はホバーで表示） */}
@@ -350,7 +338,7 @@ export function ExpenseTimeline({
       )}
 
       <p className="text-xs text-gray-500">
-        ※ ▼マークをドラッグして年齢境界を調整 / 区間をクリックして支出額を編集
+        ※ ▲マークをドラッグして年齢境界を調整 / 区間をクリックして支出額を編集
       </p>
     </div>
   );
