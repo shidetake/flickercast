@@ -328,16 +328,21 @@ export function ExpenseTimeline({
       {editingSegmentId && (
         <div className="flex items-center gap-2 p-2 bg-blue-50 rounded border border-blue-200">
           <span className="text-sm">月間支出額 [万円]</span>
-          <Input
-            type="number"
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={handleEditComplete}
-            onKeyDown={handleEditKeyDown}
-            className="w-24"
-            autoFocus
-          />
-          <span className="text-xs text-gray-500">Enter: 確定 / Esc: キャンセル</span>
+          <div className="flex items-center gap-2 ml-auto">
+            <Input
+              type="number"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={handleEditComplete}
+              onKeyDown={handleEditKeyDown}
+              className="w-24"
+              autoFocus
+            />
+            <div className="text-xs text-gray-500">
+              <div>Enter: 確定</div>
+              <div>Esc: キャンセル</div>
+            </div>
+          </div>
         </div>
       )}
 
