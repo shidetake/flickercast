@@ -327,7 +327,7 @@ export function ExpenseTimeline({
       {/* 編集モーダル（インライン） */}
       {editingSegmentId && (
         <div className="flex items-center gap-2 p-2 bg-blue-50 rounded border border-blue-200">
-          <span className="text-sm">月間支出額（万円）:</span>
+          <span className="text-sm">月間支出額 [万円]</span>
           <Input
             type="number"
             value={editValue}
