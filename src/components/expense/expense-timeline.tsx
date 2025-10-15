@@ -86,7 +86,7 @@ export function ExpenseTimeline({
     const constrainedAge = Math.max(minAge, Math.min(maxAge, newAge));
 
     prevSegment.endAge = constrainedAge;
-    nextSegment.startAge = constrainedAge;
+    nextSegment.startAge = constrainedAge + 1;
 
     onSegmentsChange(updatedSegments);
   };
@@ -143,7 +143,7 @@ export function ExpenseTimeline({
     const newSegments = [...segments];
     const newSegment: ExpenseSegment = {
       id: Date.now().toString(),
-      startAge: midAge,
+      startAge: midAge + 1,
       endAge: targetSegment.endAge,
       monthlyExpenses: targetSegment.monthlyExpenses,
     };
@@ -212,7 +212,10 @@ export function ExpenseTimeline({
         {/* 区間表示 */}
         {segments.map((segment, index) => {
           const x1 = ageToX(segment.startAge);
-          const x2 = ageToX(segment.endAge);
+          // 次の区間の開始位置まで描画して空白をなくす
+          const x2 = index < segments.length - 1
+            ? ageToX(segments[index + 1].startAge)
+            : ageToX(segment.endAge + 1);
           const width = x2 - x1;
           const color = getColorForExpense(segment.monthlyExpenses);
 
@@ -261,7 +264,8 @@ export function ExpenseTimeline({
 
         {/* 区切り線ハンドル */}
         {segments.slice(0, -1).map((segment, index) => {
-          const x = ageToX(segment.endAge);
+          // 区切り線を次の区間のstartAge位置に配置（区間のstrokeと重なる）
+          const x = ageToX(segments[index + 1].startAge);
 
           // 編集中の区間に隣接する区切り線かチェック
           const editingSegmentIndex = segments.findIndex(s => s.id === editingSegmentId);

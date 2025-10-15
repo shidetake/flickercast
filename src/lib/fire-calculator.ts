@@ -52,7 +52,7 @@ function getMonthlyExpensesForAge(
   segments: ExpenseSegment[]
 ): number {
   const segment = segments.find(
-    s => age >= s.startAge && age < s.endAge
+    s => age >= s.startAge && age <= s.endAge
   );
   return segment?.monthlyExpenses ?? 0;
 }

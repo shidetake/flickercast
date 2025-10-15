@@ -683,7 +683,7 @@ function HomeContent() {
       // メトリクス計算
       // 現在年齢での月間支出を取得
       const currentSegment = input.expenseSegments.find(
-        s => input.currentAge >= s.startAge && input.currentAge < s.endAge
+        s => input.currentAge >= s.startAge && input.currentAge <= s.endAge
       );
       const currentMonthlyExpenses = currentSegment?.monthlyExpenses ?? 0;
       const annualExpenses = currentMonthlyExpenses * 12;
@@ -1492,7 +1492,7 @@ function HomeContent() {
                         <div className="flex justify-between">
                           <span>年間支出:</span>
                           <span>{formatCurrency(
-                            (input.expenseSegments.find(s => input.currentAge >= s.startAge && input.currentAge < s.endAge)?.monthlyExpenses ?? 0) * 12
+                            (input.expenseSegments.find(s => input.currentAge >= s.startAge && input.currentAge <= s.endAge)?.monthlyExpenses ?? 0) * 12
                           )}</span>
                         </div>
                       </div>
