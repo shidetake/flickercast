@@ -243,11 +243,19 @@ export class FireCalculator {
             ...asset,
             currentValue: asset.currentValue + (netCashFlow * asset.originalRatio)
           }));
-        } else {
+        } else if (assetBalances.length > 0) {
           assetBalances = assetBalances.map((asset, index) => ({
             ...asset,
             currentValue: index === 0 ? asset.currentValue + netCashFlow : asset.currentValue
           }));
+        } else {
+          // 金融資産が0件の場合、新しい資産（現金相当）を作成
+          assetBalances = [{
+            id: 'cash',
+            currentValue: netCashFlow,
+            originalRatio: 1,
+            expectedReturn: 0
+          }];
         }
       }
     }
@@ -576,11 +584,19 @@ export class FireCalculator {
             ...asset,
             currentValue: asset.currentValue + (netCashFlow * asset.originalRatio)
           }));
-        } else {
+        } else if (currentAssetBalances.length > 0) {
           currentAssetBalances = currentAssetBalances.map((asset, index) => ({
             ...asset,
             currentValue: index === 0 ? asset.currentValue + netCashFlow : asset.currentValue
           }));
+        } else {
+          // 金融資産が0件の場合、新しい資産（現金相当）を作成
+          currentAssetBalances = [{
+            id: 'cash',
+            currentValue: netCashFlow,
+            originalRatio: 1,
+            expectedReturn: 0
+          }];
         }
       }
     }
@@ -746,12 +762,20 @@ export class FireCalculator {
             ...asset,
             currentValue: asset.currentValue + (netCashFlow * asset.originalRatio)
           }));
-        } else {
+        } else if (currentAssetBalances.length > 0) {
           // 初期資産がない場合：最初の資産に全額追加（現金として扱う）
           currentAssetBalances = currentAssetBalances.map((asset, index) => ({
             ...asset,
             currentValue: index === 0 ? asset.currentValue + netCashFlow : asset.currentValue
           }));
+        } else {
+          // 金融資産が0件の場合、新しい資産（現金相当）を作成
+          currentAssetBalances = [{
+            id: 'cash',
+            currentValue: netCashFlow,
+            originalRatio: 1,
+            expectedReturn: 0
+          }];
         }
       }
       
