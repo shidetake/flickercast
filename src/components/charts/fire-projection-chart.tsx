@@ -44,9 +44,6 @@ export default function FireProjectionChart({
     return `${amountInManYen.toFixed(1)}万円`;
   };
 
-  // FIRE達成年を特定
-  const fireAchievedYear = data.find(point => point.fireAchieved)?.year;
-
   return (
     <div className={className}>
       <ResponsiveContainer width="100%" height="100%">
@@ -104,23 +101,12 @@ export default function FireProjectionChart({
 
           {/* FIRE目標額のライン */}
           {targetAmount && (
-            <ReferenceLine 
-              y={targetAmount} 
+            <ReferenceLine
+              y={targetAmount}
               stroke="#f59e0b"
               strokeDasharray="8 4"
               strokeWidth={2}
               label={{ value: "FIRE目標額", position: "top" }}
-            />
-          )}
-
-          {/* FIRE達成年のライン */}
-          {fireAchievedYear && (
-            <ReferenceLine 
-              x={fireAchievedYear} 
-              stroke="#10b981"
-              strokeDasharray="8 4"
-              strokeWidth={2}
-              label={{ value: "FIRE達成", position: "top" }}
             />
           )}
         </LineChart>

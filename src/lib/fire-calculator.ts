@@ -690,9 +690,9 @@ export class FireCalculator {
     });
     const projections: YearlyProjection[] = [];
 
-    let fireAge = 0;
-    let yearsToFire = 0;
-    let isFireAchievable = false;
+    const fireAge = 0; // FIRE達成判定は削除
+    const yearsToFire = 0; // FIRE達成判定は削除
+    const isFireAchievable = false; // FIRE達成判定は削除
 
     // 年次計算（想定寿命まで）
     let currentAssetBalances = [...assetBalances];
@@ -757,16 +757,8 @@ export class FireCalculator {
       
       const futureAssets = currentAssetBalances.reduce((sum, asset) => sum + asset.currentValue, 0);
 
-      // FIRE達成判定: 資産がその年の支出を賄えるかチェック
+      // FIRE達成判定は削除（目標額ラインのみで判断）
       const totalAnnualExpenses = yearlyExpenses + yearlyLoanPayments + yearlySpecialExpenses;
-      const fireAchieved = futureAssets >= totalAnnualExpenses;
-
-      // 初回のFIRE達成年を記録
-      if (fireAchieved && !isFireAchievable) {
-        isFireAchievable = true;
-        fireAge = age;
-        yearsToFire = year;
-      }
 
       // 現在の年齢での月間支出（表示用、インフレ調整なし）
       const currentMonthlyExpenses = getMonthlyExpensesForAge(age, expenseSegments);
@@ -779,8 +771,8 @@ export class FireCalculator {
         expenses: currentAnnualExpenses + yearlyLoanPayments + yearlySpecialExpenses,
         realExpenses: totalAnnualExpenses,
         netWorth: futureAssets,
-        fireAchieved: fireAchieved,
-        yearsToFire: fireAchieved ? 0 : (year === 0 ? yearsToFire : year)
+        fireAchieved: false, // FIRE達成判定は削除
+        yearsToFire: year === 0 ? yearsToFire : year
       });
     }
 
