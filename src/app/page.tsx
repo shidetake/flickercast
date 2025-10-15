@@ -565,7 +565,7 @@ function HomeContent() {
         updated.expenseSegments = prev.expenseSegments
           .filter(seg => seg.endAge > value) // 終了年齢が新現在年齢より後の区間のみ残す
           .map((seg, index, arr) => {
-            let adjustedSeg = { ...seg };
+            const adjustedSeg = { ...seg };
             // 最初の区間の開始年齢を常に新現在年齢に調整
             if (index === 0) {
               adjustedSeg.startAge = value;
@@ -919,7 +919,7 @@ function HomeContent() {
                       <div className="grid grid-cols-[1.5fr_1.5fr_1fr_1fr_1fr] gap-3 mb-2">
                         <Label className="text-sm font-medium">年金名</Label>
                         <Label className="text-sm font-medium">年受給額</Label>
-                        <Label className="text-sm font-medium">通貨</Label>
+                        <Label className="text-sm font-medium"></Label>
                         <Label className="text-sm font-medium">開始年齢</Label>
                         <Label className="text-sm font-medium">終了年齢</Label>
                       </div>
@@ -1019,7 +1019,7 @@ function HomeContent() {
                         <Label className="text-sm font-medium">銘柄名</Label>
                         <Label className="text-sm font-medium">数量</Label>
                         <Label className="text-sm font-medium">単価</Label>
-                        <Label className="text-sm font-medium">通貨</Label>
+                        <Label className="text-sm font-medium"></Label>
                         <Label className="text-sm font-medium">利回り</Label>
                       </div>
                     )}

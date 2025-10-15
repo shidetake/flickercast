@@ -67,9 +67,17 @@ export default function FireProjectionChart({
             domain={['dataMin', 'dataMax']}
             tickFormatter={(value) => `${value}年`}
           />
-          <YAxis 
+          <YAxis
             tickFormatter={formatYAxis}
-            domain={[0, 'auto']}
+            domain={[
+              0,
+              (dataMax: number) => {
+                // データの最大値とFIRE目標額のうち、大きい方を縦軸の最大値とする
+                const maxValue = targetAmount ? Math.max(dataMax, targetAmount) : dataMax;
+                // 少し余裕を持たせる（10%上乗せ）
+                return Math.ceil(maxValue * 1.1);
+              }
+            ]}
           />
           <Tooltip 
             formatter={formatTooltip}
