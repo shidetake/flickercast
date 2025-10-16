@@ -1528,47 +1528,6 @@ function HomeContent() {
                     className="w-full h-96"
                   />
                 </div>
-
-                {/* 詳細情報 */}
-                <div className="bg-white rounded-lg shadow-md p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                    計算結果詳細
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h3 className="font-semibold text-gray-800 mb-3">基本情報</h3>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>現在年齢:</span>
-                          <span>{input.currentAge}歳</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>現在の資産:</span>
-                          <span>{formatCurrency(calculateTotalAssets() * 10000)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>年間支出:</span>
-                          <span>{formatCurrency(
-                            (input.expenseSegments.find(s => input.currentAge >= s.startAge && input.currentAge <= s.endAge)?.monthlyExpenses ?? 0) * 12
-                          )}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-800 mb-3">FIRE達成条件</h3>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>必要資産額:</span>
-                          <span>{formatCurrency(results.requiredAssets)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>達成までの年数:</span>
-                          <span>{results.metrics.yearsToFire}年</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </>
             ) : (
               <div className="bg-white rounded-lg shadow-md p-12 text-center">
