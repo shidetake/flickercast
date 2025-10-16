@@ -10,14 +10,15 @@ interface FireSummaryProps {
 
 export default function FireSummary({ metrics, className = "" }: FireSummaryProps) {
   const {
-    currentFireNumber,
-    requiredFireNumber,
+    currentAssets,
+    requiredAssets,
     fireProgress,
     yearsToFire,
     monthlyDeficit
   } = metrics;
 
   const progressBarWidth = Math.min(fireProgress, 100);
+  const remainingAmount = Math.max(0, requiredAssets - currentAssets);
 
   return (
     <div className={`bg-white rounded-lg shadow-md p-6 ${className}`}>
@@ -27,21 +28,21 @@ export default function FireSummary({ metrics, className = "" }: FireSummaryProp
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="text-center">
           <div className="text-3xl font-bold text-blue-600">
-            {formatNumber(currentFireNumber, 'ja-JP')}
+            {Math.round(fireProgress)}%
           </div>
-          <div className="text-sm text-gray-600 mt-1">現在のFIRE数値</div>
+          <div className="text-sm text-gray-600 mt-1">FIRE達成率</div>
           <div className="text-xs text-gray-500">
-            (年間支出の{currentFireNumber.toFixed(1)}倍)
+            目標額に対する現在資産の割合
           </div>
         </div>
 
         <div className="text-center">
           <div className="text-3xl font-bold text-green-600">
-            {formatNumber(requiredFireNumber, 'ja-JP')}
+            {formatCurrency(Math.round(remainingAmount / 10000) * 10000)}
           </div>
-          <div className="text-sm text-gray-600 mt-1">目標FIRE数値</div>
+          <div className="text-sm text-gray-600 mt-1">FIRE目標額まで</div>
           <div className="text-xs text-gray-500">
-            (年間支出の{requiredFireNumber}倍)
+            {remainingAmount === 0 ? '達成済み！' : 'あと必要な金額'}
           </div>
         </div>
 
@@ -61,7 +62,7 @@ export default function FireSummary({ metrics, className = "" }: FireSummaryProp
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm font-medium text-gray-700">FIRE達成度</span>
           <span className="text-sm font-medium text-gray-700">
-            {fireProgress.toFixed(1)}%
+            {Math.round(fireProgress)}%
           </span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-4">
@@ -83,12 +84,12 @@ export default function FireSummary({ metrics, className = "" }: FireSummaryProp
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-600">FIRE進捗率:</span>
-              <span className="font-medium">{fireProgress.toFixed(1)}%</span>
+              <span className="font-medium">{Math.round(fireProgress)}%</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">必要資産まで:</span>
+              <span className="text-gray-600">目標額まで:</span>
               <span className="font-medium">
-                {formatCurrency((requiredFireNumber - currentFireNumber) * (metrics.monthlyDeficit * 12))}
+                {formatCurrency(Math.round(remainingAmount / 10000) * 10000)}
               </span>
             </div>
           </div>

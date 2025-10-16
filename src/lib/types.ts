@@ -136,8 +136,8 @@ export interface ExpenseSummary {
 }
 
 export interface FireMetrics {
-  currentFireNumber: number; // 現在のFIRE数値（年間支出の何倍の資産があるか）
-  requiredFireNumber: number; // 必要なFIRE数値（通常25倍）
+  currentAssets: number; // 現在の資産額（円）
+  requiredAssets: number; // FIRE目標額（円）
   fireProgress: number; // FIRE達成度（%）
   yearsToFire: number;
   monthlyDeficit: number; // 月間不足額

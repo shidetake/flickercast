@@ -740,13 +740,14 @@ function HomeContent() {
       const currentMonthlyExpenses = currentSegment?.monthlyExpenses ?? 0;
       const annualExpenses = currentMonthlyExpenses * 12;
       const currentAssets = calculateTotalAssets() * 10000; // 万円 → 円に変換
-      const currentFireNumber = annualExpenses > 0 ? currentAssets / annualExpenses : 0;
-      const requiredFireNumber = 25; // 4%ルール
-      const fireProgress = Math.min((currentFireNumber / requiredFireNumber) * 100, 100);
+      const requiredAssets = fireResult.requiredAssets; // FIRE目標額（円）
+      const fireProgress = requiredAssets > 0
+        ? Math.min((currentAssets / requiredAssets) * 100, 100)
+        : 0;
 
       const metrics: FireMetrics = {
-        currentFireNumber,
-        requiredFireNumber,
+        currentAssets,
+        requiredAssets,
         fireProgress,
         yearsToFire: fireResult.yearsToFire,
         monthlyDeficit: fireResult.monthlyShortfall,
