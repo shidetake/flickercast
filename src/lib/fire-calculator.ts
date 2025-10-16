@@ -290,7 +290,7 @@ export class FireCalculator {
       : 0;
 
     let currentAssets = startingAssets;
-    const retirementYears = lifeExpectancy - retirementAge;
+    const retirementYears = lifeExpectancy - retirementAge + 1; // 推定寿命年齢も含める
 
     // 各種スケジュールを事前計算
     const loanSchedules = new Map<string, number[]>();
@@ -351,8 +351,13 @@ export class FireCalculator {
    *
    * 最も高い年収の給与プランの退職年齢を延長しながら働き、
    * 到達した資産額から推定寿命まで資産が持続する最小の「到達目標額」を求める。
+   * @returns 目標資産額、FIRE達成までの年数、FIRE達成年齢
    */
-  static calculateMinimalRequiredAssets(input: FireCalculationInput): number {
+  static calculateMinimalRequiredAssets(input: FireCalculationInput): {
+    targetAssets: number;
+    yearsToFire: number;
+    fireAge: number;
+  } {
     const {
       salaryPlans,
       lifeExpectancy,
@@ -367,7 +372,11 @@ export class FireCalculator {
       );
       const monthlyExpenses = currentSegment?.monthlyExpenses ?? 0;
       const annualExpenses = monthlyExpenses * 12;
-      return annualExpenses * 25; // 4%ルール
+      return {
+        targetAssets: annualExpenses * 25, // 4%ルール
+        yearsToFire: 0,
+        fireAge: currentAge
+      };
     }
 
     // 最も高い年収の給与プランを特定
@@ -408,7 +417,7 @@ export class FireCalculator {
         return plan;
       });
 
-      const workingYears = (highestSalaryPlan.endAge + extensionYears) - currentAge;
+      const workingYears = (highestSalaryPlan.endAge + extensionYears) - currentAge + 1; // endAge年齢も含める
       const retirementAge = currentAge + workingYears;
 
       // ステップ1: この延長年数働いた後の資産額を計算
@@ -427,7 +436,11 @@ export class FireCalculator {
 
       // 資産が枯渇せず持続した場合、この到達資産額がFIRE目標額
       if (assetsAtLifeEnd >= 0) {
-        return assetsAfterWorking;
+        return {
+          targetAssets: assetsAfterWorking,
+          yearsToFire: extensionYears, // あと何年延長すればいいか
+          fireAge: retirementAge
+        };
       }
     }
 
@@ -437,7 +450,11 @@ export class FireCalculator {
     );
     const monthlyExpenses = currentSegment?.monthlyExpenses ?? 0;
     const annualExpenses = monthlyExpenses * 12;
-    return annualExpenses * 25; // 4%ルール
+    return {
+      targetAssets: annualExpenses * 25, // 4%ルール
+      yearsToFire: 0,
+      fireAge: currentAge
+    };
   }
 
   /**
@@ -706,10 +723,6 @@ export class FireCalculator {
     });
     const projections: YearlyProjection[] = [];
 
-    const fireAge = 0; // FIRE達成判定は削除
-    const yearsToFire = 0; // FIRE達成判定は削除
-    const isFireAchievable = false; // FIRE達成判定は削除
-
     // 年次計算（想定寿命まで）
     let currentAssetBalances = [...assetBalances];
     
@@ -796,21 +809,27 @@ export class FireCalculator {
         realExpenses: totalAnnualExpenses,
         netWorth: futureAssets,
         fireAchieved: false, // FIRE達成判定は削除
-        yearsToFire: year === 0 ? yearsToFire : year
+        yearsToFire: year
       });
     }
 
     // FIRE目標額：推定寿命まで資産が持続する最小初期資産額を計算
     // （最も高い年収の仕事を延長できると仮定した場合）
-    const requiredAssets = this.calculateMinimalRequiredAssets(input);
-    
+    const fireTargetResult = this.calculateMinimalRequiredAssets(input);
+    const requiredAssets = fireTargetResult.targetAssets;
+    const yearsToFire = fireTargetResult.yearsToFire;
+    const fireAge = fireTargetResult.fireAge;
+
     // 予測資産は最終年の総資産額
     const projectedAssets = projections.length > 0 ? projections[projections.length - 1].assets : totalAssetValue;
 
+    // FIRE達成可能かどうか（現在の資産がFIRE目標額以上か）
+    const isFireAchievable = totalAssetValue >= requiredAssets;
+
     // 不足額計算（月次）
-    const monthlyShortfall = isFireAchievable 
-      ? 0 
-      : Math.max(0, (requiredAssets - projectedAssets) / (yearsToFire * 12));
+    const monthlyShortfall = isFireAchievable
+      ? 0
+      : Math.max(0, (requiredAssets - totalAssetValue) / Math.max(1, yearsToFire * 12));
 
     return {
       yearsToFire,
