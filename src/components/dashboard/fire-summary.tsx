@@ -1,7 +1,7 @@
 'use client';
 
 import { FireMetrics } from '@/lib/types';
-import { formatCurrency, formatNumber } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 
 interface FireSummaryProps {
   metrics: FireMetrics;
@@ -14,7 +14,6 @@ export default function FireSummary({ metrics, className = "" }: FireSummaryProp
     requiredAssets,
     fireProgress,
     yearsToFire,
-    monthlyDeficit
   } = metrics;
 
   const progressBarWidth = Math.min(fireProgress, 100);
@@ -74,69 +73,6 @@ export default function FireSummary({ metrics, className = "" }: FireSummaryProp
         <div className="flex justify-between text-xs text-gray-500 mt-1">
           <span>0%</span>
           <span>100%</span>
-        </div>
-      </div>
-
-      {/* 詳細情報 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="font-semibold text-gray-800 mb-2">現在の状況</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">FIRE進捗率:</span>
-              <span className="font-medium">{Math.round(fireProgress)}%</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">目標額まで:</span>
-              <span className="font-medium">
-                {formatCurrency(Math.round(remainingAmount / 10000) * 10000)}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="font-semibold text-gray-800 mb-2">改善提案</h3>
-          <div className="space-y-2 text-sm">
-            {monthlyDeficit > 0 ? (
-              <>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">月間不足額:</span>
-                  <span className="font-medium text-red-600">
-                    {formatCurrency(monthlyDeficit)}
-                  </span>
-                </div>
-                <div className="text-xs text-gray-500">
-                  貯蓄を月額{formatCurrency(monthlyDeficit)}増やすと目標達成できます
-                </div>
-              </>
-            ) : (
-              <div className="text-green-600 font-medium">
-                順調にFIRE達成に向かっています！
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ステータスメッセージ */}
-      <div className="mt-6 p-4 rounded-lg bg-blue-50 border-l-4 border-blue-400">
-        <div className="flex">
-          <div className="ml-3">
-            <p className="text-sm text-blue-800">
-              {fireProgress >= 100 ? (
-                <span className="font-semibold">🎉 FIRE達成おめでとうございます！</span>
-              ) : fireProgress >= 75 ? (
-                <span>もう少しでFIRE達成です。最後のスパートを頑張りましょう！</span>
-              ) : fireProgress >= 50 ? (
-                <span>FIRE達成の中間地点を通過しました。着実に進歩しています。</span>
-              ) : fireProgress >= 25 ? (
-                <span>FIRE達成に向けて順調に進んでいます。継続が重要です。</span>
-              ) : (
-                <span>FIRE達成に向けた旅が始まりました。長期的な視点で取り組みましょう。</span>
-              )}
-            </p>
-          </div>
         </div>
       </div>
     </div>
