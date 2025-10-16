@@ -7,7 +7,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   ReferenceLine,
 } from 'recharts';
@@ -85,8 +84,7 @@ export default function FireProjectionChart({
               borderRadius: '8px'
             }}
           />
-          <Legend />
-          
+
           {/* 資産の推移 */}
           <Line
             type="monotone"
