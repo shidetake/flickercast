@@ -874,6 +874,7 @@ function HomeContent() {
                             value={plan.startAge}
                             onChange={(e) => updateSalaryPlan(plan.id, 'startAge', Number(e.target.value))}
                             min="0"
+                            max={plan.endAge}
                             step="1"
                           />
                           <Input
@@ -881,7 +882,8 @@ function HomeContent() {
                             placeholder="65"
                             value={plan.endAge}
                             onChange={(e) => updateSalaryPlan(plan.id, 'endAge', Number(e.target.value))}
-                            min="0"
+                            min={plan.startAge}
+                            max={input.lifeExpectancy}
                             step="1"
                           />
                         </div>
@@ -972,6 +974,7 @@ function HomeContent() {
                             value={plan.startAge}
                             onChange={(e) => updatePensionPlan(plan.id, 'startAge', Number(e.target.value))}
                             min="0"
+                            max={plan.endAge}
                             step="1"
                           />
                           <Input
@@ -979,7 +982,8 @@ function HomeContent() {
                             placeholder="84"
                             value={plan.endAge}
                             onChange={(e) => updatePensionPlan(plan.id, 'endAge', Number(e.target.value))}
-                            min="0"
+                            min={plan.startAge}
+                            max={input.lifeExpectancy}
                             step="1"
                           />
                         </div>
@@ -1188,8 +1192,8 @@ function HomeContent() {
                               placeholder={input.currentAge > 0 ? input.currentAge.toString() : "50"}
                               value={income.targetAge ?? ''}
                               onChange={(e) => updateSpecialIncome(income.id, 'targetAge', Number(e.target.value))}
-                              min="18"
-                              max="100"
+                              min={input.currentAge}
+                              max={input.lifeExpectancy}
                               step="1"
                               className="pr-8"
                             />
@@ -1398,8 +1402,8 @@ function HomeContent() {
                               placeholder={input.currentAge > 0 ? input.currentAge.toString() : "50"}
                               value={expense.targetAge ?? ''}
                               onChange={(e) => updateSpecialExpense(expense.id, 'targetAge', Number(e.target.value))}
-                              min="18"
-                              max="100"
+                              min={input.currentAge}
+                              max={input.lifeExpectancy}
                               step="1"
                               className="pr-8"
                             />
