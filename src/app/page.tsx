@@ -583,6 +583,32 @@ function HomeContent() {
             { id: Date.now().toString(), startAge: value, endAge: updated.lifeExpectancy, monthlyExpenses: 0 }
           ];
         }
+
+        // 給与プランの調整
+        updated.salaryPlans = prev.salaryPlans
+          .filter(plan => plan.endAge >= value) // 終了年齢が新現在年齢以上のもの
+          .map(plan => ({
+            ...plan,
+            startAge: Math.max(plan.startAge, value), // 開始年齢を新現在年齢以上に
+          }));
+
+        // 年金プランの調整
+        updated.pensionPlans = prev.pensionPlans
+          .filter(plan => plan.endAge >= value) // 終了年齢が新現在年齢以上のもの
+          .map(plan => ({
+            ...plan,
+            startAge: Math.max(plan.startAge, value), // 開始年齢を新現在年齢以上に
+          }));
+
+        // 臨時収入の調整（範囲外のものを削除）
+        updated.specialIncomes = prev.specialIncomes.filter(
+          income => !income.targetAge || income.targetAge >= value
+        );
+
+        // 特別支出の調整（範囲外のものを削除）
+        updated.specialExpenses = prev.specialExpenses.filter(
+          expense => !expense.targetAge || expense.targetAge >= value
+        );
       }
 
       // 想定寿命が変更された場合、expenseSegments を調整
@@ -607,6 +633,32 @@ function HomeContent() {
             { id: Date.now().toString(), startAge: prev.currentAge, endAge: value, monthlyExpenses: 0 }
           ];
         }
+
+        // 給与プランの調整
+        updated.salaryPlans = prev.salaryPlans
+          .filter(plan => plan.startAge <= value) // 開始年齢が新推定寿命以下のもの
+          .map(plan => ({
+            ...plan,
+            endAge: Math.min(plan.endAge, value), // 終了年齢を新推定寿命以下に
+          }));
+
+        // 年金プランの調整
+        updated.pensionPlans = prev.pensionPlans
+          .filter(plan => plan.startAge <= value) // 開始年齢が新推定寿命以下のもの
+          .map(plan => ({
+            ...plan,
+            endAge: Math.min(plan.endAge, value), // 終了年齢を新推定寿命以下に
+          }));
+
+        // 臨時収入の調整（範囲外のものを削除）
+        updated.specialIncomes = prev.specialIncomes.filter(
+          income => !income.targetAge || income.targetAge <= value
+        );
+
+        // 特別支出の調整（範囲外のものを削除）
+        updated.specialExpenses = prev.specialExpenses.filter(
+          expense => !expense.targetAge || expense.targetAge <= value
+        );
       }
 
       return updated;
