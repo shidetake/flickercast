@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import { YahooFinanceAPI } from '@/lib/external-apis';
 import * as cheerio from 'cheerio';
-import { promises as fs } from 'fs';
-import path from 'path';
 
 interface StockPriceData {
   symbol: string;
@@ -23,32 +21,9 @@ interface CachedStockPrices {
 
 const CACHE_DURATION = 60 * 60 * 1000; // 1時間（株式・ETF）
 const MUTUAL_FUND_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24時間（投資信託）
-const CACHE_FILE_PATH = path.join(process.cwd(), '.next', 'cache', 'stock-prices.json');
 
-// ファイルからキャッシュを読み込む
-async function loadCacheFromFile(): Promise<CachedStockPrices | null> {
-  try {
-    const data = await fs.readFile(CACHE_FILE_PATH, 'utf-8');
-    const cache = JSON.parse(data) as CachedStockPrices;
-    return cache;
-  } catch (error) {
-    // ファイルが存在しない、または読み込みエラーの場合はnullを返す
-    return null;
-  }
-}
-
-// ファイルにキャッシュを保存する
-async function saveCacheToFile(cache: CachedStockPrices): Promise<void> {
-  try {
-    // .next/cache ディレクトリが存在しない場合は作成
-    const cacheDir = path.dirname(CACHE_FILE_PATH);
-    await fs.mkdir(cacheDir, { recursive: true });
-
-    await fs.writeFile(CACHE_FILE_PATH, JSON.stringify(cache, null, 2), 'utf-8');
-  } catch (error) {
-    console.error('Failed to save cache to file:', error);
-  }
-}
+// メモリベースのキャッシュ（Vercel対応）
+let stockPricesCache: CachedStockPrices = { prices: [] };
 
 // ティッカーシンボル（英字のみ）かどうかを判定
 function isTickerSymbol(symbol: string): boolean {
@@ -161,31 +136,26 @@ export async function GET(request: Request) {
       });
     }
 
-    // ファイルからキャッシュを読み込む
-    const stockPricesCache = await loadCacheFromFile();
+    // メモリキャッシュが有効かチェック（銘柄ごとに個別判定）
+    const now = Date.now();
+    const validCachedPrices = stockPricesCache.prices.filter(p => {
+      // リクエストされた銘柄に含まれるか
+      const isRequested = symbols.includes(p.symbol) || symbols.some(s => p.symbol.includes(s));
+      if (!isRequested) return false;
 
-    // キャッシュが有効かチェック（銘柄ごとに個別判定）
-    if (stockPricesCache) {
-      const now = Date.now();
-      const validCachedPrices = stockPricesCache.prices.filter(p => {
-        // リクエストされた銘柄に含まれるか
-        const isRequested = symbols.includes(p.symbol) || symbols.some(s => p.symbol.includes(s));
-        if (!isRequested) return false;
+      // キャッシュ有効期限判定（投資信託は24時間、株式は1時間）
+      const isMutualFund = isMutualFundCode(p.symbol);
+      const duration = isMutualFund ? MUTUAL_FUND_CACHE_DURATION : CACHE_DURATION;
+      return (now - new Date(p.cachedAt).getTime()) < duration;
+    });
 
-        // キャッシュ有効期限判定（投資信託は24時間、株式は1時間）
-        const isMutualFund = isMutualFundCode(p.symbol);
-        const duration = isMutualFund ? MUTUAL_FUND_CACHE_DURATION : CACHE_DURATION;
-        return (now - new Date(p.cachedAt).getTime()) < duration;
+    // 全ての要求された銘柄が有効なキャッシュにある場合
+    if (validCachedPrices.length === symbols.length) {
+      return NextResponse.json({
+        prices: validCachedPrices.map(({ symbol, price, currency }) => ({ symbol, price, currency })),
+        cached: true,
+        lastUpdated: new Date(),
       });
-
-      // 全ての要求された銘柄が有効なキャッシュにある場合
-      if (validCachedPrices.length === symbols.length) {
-        return NextResponse.json({
-          prices: validCachedPrices.map(({ symbol, price, currency }) => ({ symbol, price, currency })),
-          cached: true,
-          lastUpdated: new Date(),
-        });
-      }
     }
 
     // 銘柄を投資信託と株式に分類（事前に判定して無駄なAPI呼び出しを回避）
@@ -233,45 +203,34 @@ export async function GET(request: Request) {
     }
 
     // キャッシュを更新（個別タイムスタンプ付き）
-    const now = new Date();
-    const nowISO = now.toISOString();
+    const updateTime = new Date();
+    const nowISO = updateTime.toISOString();
     const cachedPrices: CachedPriceData[] = prices.map(p => ({
       ...p,
       cachedAt: nowISO,
     }));
 
     // 既存キャッシュと統合（古いデータを保持しつつ、新しいデータで上書き）
-    let updatedCache: CachedStockPrices;
-    if (stockPricesCache) {
-      const existingPrices = stockPricesCache.prices.filter(
-        existing => !prices.some(newPrice => newPrice.symbol === existing.symbol)
-      );
-      updatedCache = {
-        prices: [...existingPrices, ...cachedPrices],
-      };
-    } else {
-      updatedCache = {
-        prices: cachedPrices,
-      };
-    }
-
-    // ファイルに保存
-    await saveCacheToFile(updatedCache);
+    const existingPrices = stockPricesCache.prices.filter(
+      existing => !prices.some(newPrice => newPrice.symbol === existing.symbol)
+    );
+    stockPricesCache = {
+      prices: [...existingPrices, ...cachedPrices],
+    };
 
     return NextResponse.json({
       prices,
       cached: false,
-      lastUpdated: now,
+      lastUpdated: updateTime,
     });
 
   } catch (error) {
     console.error('Stock price API error:', error);
 
-    // エラーが発生した場合、ファイルから古いキャッシュを読み込んで返す
-    const cache = await loadCacheFromFile();
-    if (cache) {
+    // エラーが発生した場合、メモリキャッシュを返す
+    if (stockPricesCache.prices.length > 0) {
       return NextResponse.json({
-        prices: cache.prices,
+        prices: stockPricesCache.prices,
         cached: true,
         lastUpdated: new Date(),
         warning: 'API呼び出し中にエラーが発生したため、キャッシュされた株価を返しています',
