@@ -1503,7 +1503,8 @@ function HomeContent() {
                     </div>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    設定データをJSONファイルで保存・読み込みできます
+                    設定データをJSONファイルで保存・読み込みできます<br />
+                    データはお使いの端末にのみ保存されます。定期的にエクスポートしてバックアップを保存してください
                   </p>
                 </div>
               </div>
