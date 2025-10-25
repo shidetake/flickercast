@@ -2052,6 +2052,86 @@
     "name": "Vanguard Total Bond Market ETF"
   },
   {
+    "symbol": "DGRO",
+    "name": "iShares Core Dividend Growth ETF"
+  },
+  {
+    "symbol": "DGRW",
+    "name": "WisdomTree U.S. Quality Dividend Growth Fund"
+  },
+  {
+    "symbol": "DHS",
+    "name": "WisdomTree U.S. High Dividend Fund"
+  },
+  {
+    "symbol": "DVY",
+    "name": "iShares Select Dividend ETF"
+  },
+  {
+    "symbol": "FVD",
+    "name": "First Trust Value Line Dividend Index Fund"
+  },
+  {
+    "symbol": "HDV",
+    "name": "iShares Core High Dividend ETF"
+  },
+  {
+    "symbol": "IDV",
+    "name": "iShares International Select Dividend ETF"
+  },
+  {
+    "symbol": "JEPI",
+    "name": "JPMorgan Equity Premium Income ETF"
+  },
+  {
+    "symbol": "NOBL",
+    "name": "ProShares S&P 500 Dividend Aristocrats ETF"
+  },
+  {
+    "symbol": "PEY",
+    "name": "Invesco High Yield Equity Dividend Achievers ETF"
+  },
+  {
+    "symbol": "QYLD",
+    "name": "Global X NASDAQ 100 Covered Call ETF"
+  },
+  {
+    "symbol": "SCHD",
+    "name": "Schwab U.S. Dividend Equity ETF"
+  },
+  {
+    "symbol": "SDY",
+    "name": "SPDR S&P Dividend ETF"
+  },
+  {
+    "symbol": "SPHD",
+    "name": "Invesco S&P 500 High Dividend Low Volatility ETF"
+  },
+  {
+    "symbol": "SPHQ",
+    "name": "Invesco S&P 500 Quality ETF"
+  },
+  {
+    "symbol": "SPYD",
+    "name": "SPDR Portfolio S&P 500 High Dividend ETF"
+  },
+  {
+    "symbol": "VIG",
+    "name": "Vanguard Dividend Appreciation ETF"
+  },
+  {
+    "symbol": "VYM",
+    "name": "Vanguard High Dividend Yield ETF"
+  },
+  {
+    "symbol": "VYMI",
+    "name": "Vanguard International High Dividend Yield ETF"
+  },
+  {
+    "symbol": "XYLD",
+    "name": "Global X S&P 500 Covered Call ETF"
+  },
+  {
     "symbol": "89311199",
     "name": "SBI・V・S&P500インデックス・ファンド"
   },
@@ -2152,8 +2232,44 @@
     "name": "マルハニチロ"
   },
   {
+    "symbol": "1343.T",
+    "name": "NEXT FUNDS 東証REIT指数連動型上場投信"
+  },
+  {
+    "symbol": "1399.T",
+    "name": "上場インデックスファンドMSCI日本株高配当低ボラティリティ"
+  },
+  {
+    "symbol": "1476.T",
+    "name": "iシェアーズ・コア Jリート ETF"
+  },
+  {
+    "symbol": "1478.T",
+    "name": "iシェアーズ MSCI ジャパン高配当利回り ETF"
+  },
+  {
+    "symbol": "1489.T",
+    "name": "日経高配当株50 ETF"
+  },
+  {
+    "symbol": "1494.T",
+    "name": "One ETF 高配当日本株"
+  },
+  {
+    "symbol": "1577.T",
+    "name": "野村日本株高配当70 連動型上場投信"
+  },
+  {
     "symbol": "1605.T",
     "name": "INPEX"
+  },
+  {
+    "symbol": "1651.T",
+    "name": "ダイワ上場投信-TOPIX高配当40指数"
+  },
+  {
+    "symbol": "1698.T",
+    "name": "上場インデックスファンド日本高配当（東証配当フォーカス100）"
   },
   {
     "symbol": "1721.T",
@@ -2218,6 +2334,14 @@
   {
     "symbol": "2503.T",
     "name": "キリンホールディングス"
+  },
+  {
+    "symbol": "2556.T",
+    "name": "One ETF 東証REIT指数"
+  },
+  {
+    "symbol": "2564.T",
+    "name": "グローバルX MSCIスーパーディビィデンド-日本株式 ETF"
   },
   {
     "symbol": "2801.T",
