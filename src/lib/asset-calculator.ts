@@ -9,7 +9,7 @@ import { AssetHolding, PensionPlan, SalaryPlan } from './types';
  */
 export function calculateTotalAssets(
   assetHoldings: AssetHolding[],
-  exchangeRate: number | null,
+  exchangeRate: number | null | undefined,
   outputUnit: 'yen' | 'manyen' = 'yen'
 ): number {
   // exchangeRateがnullの場合はデフォルト値を使用
@@ -39,7 +39,7 @@ export function calculateTotalAssets(
  */
 export function convertPensionToJPY(
   pensionPlan: PensionPlan,
-  exchangeRate: number | null
+  exchangeRate: number | null | undefined
 ): number {
   // exchangeRateがnullの場合はデフォルト値を使用
   const currentExchangeRate = exchangeRate ?? 150;

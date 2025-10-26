@@ -478,362 +478,50 @@ export class FireCalculator {
   }
 
   /**
-   * 推定寿命時点での資産残高をシミュレーション（メインのcalculateFire用）
-   */
-  private static simulateAssetBalance(input: FireCalculationInput): number {
-    const {
-      currentAge,
-      assetHoldings,
-      loans,
-      pensionPlans,
-      salaryPlans,
-      specialExpenses,
-      specialIncomes,
-      expenseSegments,
-      inflationRate,
-      lifeExpectancy,
-      exchangeRate
-    } = input;
-
-    // 各資産の初期残高と構成比を計算
-    const totalAssetValue = calculateTotalAssets(assetHoldings, exchangeRate, 'yen');
-    const currentExchangeRate = exchangeRate ?? 150;
-    const assetBalances: AssetBalance[] = assetHoldings.map(holding => {
-      const value = holding.quantity * holding.pricePerUnit;
-      const jpyValue = holding.currency === 'USD' ? value * currentExchangeRate : value;
-      return {
-        id: holding.id,
-        currentValue: jpyValue,
-        originalRatio: totalAssetValue > 0 ? jpyValue / totalAssetValue : 0,
-        expectedReturn: holding.expectedReturn ?? 0
-      };
-    });
-
-    // 各ローンの年次返済スケジュールを事前計算
-    const maxYearsToLife = lifeExpectancy - currentAge;
-    const loanSchedules = new Map<string, number[]>();
-    loans.forEach(loan => {
-      const schedule = this.calculateLoanPaymentSchedule(loan, maxYearsToLife);
-      loanSchedules.set(loan.id, schedule);
-    });
-
-    // 複数給与プランの統合スケジュールを年ごとに事前計算
-    const salarySchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
-      const age = currentAge + year;
-      return salaryPlans.reduce((total, plan) => {
-        const isSalaryActive = age >= plan.startAge && age <= plan.endAge;
-        if (isSalaryActive) {
-          const amount = convertSalaryToJPY(plan);
-          return total + amount;
-        }
-        return total;
-      }, 0);
-    });
-
-    // 複数年金プランの統合スケジュールを年ごとに事前計算
-    const pensionSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
-      const age = currentAge + year;
-      return pensionPlans.reduce((total, plan) => {
-        const isPensionActive = age >= plan.startAge && age <= plan.endAge;
-        if (isPensionActive) {
-          const convertedAmount = convertPensionToJPY(plan, exchangeRate);
-          return total + convertedAmount;
-        }
-        return total;
-      }, 0);
-    });
-
-    // 特別支出スケジュール
-    const specialExpenseSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
-      const age = currentAge + year;
-      return specialExpenses.reduce((total, expense) => {
-        if (expense.targetAge !== undefined && age === expense.targetAge) {
-          const inflationAdjustedAmount = this.adjustForInflation(expense.amount, inflationRate, year);
-          return total + inflationAdjustedAmount;
-        }
-        return total;
-      }, 0);
-    });
-
-    // 臨時収入スケジュール
-    const specialIncomeSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
-      const age = currentAge + year;
-      return specialIncomes.reduce((total, income) => {
-        if (income.targetAge !== undefined && age === income.targetAge) {
-          const inflationAdjustedAmount = this.adjustForInflation(income.amount, inflationRate, year);
-          return total + inflationAdjustedAmount;
-        }
-        return total;
-      }, 0);
-    });
-
-    // インフレ調整済みの年間支出
-    const expensesSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
-      const age = currentAge + year;
-      const monthlyExpenses = getMonthlyExpensesForAge(age, expenseSegments);
-      const annualExpenses = monthlyExpenses * 12;
-      return this.adjustForInflation(annualExpenses, inflationRate, year);
-    });
-
-    // 年次シミュレーション
-    let currentAssetBalances = [...assetBalances];
-
-    for (let year = 0; year <= maxYearsToLife; year++) {
-      // 各資産に個別利回りを適用
-      currentAssetBalances = currentAssetBalances.map(asset => ({
-        ...asset,
-        currentValue: asset.currentValue > 0 ? asset.currentValue * (1 + asset.expectedReturn / 100) : asset.currentValue
-      }));
-
-      // 年間収支計算
-      const yearlySalary = salarySchedule[year];
-      const yearlyPension = pensionSchedule[year];
-      const yearlyExpenses = expensesSchedule[year];
-      const yearlyLoanPayments = Array.from(loanSchedules.values())
-        .reduce((total, schedule) => total + (schedule[year] || 0), 0);
-      const yearlySpecialExpenses = specialExpenseSchedule[year];
-      const yearlySpecialIncomes = specialIncomeSchedule[year];
-
-      const totalIncome = yearlySalary + yearlyPension + yearlySpecialIncomes;
-      const totalExpenses = yearlyExpenses + yearlyLoanPayments + yearlySpecialExpenses;
-      const netCashFlow = totalIncome - totalExpenses;
-
-      // 収支に応じて資産を調整
-      if (netCashFlow < 0) {
-        // 支出超過：各資産を現在の構成比に応じて取り崩し
-        const totalCurrentAssets = currentAssetBalances.reduce((sum, asset) => sum + asset.currentValue, 0);
-        const withdrawalAmount = Math.abs(netCashFlow);
-
-        if (totalCurrentAssets > 0) {
-          currentAssetBalances = currentAssetBalances.map(asset => {
-            const currentRatio = asset.currentValue / totalCurrentAssets;
-            return {
-              ...asset,
-              currentValue: Math.max(0, asset.currentValue - (withdrawalAmount * currentRatio))
-            };
-          });
-        }
-      } else if (netCashFlow > 0) {
-        // 収入超過：各資産を初期構成比に応じて増加
-        const totalOriginalRatio = assetBalances.reduce((sum, asset) => sum + asset.originalRatio, 0);
-
-        if (totalOriginalRatio > 0) {
-          currentAssetBalances = currentAssetBalances.map(asset => ({
-            ...asset,
-            currentValue: asset.currentValue + (netCashFlow * asset.originalRatio)
-          }));
-        } else if (currentAssetBalances.length > 0) {
-          currentAssetBalances = currentAssetBalances.map((asset, index) => ({
-            ...asset,
-            currentValue: index === 0 ? asset.currentValue + netCashFlow : asset.currentValue
-          }));
-        } else {
-          // 金融資産が0件の場合、新しい資産（現金相当）を作成
-          currentAssetBalances = [{
-            id: 'cash',
-            currentValue: netCashFlow,
-            originalRatio: 1,
-            expectedReturn: 0
-          }];
-        }
-      }
-    }
-
-    // 推定寿命時点での資産残高を返す
-    return currentAssetBalances.reduce((sum, asset) => sum + asset.currentValue, 0);
-  }
-
-  /**
    * メインのFIRE計算関数
    */
   static calculateFire(input: FireCalculationInput): FireCalculationResult {
     const {
-      currentAge,
       assetHoldings,
-      loans,
-      pensionPlans,
-      salaryPlans,
-      specialExpenses,
-      specialIncomes,
-      expenseSegments,
-      inflationRate,
-      lifeExpectancy,
-      exchangeRate
+      exchangeRate,
+      expenseSegments
     } = input;
 
-    // 各資産の初期残高と構成比を計算
+    // 各資産の初期残高と構成比を計算（FIRE目標額計算用）
     const totalAssetValue = calculateTotalAssets(assetHoldings, exchangeRate, 'yen');
-    const currentExchangeRate = exchangeRate ?? 150;
-    const assetBalances: AssetBalance[] = assetHoldings.map(holding => {
-      const value = holding.quantity * holding.pricePerUnit;
-      const jpyValue = holding.currency === 'USD' ? value * currentExchangeRate : value;
-      return {
-        id: holding.id,
-        currentValue: jpyValue,
-        originalRatio: totalAssetValue > 0 ? jpyValue / totalAssetValue : 0,
-        expectedReturn: holding.expectedReturn ?? 0
-      };
-    });
 
-    // 各ローンの年次返済スケジュールを事前計算
-    const maxYearsToLife = lifeExpectancy - currentAge;
-    const loanSchedules = new Map<string, number[]>();
-    loans.forEach(loan => {
-      const schedule = this.calculateLoanPaymentSchedule(loan, maxYearsToLife);
-      loanSchedules.set(loan.id, schedule);
-    });
+    // 年次詳細データを計算（これが唯一の資産推移計算処理）
+    const yearlyDetails = this.calculateYearlyDetails(input);
 
-    // 複数給与プランの統合スケジュールを年ごとに事前計算
-    const salarySchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
-      const age = currentAge + year;
-      return salaryPlans.reduce((total, plan) => {
-        const isSalaryActive = age >= plan.startAge && age <= plan.endAge;
-        if (isSalaryActive) {
-          const amount = convertSalaryToJPY(plan);
-          return total + amount;
-        }
-        return total;
-      }, 0);
-    });
-
-    // 複数年金プランの統合スケジュールを年ごとに事前計算（通貨換算含む）
-    const pensionSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
-      const age = currentAge + year;
-      return pensionPlans.reduce((total, plan) => {
-        const isPensionActive = age >= plan.startAge && age <= plan.endAge;
-        if (isPensionActive) {
-          // 通貨換算して円ベースで統一
-          const convertedAmount = convertPensionToJPY(plan, exchangeRate);
-          return total + convertedAmount;
-        }
-        return total;
-      }, 0);
-    });
-
-    // 特別支出スケジュールを年ごとに事前計算（インフレ調整含む）
-    const specialExpenseSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
-      const age = currentAge + year;
-      return specialExpenses.reduce((total, expense) => {
-        if (expense.targetAge !== undefined && age === expense.targetAge) {
-          // インフレ調整：現在価値 → 将来価値
-          const inflationAdjustedAmount = this.adjustForInflation(expense.amount, inflationRate, year);
-          return total + inflationAdjustedAmount;
-        }
-        return total;
-      }, 0);
-    });
-
-    // 臨時収入スケジュールを年ごとに事前計算（インフレ調整含む）
-    const specialIncomeSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
-      const age = currentAge + year;
-      return specialIncomes.reduce((total, income) => {
-        if (income.targetAge !== undefined && age === income.targetAge) {
-          // インフレ調整：現在価値 → 将来価値
-          const inflationAdjustedAmount = this.adjustForInflation(income.amount, inflationRate, year);
-          return total + inflationAdjustedAmount;
-        }
-        return total;
-      }, 0);
-    });
-
-    // インフレ調整済みの年間支出を年ごとに事前計算（年齢別支出を考慮）
-    const expensesSchedule: number[] = new Array(maxYearsToLife + 1).fill(0).map((_, year) => {
-      const age = currentAge + year;
-      const monthlyExpenses = getMonthlyExpensesForAge(age, expenseSegments);
-      const annualExpenses = monthlyExpenses * 12;
-      return this.adjustForInflation(annualExpenses, inflationRate, year);
-    });
-    const projections: YearlyProjection[] = [];
-
-    // 年次計算（想定寿命まで）
-    let currentAssetBalances = [...assetBalances];
-    
-    for (let year = 0; year <= maxYearsToLife; year++) {
-      const age = currentAge + year;
-
-      // 事前計算済みスケジュールから各年の値を取得
-      const yearlySalary = salarySchedule[year];
-      const yearlyPension = pensionSchedule[year];
-      const yearlyExpenses = expensesSchedule[year];
-      const yearlyLoanPayments = Array.from(loanSchedules.values())
-        .reduce((total, schedule) => total + (schedule[year] || 0), 0);
-      const yearlySpecialExpenses = specialExpenseSchedule[year];
-      const yearlySpecialIncomes = specialIncomeSchedule[year];
-
-      // 1. 各資産に個別利回りを適用
-      currentAssetBalances = currentAssetBalances.map(asset => ({
-        ...asset,
-        currentValue: asset.currentValue > 0 ? asset.currentValue * (1 + asset.expectedReturn / 100) : asset.currentValue
-      }));
-
-      // 2. 年間収支計算
-      const totalIncome = yearlySalary + yearlyPension + yearlySpecialIncomes;
-      const totalExpenses = yearlyExpenses + yearlyLoanPayments + yearlySpecialExpenses;
-      const netCashFlow = totalIncome - totalExpenses;
-      
-      // 3. 収支に応じて資産を調整
-      if (netCashFlow < 0) {
-        // 支出超過：各資産を現在の構成比に応じて取り崩し
-        const totalCurrentAssets = currentAssetBalances.reduce((sum, asset) => sum + asset.currentValue, 0);
-        const withdrawalAmount = Math.abs(netCashFlow);
-
-        if (totalCurrentAssets > 0) {
-          // 現在の資産構成比を計算
-          currentAssetBalances = currentAssetBalances.map(asset => {
-            const currentRatio = asset.currentValue / totalCurrentAssets;
-            return {
-              ...asset,
-              currentValue: Math.max(0, asset.currentValue - (withdrawalAmount * currentRatio))
-            };
-          });
-        }
-      } else if (netCashFlow > 0) {
-        // 収入超過：各資産を初期構成比に応じて増加
-        const totalOriginalRatio = assetBalances.reduce((sum, asset) => sum + asset.originalRatio, 0);
-
-        if (totalOriginalRatio > 0) {
-          // 通常ケース：初期資産がある場合、構成比に応じて分配
-          currentAssetBalances = currentAssetBalances.map(asset => ({
-            ...asset,
-            currentValue: asset.currentValue + (netCashFlow * asset.originalRatio)
-          }));
-        } else if (currentAssetBalances.length > 0) {
-          // 初期資産がない場合：最初の資産に全額追加（現金として扱う）
-          currentAssetBalances = currentAssetBalances.map((asset, index) => ({
-            ...asset,
-            currentValue: index === 0 ? asset.currentValue + netCashFlow : asset.currentValue
-          }));
-        } else {
-          // 金融資産が0件の場合、新しい資産（現金相当）を作成
-          currentAssetBalances = [{
-            id: 'cash',
-            currentValue: netCashFlow,
-            originalRatio: 1,
-            expectedReturn: 0
-          }];
-        }
-      }
-      
-      const futureAssets = currentAssetBalances.reduce((sum, asset) => sum + asset.currentValue, 0);
-
-      // FIRE達成判定は削除（目標額ラインのみで判断）
-      const totalAnnualExpenses = yearlyExpenses + yearlyLoanPayments + yearlySpecialExpenses;
-
+    // 年次詳細データから projections を生成（マッピング変換）
+    const projections: YearlyProjection[] = yearlyDetails.map((detail, index) => {
       // 現在の年齢での月間支出（表示用、インフレ調整なし）
-      const currentMonthlyExpenses = getMonthlyExpensesForAge(age, expenseSegments);
+      const currentMonthlyExpenses = getMonthlyExpensesForAge(detail.age, expenseSegments);
       const currentAnnualExpenses = currentMonthlyExpenses * 12;
 
-      projections.push({
-        year: year,
-        age: age,
-        assets: futureAssets,
-        expenses: currentAnnualExpenses + yearlyLoanPayments + yearlySpecialExpenses,
-        realExpenses: totalAnnualExpenses,
-        netWorth: futureAssets,
-        fireAchieved: false, // FIRE達成判定は削除
-        yearsToFire: year
-      });
-    }
+      // ローン返済額の合計
+      const totalLoanPayments = Math.abs(detail.loanPayments);
+
+      // 特別支出の合計
+      const totalSpecialExpenses = Math.abs(Object.values(detail.specialExpenses).reduce((sum, val) => sum + val, 0));
+
+      // 生活費（インフレ調整なし）+ ローン返済 + 特別支出
+      const displayExpenses = currentAnnualExpenses + totalLoanPayments + totalSpecialExpenses;
+
+      // 実際の支出（インフレ調整済み）
+      const realExpenses = Math.abs(detail.expenses) + totalLoanPayments + totalSpecialExpenses;
+
+      return {
+        year: index,
+        age: detail.age,
+        assets: detail.totalAssets,
+        expenses: displayExpenses,
+        realExpenses: realExpenses,
+        netWorth: detail.totalAssets,
+        fireAchieved: false,
+        yearsToFire: index
+      };
+    });
 
     // FIRE目標額：推定寿命まで資産が持続する最小初期資産額を計算
     // （最も高い年収の仕事を延長できると仮定した場合）
@@ -1119,8 +807,8 @@ export class FireCalculator {
         assets[name] = assetBalances[name];
       });
 
-      // 合計資産
-      const totalAssets = Object.values(assetBalances).reduce((sum, val) => sum + val, 0);
+      // 合計資産（金融資産 + 現金残高）
+      const totalAssets = Math.max(0, Object.values(assetBalances).reduce((sum, val) => sum + val, 0) + cashBalance);
 
       // ローン残高のコピー（現時点での残高）
       const currentLoanBalances: { [key: string]: number } = {};
