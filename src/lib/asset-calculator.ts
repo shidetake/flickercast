@@ -3,18 +3,17 @@ import { AssetHolding, PensionPlan, SalaryPlan } from './types';
 /**
  * 資産保有情報から総資産額を計算する統一関数
  * @param assetHoldings - 資産保有情報の配列
- * @param exchangeRate - USD/JPY為替レート（nullの場合はデフォルト値150を使用）
+ * @param exchangeRate - USD/JPY為替レート
  * @param outputUnit - 出力単位 ('yen': 円, 'manyen': 万円)
  * @returns 指定単位での総資産額
  */
 export function calculateTotalAssets(
   assetHoldings: AssetHolding[],
-  exchangeRate: number | null = null,
+  exchangeRate: number | null,
   outputUnit: 'yen' | 'manyen' = 'yen'
 ): number {
-  // デフォルト為替レート（APIが利用できない場合の代替値）
-  const defaultExchangeRate = 150;
-  const currentExchangeRate = exchangeRate ?? defaultExchangeRate;
+  // exchangeRateがnullの場合はデフォルト値を使用
+  const currentExchangeRate = exchangeRate ?? 150;
   
   const totalInYen = assetHoldings.reduce((total, holding) => {
     const assetValue = holding.quantity * holding.pricePerUnit;
@@ -35,16 +34,15 @@ export function calculateTotalAssets(
 /**
  * 年金受給額を円に換算する関数
  * @param pensionPlan - 年金プラン情報
- * @param exchangeRate - USD/JPY為替レート（nullの場合はデフォルト値150を使用）
+ * @param exchangeRate - USD/JPY為替レート
  * @returns 円換算された年間受給額
  */
 export function convertPensionToJPY(
   pensionPlan: PensionPlan,
-  exchangeRate: number | null = null
+  exchangeRate: number | null
 ): number {
-  // デフォルト為替レート（APIが利用できない場合の代替値）
-  const defaultExchangeRate = 150;
-  const currentExchangeRate = exchangeRate ?? defaultExchangeRate;
+  // exchangeRateがnullの場合はデフォルト値を使用
+  const currentExchangeRate = exchangeRate ?? 150;
 
   const amount = pensionPlan.annualAmount ?? 0;
 

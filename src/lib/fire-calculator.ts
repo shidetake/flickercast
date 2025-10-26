@@ -173,9 +173,10 @@ export class FireCalculator {
 
     // 各資産の初期残高と構成比を計算
     const totalAssetValue = calculateTotalAssets(assetHoldings, exchangeRate, 'yen');
+    const currentExchangeRate = exchangeRate ?? 150;
     let assetBalances: AssetBalance[] = assetHoldings.map(holding => {
       const value = holding.quantity * holding.pricePerUnit;
-      const jpyValue = holding.currency === 'USD' && exchangeRate ? value * exchangeRate : value;
+      const jpyValue = holding.currency === 'USD' ? value * currentExchangeRate : value;
       return {
         id: holding.id,
         currentValue: jpyValue,
@@ -495,9 +496,10 @@ export class FireCalculator {
 
     // 各資産の初期残高と構成比を計算
     const totalAssetValue = calculateTotalAssets(assetHoldings, exchangeRate, 'yen');
+    const currentExchangeRate = exchangeRate ?? 150;
     const assetBalances: AssetBalance[] = assetHoldings.map(holding => {
       const value = holding.quantity * holding.pricePerUnit;
-      const jpyValue = holding.currency === 'USD' && exchangeRate ? value * exchangeRate : value;
+      const jpyValue = holding.currency === 'USD' ? value * currentExchangeRate : value;
       return {
         id: holding.id,
         currentValue: jpyValue,
@@ -660,9 +662,10 @@ export class FireCalculator {
 
     // 各資産の初期残高と構成比を計算
     const totalAssetValue = calculateTotalAssets(assetHoldings, exchangeRate, 'yen');
+    const currentExchangeRate = exchangeRate ?? 150;
     const assetBalances: AssetBalance[] = assetHoldings.map(holding => {
       const value = holding.quantity * holding.pricePerUnit;
-      const jpyValue = holding.currency === 'USD' && exchangeRate ? value * exchangeRate : value;
+      const jpyValue = holding.currency === 'USD' ? value * currentExchangeRate : value;
       return {
         id: holding.id,
         currentValue: jpyValue,
@@ -918,14 +921,15 @@ export class FireCalculator {
 
     // 初期資産の計算
     const initialTotalAssets = calculateTotalAssets(input.assetHoldings, input.exchangeRate, 'yen');
+    const currentExchangeRate = input.exchangeRate ?? 150;
 
     // 資産残高の追跡（各銘柄ごと）
     const assetBalances: { [key: string]: number } = {};
     input.assetHoldings.forEach(holding => {
       const name = holding.name || `資産${holding.id}`;
       const value = holding.quantity * holding.pricePerUnit;
-      const valueInYen = holding.currency === 'USD' && input.exchangeRate
-        ? value * input.exchangeRate
+      const valueInYen = holding.currency === 'USD'
+        ? value * currentExchangeRate
         : value;
       assetBalances[name] = valueInYen;
     });

@@ -100,6 +100,7 @@ function HomeContent() {
   // USD/JPY為替レート関連の状態
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [exchangeRateLoading, setExchangeRateLoading] = useState(true);
+  const [exchangeRateFetchFailed, setExchangeRateFetchFailed] = useState(false);
 
   // 年次詳細データ表示の状態
   const [showYearlyDetails, setShowYearlyDetails] = useState(false);
@@ -157,7 +158,9 @@ function HomeContent() {
       setExchangeRate(data.rate);
     } catch (error) {
       console.error('Exchange rate fetch error:', error);
-      setExchangeRate(null);
+      // APIエラー時はデフォルト値150円を設定
+      setExchangeRate(150);
+      setExchangeRateFetchFailed(true);
     } finally {
       setExchangeRateLoading(false);
     }
@@ -1173,6 +1176,8 @@ function HomeContent() {
                     <span className="text-xs text-gray-500">
                       {exchangeRateLoading ? (
                         '(USD/JPY: 読み込み中...)'
+                      ) : exchangeRateFetchFailed ? (
+                        `(USD/JPY: ${exchangeRate?.toFixed(2) || '150'} - 取得失敗 デフォルト値使用)`
                       ) : exchangeRate ? (
                         `(USD/JPY: ${exchangeRate.toFixed(2)})`
                       ) : (
