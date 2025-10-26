@@ -175,7 +175,12 @@ export function YearlyDetailTable({ data }: YearlyDetailTableProps) {
 
               {/* 資産データ */}
               {assetColumns.map(col => (
-                <td key={`asset-${col}-${idx}`} className="px-3 py-2 text-right border-r border-gray-200">
+                <td
+                  key={`asset-${col}-${idx}`}
+                  className={`px-3 py-2 text-right border-r border-gray-200 ${
+                    row.withdrawnAssets.has(col) ? 'bg-red-100' : ''
+                  }`}
+                >
                   {row.assets[col] ? formatCurrency(row.assets[col]) : ''}
                 </td>
               ))}

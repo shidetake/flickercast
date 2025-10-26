@@ -57,6 +57,7 @@ export interface YearlyDetailData {
   annualNetCashFlow: number; // 年間収支（収入 - 支出）
   cash: number; // 現金累計（給与・年金の累計）
   assets: { [key: string]: number }; // 金融資産銘柄別（利回り計算後）
+  withdrawnAssets: Set<string>; // 取り崩された資産名のセット
   totalAssets: number; // 合計資産
 }
 
@@ -1018,6 +1019,9 @@ export class FireCalculator {
       // 現金累計の更新（年間収支を累積）
       cashBalance += netCashFlow;
 
+      // 取り崩された資産を記録
+      const withdrawnAssets = new Set<string>();
+
       // 現金が負数の場合、金融資産を取り崩す
       if (cashBalance < 0) {
         const deficit = -cashBalance; // 不足額（正の値）
@@ -1041,6 +1045,10 @@ export class FireCalculator {
           assetBalances[asset.name] -= withdrawAmount;
           cashBalance += withdrawAmount;
           remaining -= withdrawAmount;
+
+          if (withdrawAmount > 0) {
+            withdrawnAssets.add(asset.name); // 取り崩し記録
+          }
         }
       }
 
@@ -1065,6 +1073,7 @@ export class FireCalculator {
         annualNetCashFlow: netCashFlow,
         cash: cashBalance,
         assets,
+        withdrawnAssets,
         totalAssets,
       });
     }
