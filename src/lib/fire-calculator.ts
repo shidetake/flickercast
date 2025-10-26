@@ -1006,20 +1006,13 @@ export class FireCalculator {
       // 年間収支
       const netCashFlow = totalIncome + totalExpense;
 
-      // 資産残高の更新（利回り適用 + 収支反映）
+      // 資産残高の更新（利回り適用のみ）
       input.assetHoldings.forEach(holding => {
         const name = holding.name || `資産${holding.id}`;
         const returnRate = (holding.expectedReturn ?? 5) / 100;
 
         // 利回り適用
         assetBalances[name] = assetBalances[name] * (1 + returnRate);
-
-        // 収支を資産構成比に応じて配分
-        const currentTotalAssets = Object.values(assetBalances).reduce((sum, val) => sum + val, 0);
-        if (currentTotalAssets > 0) {
-          const ratio = assetBalances[name] / currentTotalAssets;
-          assetBalances[name] += netCashFlow * ratio;
-        }
       });
 
       // 現金累計の更新（年間収支を累積）
