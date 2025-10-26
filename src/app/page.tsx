@@ -10,12 +10,13 @@ import { FireCalculator, FireCalculationInput } from '@/lib/fire-calculator';
 import FireProjectionChart from '@/components/charts/fire-projection-chart';
 import FireSummary from '@/components/dashboard/fire-summary';
 import { YearlyDetailTable } from '@/components/dashboard/yearly-detail-table';
-import { ChartDataPoint, FireMetrics, AssetHolding, Loan, PensionPlan, SalaryPlan, SpecialExpense, SpecialIncome, ExpenseSegment } from '@/lib/types';
+import { ChartDataPoint, FireMetrics, AssetHolding, Loan, PensionPlan, SalaryPlan, SpecialExpense, SpecialIncome, ExpenseSegment, Child } from '@/lib/types';
 import { ExpenseTimeline } from '@/components/expense/expense-timeline';
 import { formatCurrency } from '@/lib/utils';
 import { saveToLocalStorage, loadFromLocalStorage, exportToJson, importFromJson } from '@/lib/storage';
 import { useToast, ToastProvider } from '@/lib/toast-context';
 import { calculateTotalAssets as calculateTotalAssetsUnified } from '@/lib/asset-calculator';
+import { generateEducationExpenses } from '@/lib/education-cost';
 
 interface StockSymbol {
   symbol: string;
@@ -81,6 +82,7 @@ function HomeContent() {
     ], // デフォルトは1つの区間
     inflationRate: 2,
     lifeExpectancy: calculateLifeExpectancy(38),
+    children: [], // 子供情報（デフォルトは空）
   });
 
   const [input, setInput] = useState<FireCalculationInput>(createDefaultInput());
@@ -90,12 +92,16 @@ function HomeContent() {
   const [nextSalaryId, setNextSalaryId] = useState(2); // 次に使用するSalary ID（デフォルトは1なので2から開始）
   const [nextSpecialExpenseId, setNextSpecialExpenseId] = useState(2); // 次に使用するSpecialExpense ID（デフォルトは1なので2から開始）
   const [nextSpecialIncomeId, setNextSpecialIncomeId] = useState(2); // 次に使用するSpecialIncome ID（デフォルトは1なので2から開始）
+  const [nextChildId, setNextChildId] = useState(1); // 次に使用するChild ID
+  const [nextChildExpenseId, setNextChildExpenseId] = useState(1); // 次に使用する子供の支出ID
   const [isDeleteMode, setIsDeleteMode] = useState(false); // 削除モード状態
   const [isLoanDeleteMode, setIsLoanDeleteMode] = useState(false); // ローン削除モード状態
   const [isPensionDeleteMode, setIsPensionDeleteMode] = useState(false); // 年金削除モード状態
   const [isSalaryDeleteMode, setIsSalaryDeleteMode] = useState(false); // 給与削除モード状態
   const [isSpecialExpenseDeleteMode, setIsSpecialExpenseDeleteMode] = useState(false); // 特別支出削除モード状態
   const [isSpecialIncomeDeleteMode, setIsSpecialIncomeDeleteMode] = useState(false); // 臨時収入削除モード状態
+  const [isChildDeleteMode, setIsChildDeleteMode] = useState(false); // 子供削除モード状態
+  const [childExpenseDeleteModes, setChildExpenseDeleteModes] = useState<Record<string, boolean>>({}); // 子供ごとの支出削除モード状態
 
   // USD/JPY為替レート関連の状態
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
@@ -147,6 +153,13 @@ function HomeContent() {
     return maxId + 1;
   };
 
+  // 既存の子供IDから次のIDを計算
+  const calculateNextChildId = (children: Child[]): number => {
+    if (children.length === 0) return 1;
+    const maxId = Math.max(...children.map(child => parseInt(child.id) || 0));
+    return maxId + 1;
+  };
+
   // 為替レート取得関数
   const fetchExchangeRate = async () => {
     try {
@@ -184,6 +197,8 @@ function HomeContent() {
       setNextSpecialExpenseId(calculateNextSpecialExpenseId(savedData.specialExpenses || []));
       // nextSpecialIncomeIdを適切に設定
       setNextSpecialIncomeId(calculateNextSpecialIncomeId(savedData.specialIncomes || []));
+      // nextChildIdを適切に設定
+      setNextChildId(calculateNextChildId(savedData.children || []));
 
       // 株価自動取得（localStorageロード完了後）
       const symbolsToFetch = savedData.assetHoldings
@@ -280,6 +295,34 @@ function HomeContent() {
   useEffect(() => {
     saveToLocalStorage(input);
   }, [input]);
+
+  // 子供情報が変更されたときに教育費を自動生成
+  useEffect(() => {
+    if (!input.children || input.children.length === 0) {
+      return;
+    }
+
+    const currentYear = new Date().getFullYear();
+
+    // 各子供の教育費を自動生成
+    setInput(prev => ({
+      ...prev,
+      children: (prev.children || []).map(child => {
+        // この子供の教育費を生成
+        const newExpenses = generateEducationExpenses(child, currentYear, prev.currentAge);
+        return {
+          ...child,
+          expenses: newExpenses
+        };
+      })
+    }));
+  }, [
+    // 子供の誕生年または教育段階設定が変更されたとき、または現在年齢が変更されたときに実行
+    input.children?.map(c =>
+      `${c.birthYear}-${c.kindergartenPrivate}-${c.elementaryPrivate}-${c.juniorHighPrivate}-${c.highSchoolPrivate}-${c.universityPrivate}`
+    ).join(','),
+    input.currentAge
+  ]);
 
   // 株価取得関数（共通化）
   const fetchStockPricesForSymbols = async (symbols: string[]) => {
@@ -546,6 +589,101 @@ function HomeContent() {
     }));
   };
 
+  // 子供管理のヘルパー関数
+  const addChild = () => {
+    const currentYear = new Date().getFullYear();
+    const newChild: Child = {
+      id: nextChildId.toString(),
+      birthYear: currentYear,
+      kindergartenPrivate: false,
+      elementaryPrivate: false,
+      juniorHighPrivate: false,
+      highSchoolPrivate: false,
+      universityPrivate: true,
+      expenses: [], // 初期は空の配列
+    };
+    setInput(prev => ({
+      ...prev,
+      children: [...(prev.children || []), newChild]
+    }));
+    setNextChildId(prev => prev + 1);
+  };
+
+  const updateChild = (id: string, field: keyof Child, value: string | number | boolean) => {
+    setInput(prev => ({
+      ...prev,
+      children: (prev.children || []).map(child =>
+        child.id === id ? { ...child, [field]: value } : child
+      )
+    }));
+  };
+
+  const removeChild = (id: string) => {
+    setInput(prev => ({
+      ...prev,
+      children: (prev.children || []).filter(child => child.id !== id),
+    }));
+  };
+
+  // 子供の教育費管理のヘルパー関数
+  const addChildExpense = (childId: string) => {
+    const newExpense: SpecialExpense = {
+      id: `child-${childId}-expense-${nextChildExpenseId}`,
+      name: '',
+      amount: 0,
+      autoGenerated: false,
+    };
+    setInput(prev => ({
+      ...prev,
+      children: (prev.children || []).map(child =>
+        child.id === childId
+          ? {
+              ...child,
+              expenses: [...child.expenses, newExpense]
+            }
+          : child
+      )
+    }));
+    setNextChildExpenseId(prev => prev + 1);
+  };
+
+  const updateChildExpense = (childId: string, expenseId: string, field: keyof SpecialExpense, value: string | number) => {
+    setInput(prev => ({
+      ...prev,
+      children: (prev.children || []).map(child =>
+        child.id === childId
+          ? {
+              ...child,
+              expenses: child.expenses.map(expense =>
+                expense.id === expenseId ? { ...expense, [field]: value } : expense
+              )
+            }
+          : child
+      )
+    }));
+  };
+
+  const removeChildExpense = (childId: string, expenseId: string) => {
+    setInput(prev => ({
+      ...prev,
+      children: (prev.children || []).map(child =>
+        child.id === childId
+          ? {
+              ...child,
+              expenses: child.expenses.filter(expense => expense.id !== expenseId)
+            }
+          : child
+      )
+    }));
+  };
+
+  const toggleChildExpenseDeleteMode = (childId: string) => {
+    setChildExpenseDeleteModes(prev => ({
+      ...prev,
+      [childId]: !prev[childId]
+    }));
+  };
+
   // 総資産額を計算（統一関数を使用）
   const calculateTotalAssets = () => {
     return calculateTotalAssetsUnified(input.assetHoldings, exchangeRate, 'manyen');
@@ -705,6 +843,8 @@ function HomeContent() {
       setNextSpecialExpenseId(calculateNextSpecialExpenseId(importedData.specialExpenses || []));
       // nextSpecialIncomeIdを適切に設定
       setNextSpecialIncomeId(calculateNextSpecialIncomeId(importedData.specialIncomes || []));
+      // nextChildIdを適切に設定
+      setNextChildId(calculateNextChildId(importedData.children || []));
 
 
       showSuccess('データを正常にインポートしました');
@@ -723,9 +863,14 @@ function HomeContent() {
     if (exchangeRateLoading) return null;
 
     try {
+      // 子供の支出を統合
+      const allChildExpenses = (input.children || []).flatMap(child => child.expenses);
+      const combinedExpenses = [...input.specialExpenses, ...allChildExpenses];
+
       // FIRE計算実行（為替レートを含む）
       const fireResult = FireCalculator.calculateFire({
         ...input,
+        specialExpenses: combinedExpenses,
         exchangeRate: exchangeRate
       });
 
@@ -763,6 +908,7 @@ function HomeContent() {
       // 年次詳細データを計算
       const yearlyDetails = FireCalculator.calculateYearlyDetails({
         ...input,
+        specialExpenses: combinedExpenses,
         exchangeRate: exchangeRate
       });
 
@@ -858,6 +1004,140 @@ function HomeContent() {
                           %
                         </span>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* 子供情報 */}
+                  <div className="mt-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <Label>子供情報</Label>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          onClick={addChild}
+                          size="sm"
+                          variant="outline"
+                          disabled={isChildDeleteMode}
+                        >
+                          追加
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => setIsChildDeleteMode(!isChildDeleteMode)}
+                          size="sm"
+                          variant={isChildDeleteMode ? "default" : "outline"}
+                          disabled={!isChildDeleteMode && (!input.children || input.children.length === 0)}
+                        >
+                          {isChildDeleteMode ? '完了' : '削除'}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {/* ヘッダー行（子供が存在し、削除モードでない場合のみ表示） */}
+                      {input.children && input.children.length > 0 && !isChildDeleteMode && (
+                        <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-0 mb-2 items-center">
+                          <Label className="text-sm font-medium mr-2">誕生年</Label>
+                          <Label className="text-sm font-medium text-center w-8">幼</Label>
+                          <Label className="text-sm font-medium text-center w-8">小</Label>
+                          <Label className="text-sm font-medium text-center w-8">中</Label>
+                          <Label className="text-sm font-medium text-center w-8">高</Label>
+                          <Label className="text-sm font-medium text-center w-8">大</Label>
+                        </div>
+                      )}
+
+                      {input.children && input.children.map((child) =>
+                        isChildDeleteMode ? (
+                          // 削除モード: 誕生年のみ表示、左側に赤い削除ボタン
+                          <div key={child.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
+                            <Button
+                              type="button"
+                              onClick={() => removeChild(child.id)}
+                              size="sm"
+                              className="w-5 h-5 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white flex-shrink-0"
+                            >
+                              <span className="text-sm font-bold">−</span>
+                            </Button>
+                            <span className="text-sm font-medium text-gray-900 truncate">
+                              {child.birthYear}年生まれ
+                            </span>
+                          </div>
+                        ) : (
+                          // 通常モード: 誕生年 + 5つのトグルボタン
+                          <div key={child.id} className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-0 items-center">
+                            <Input
+                              type="number"
+                              placeholder="2020"
+                              value={child.birthYear}
+                              onChange={(e) => updateChild(child.id, 'birthYear', Number(e.target.value))}
+                              min="1900"
+                              max="2100"
+                              step="1"
+                              className="w-24 mr-2"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => updateChild(child.id, 'kindergartenPrivate', !child.kindergartenPrivate)}
+                              className={`w-8 h-8 text-sm font-medium cursor-pointer transition-colors border ${
+                                child.kindergartenPrivate
+                                  ? 'bg-red-100 text-red-700 hover:bg-red-200 border-red-600'
+                                  : 'bg-green-100 text-green-700 hover:bg-green-200 border-green-600'
+                              }`}
+                            >
+                              {child.kindergartenPrivate ? '私' : '公'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateChild(child.id, 'elementaryPrivate', !child.elementaryPrivate)}
+                              className={`w-8 h-8 text-sm font-medium cursor-pointer transition-colors border ${
+                                child.elementaryPrivate
+                                  ? 'bg-red-100 text-red-700 hover:bg-red-200 border-red-600'
+                                  : 'bg-green-100 text-green-700 hover:bg-green-200 border-green-600'
+                              }`}
+                            >
+                              {child.elementaryPrivate ? '私' : '公'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateChild(child.id, 'juniorHighPrivate', !child.juniorHighPrivate)}
+                              className={`w-8 h-8 text-sm font-medium cursor-pointer transition-colors border ${
+                                child.juniorHighPrivate
+                                  ? 'bg-red-100 text-red-700 hover:bg-red-200 border-red-600'
+                                  : 'bg-green-100 text-green-700 hover:bg-green-200 border-green-600'
+                              }`}
+                            >
+                              {child.juniorHighPrivate ? '私' : '公'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateChild(child.id, 'highSchoolPrivate', !child.highSchoolPrivate)}
+                              className={`w-8 h-8 text-sm font-medium cursor-pointer transition-colors border ${
+                                child.highSchoolPrivate
+                                  ? 'bg-red-100 text-red-700 hover:bg-red-200 border-red-600'
+                                  : 'bg-green-100 text-green-700 hover:bg-green-200 border-green-600'
+                              }`}
+                            >
+                              {child.highSchoolPrivate ? '私' : '公'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateChild(child.id, 'universityPrivate', !child.universityPrivate)}
+                              className={`w-8 h-8 text-sm font-medium cursor-pointer transition-colors border ${
+                                child.universityPrivate
+                                  ? 'bg-red-100 text-red-700 hover:bg-red-200 border-red-600'
+                                  : 'bg-green-100 text-green-700 hover:bg-green-200 border-green-600'
+                              }`}
+                            >
+                              {child.universityPrivate ? '私' : '公'}
+                            </button>
+                          </div>
+                        )
+                      )}
+
+                      {(!input.children || input.children.length === 0) && (
+                        <p className="text-sm text-gray-500">
+                          子供を追加すると、教育費が自動的に特別支出として計上されます
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1397,6 +1677,126 @@ function HomeContent() {
                         </span>
                       </div>
                     </div>
+
+                    {/* 子供ごとの支出セクション */}
+                    {input.children && input.children.length > 0 && input.children.map((child, index) => {
+                      // 私立の教育段階をリスト化
+                      const privateStages = [];
+                      if (child.kindergartenPrivate) privateStages.push('幼');
+                      if (child.elementaryPrivate) privateStages.push('小');
+                      if (child.juniorHighPrivate) privateStages.push('中');
+                      if (child.highSchoolPrivate) privateStages.push('高');
+                      if (child.universityPrivate) privateStages.push('大');
+
+                      const educationLabel = privateStages.length === 0
+                        ? '全て公立'
+                        : privateStages.length === 5
+                        ? '全て私立'
+                        : `私立: ${privateStages.join('・')}`;
+
+                      const childNumber = ['第一子', '第二子', '第三子', '第四子', '第五子'][index] || `第${index + 1}子`;
+
+                      const isDeleteMode = childExpenseDeleteModes[child.id] || false;
+
+                      return (
+                        <div key={child.id} className="mt-6">
+                          <div className="flex justify-between items-center mb-3">
+                            <Label className="text-base font-semibold">
+                              子育て費用（{childNumber}） - {child.birthYear}年生まれ、{educationLabel}
+                            </Label>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                onClick={() => addChildExpense(child.id)}
+                                size="sm"
+                                variant="outline"
+                                disabled={isDeleteMode}
+                              >
+                                追加
+                              </Button>
+                              <Button
+                                type="button"
+                                onClick={() => toggleChildExpenseDeleteMode(child.id)}
+                                size="sm"
+                                variant={isDeleteMode ? "default" : "outline"}
+                                disabled={child.expenses.length === 0}
+                              >
+                                {isDeleteMode ? '完了' : '削除'}
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            {/* ヘッダー行（削除モードでない場合のみ表示） */}
+                            {child.expenses.length > 0 && !isDeleteMode && (
+                              <div className="grid grid-cols-3 gap-2 mb-2">
+                                <Label className="text-sm font-medium">費用名</Label>
+                                <Label className="text-sm font-medium">支出額 [万円]</Label>
+                                <Label className="text-sm font-medium">年齢</Label>
+                              </div>
+                            )}
+
+                            {child.expenses.map((expense) =>
+                              isDeleteMode ? (
+                                // 削除モード: 費用名のみ表示、左側に赤い削除ボタン
+                                <div key={expense.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
+                                  <Button
+                                    type="button"
+                                    onClick={() => removeChildExpense(child.id, expense.id)}
+                                    size="sm"
+                                    className="w-5 h-5 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white flex-shrink-0"
+                                  >
+                                    <span className="text-sm font-bold">−</span>
+                                  </Button>
+                                  <span className="text-sm font-medium text-gray-900 truncate">
+                                    {expense.name || '未設定'}
+                                  </span>
+                                </div>
+                              ) : (
+                                // 通常モード: 全ての入力欄を表示
+                                <div key={expense.id} className="grid grid-cols-3 gap-2 items-center">
+                                  <Input
+                                    placeholder="費用名"
+                                    value={expense.name}
+                                    onChange={(e) => updateChildExpense(child.id, expense.id, 'name', e.target.value)}
+                                  />
+                                  <Input
+                                    type="number"
+                                    placeholder="100"
+                                    value={expense.amount ? (expense.amount / 10000) : ''}
+                                    onChange={(e) => updateChildExpense(child.id, expense.id, 'amount', Number(e.target.value) * 10000)}
+                                    min="0"
+                                    step="1"
+                                    noSpinner
+                                  />
+                                  <div className="relative">
+                                    <Input
+                                      type="number"
+                                      placeholder={input.currentAge > 0 ? input.currentAge.toString() : "50"}
+                                      value={expense.targetAge ?? ''}
+                                      onChange={(e) => updateChildExpense(child.id, expense.id, 'targetAge', Number(e.target.value))}
+                                      min={input.currentAge}
+                                      max={input.lifeExpectancy}
+                                      step="1"
+                                      className="pr-8"
+                                    />
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
+                                      歳
+                                    </span>
+                                  </div>
+                                </div>
+                              )
+                            )}
+
+                            {child.expenses.length === 0 && (
+                              <p className="text-sm text-gray-500 py-2">
+                                教育費が自動生成されます
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
 
                     <div className="mt-6">
                       <div className="flex justify-between items-center mb-3">

@@ -1,4 +1,4 @@
-import { AssetHolding, Loan, PensionPlan, SalaryPlan, SpecialExpense, SpecialIncome, ExpenseSegment } from './types';
+import { AssetHolding, Loan, PensionPlan, SalaryPlan, SpecialExpense, SpecialIncome, ExpenseSegment, Child } from './types';
 import { calculateTotalAssets, convertPensionToJPY, convertSalaryToJPY } from './asset-calculator';
 
 export interface FireCalculationInput {
@@ -13,6 +13,7 @@ export interface FireCalculationInput {
   inflationRate: number; // パーセント（例: 2 = 2%）
   lifeExpectancy: number;
   exchangeRate?: number | null; // USD/JPY為替レート
+  children?: Child[]; // 子供情報
 }
 
 export interface FireCalculationResult {
