@@ -44,6 +44,21 @@ export interface YearlyProjection {
   yearsToFire: number;
 }
 
+// 年次詳細データ（デバッグ用）
+export interface YearlyDetailData {
+  year: number;
+  age: number;
+  salaries: { [key: string]: number }; // 給与項目別（key: 項目名, value: 年収）
+  pensions: { [key: string]: number }; // 年金項目別
+  specialIncomes: { [key: string]: number }; // 臨時収入
+  cash: number; // 現金累計（給与・年金の累計）
+  assets: { [key: string]: number }; // 金融資産銘柄別（利回り計算後）
+  expenses: number; // 生活費（負数）
+  loanPayments: number; // ローン返済（負数）
+  specialExpenses: { [key: string]: number }; // 特別支出（負数）
+  totalAssets: number; // 合計資産
+}
+
 /**
  * 年齢に応じた月間支出額を取得
  */
@@ -888,5 +903,182 @@ export class FireCalculator {
         assetHoldings: updatedAssetHoldings
       });
     });
+  }
+
+  /**
+   * 年次詳細データを計算（デバッグ用）
+   */
+  static calculateYearlyDetails(input: FireCalculationInput): YearlyDetailData[] {
+    const details: YearlyDetailData[] = [];
+    const years = input.lifeExpectancy - input.currentAge + 1;
+    const inflationRate = input.inflationRate / 100;
+
+    // 初期資産の計算
+    const initialTotalAssets = calculateTotalAssets(input.assetHoldings, input.exchangeRate, 'yen');
+
+    // 資産残高の追跡（各銘柄ごと）
+    const assetBalances: { [key: string]: number } = {};
+    input.assetHoldings.forEach(holding => {
+      const name = holding.name || `資産${holding.id}`;
+      const value = holding.quantity * holding.pricePerUnit;
+      const valueInYen = holding.currency === 'USD' && input.exchangeRate
+        ? value * input.exchangeRate
+        : value;
+      assetBalances[name] = valueInYen;
+    });
+
+    // 現金残高の追跡（給与・年金の累計）
+    let cashBalance = 0;
+
+    for (let yearOffset = 0; yearOffset < years; yearOffset++) {
+      const age = input.currentAge + yearOffset;
+      const year = new Date().getFullYear() + yearOffset;
+
+      // 給与収入
+      const salaries: { [key: string]: number } = {};
+      input.salaryPlans.forEach(plan => {
+        if (age >= plan.startAge && age <= plan.endAge && plan.annualAmount) {
+          const name = plan.name || `給与${plan.id}`;
+          const inflationAdjusted = plan.annualAmount * Math.pow(1 + inflationRate, yearOffset);
+          salaries[name] = inflationAdjusted;
+        }
+      });
+
+      // 年金収入
+      const pensions: { [key: string]: number } = {};
+      input.pensionPlans.forEach(plan => {
+        if (age >= plan.startAge && age <= plan.endAge && plan.annualAmount) {
+          const name = plan.name || `年金${plan.id}`;
+          const amountInYen = convertPensionToJPY(plan, input.exchangeRate);
+          const inflationAdjusted = amountInYen * Math.pow(1 + inflationRate, yearOffset);
+          pensions[name] = inflationAdjusted;
+        }
+      });
+
+      // 臨時収入
+      const specialIncomes: { [key: string]: number } = {};
+      input.specialIncomes.forEach(income => {
+        if (income.targetAge === age && income.amount) {
+          const name = income.name || `臨時収入${income.id}`;
+          const inflationAdjusted = income.amount * Math.pow(1 + inflationRate, yearOffset);
+          specialIncomes[name] = inflationAdjusted;
+        }
+      });
+
+      // 生活費（負数）
+      const monthlyExpenses = getMonthlyExpensesForAge(age, input.expenseSegments);
+      const annualExpenses = monthlyExpenses * 12;
+      const inflationAdjustedExpenses = annualExpenses * Math.pow(1 + inflationRate, yearOffset);
+      const expenses = -inflationAdjustedExpenses;
+
+      // ローン返済（負数）
+      let totalLoanPayment = 0;
+      input.loans.forEach(loan => {
+        if (loan.balance > 0 && loan.monthlyPayment > 0) {
+          totalLoanPayment += loan.monthlyPayment * 12;
+        }
+      });
+      const loanPayments = -totalLoanPayment;
+
+      // 特別支出（負数）
+      const specialExpenses: { [key: string]: number } = {};
+      input.specialExpenses.forEach(expense => {
+        if (expense.targetAge === age && expense.amount) {
+          const name = expense.name || `特別支出${expense.id}`;
+          const inflationAdjusted = expense.amount * Math.pow(1 + inflationRate, yearOffset);
+          specialExpenses[name] = -inflationAdjusted;
+        }
+      });
+
+      // 合計収入
+      const totalIncome =
+        Object.values(salaries).reduce((sum, val) => sum + val, 0) +
+        Object.values(pensions).reduce((sum, val) => sum + val, 0) +
+        Object.values(specialIncomes).reduce((sum, val) => sum + val, 0);
+
+      // 合計支出
+      const totalExpense =
+        expenses +
+        loanPayments +
+        Object.values(specialExpenses).reduce((sum, val) => sum + val, 0);
+
+      // 年間収支
+      const netCashFlow = totalIncome + totalExpense;
+
+      // 資産残高の更新（利回り適用 + 収支反映）
+      input.assetHoldings.forEach(holding => {
+        const name = holding.name || `資産${holding.id}`;
+        const returnRate = (holding.expectedReturn ?? 5) / 100;
+
+        // 利回り適用
+        assetBalances[name] = assetBalances[name] * (1 + returnRate);
+
+        // 収支を資産構成比に応じて配分
+        const currentTotalAssets = Object.values(assetBalances).reduce((sum, val) => sum + val, 0);
+        if (currentTotalAssets > 0) {
+          const ratio = assetBalances[name] / currentTotalAssets;
+          assetBalances[name] += netCashFlow * ratio;
+        }
+      });
+
+      // 現金累計の更新（給与・年金・臨時収入を加算、支出を減算）
+      cashBalance += Object.values(salaries).reduce((sum, val) => sum + val, 0);
+      cashBalance += Object.values(pensions).reduce((sum, val) => sum + val, 0);
+      cashBalance += Object.values(specialIncomes).reduce((sum, val) => sum + val, 0);
+      cashBalance += expenses; // 生活費（負数）
+      cashBalance += loanPayments; // ローン返済（負数）
+      cashBalance += Object.values(specialExpenses).reduce((sum, val) => sum + val, 0); // 特別支出（負数）
+
+      // 現金が負数の場合、金融資産を取り崩す
+      if (cashBalance < 0) {
+        const deficit = -cashBalance; // 不足額（正の値）
+        let remaining = deficit;
+
+        // 利回りの低い順に資産をソート
+        const sortedAssets = input.assetHoldings
+          .map(holding => ({
+            name: holding.name || `資産${holding.id}`,
+            returnRate: (holding.expectedReturn ?? 5) / 100,
+            balance: assetBalances[holding.name || `資産${holding.id}`] || 0
+          }))
+          .filter(asset => asset.balance > 0) // 残高がある資産のみ
+          .sort((a, b) => a.returnRate - b.returnRate); // 利回りの低い順（同じ場合は入力順）
+
+        // 取り崩し処理
+        for (const asset of sortedAssets) {
+          if (remaining <= 0) break;
+
+          const withdrawAmount = Math.min(asset.balance, remaining);
+          assetBalances[asset.name] -= withdrawAmount;
+          cashBalance += withdrawAmount;
+          remaining -= withdrawAmount;
+        }
+      }
+
+      // 資産評価額（利回り適用後）
+      const assets: { [key: string]: number } = {};
+      Object.keys(assetBalances).forEach(name => {
+        assets[name] = assetBalances[name];
+      });
+
+      // 合計資産
+      const totalAssets = Object.values(assetBalances).reduce((sum, val) => sum + val, 0);
+
+      details.push({
+        year,
+        age,
+        salaries,
+        pensions,
+        specialIncomes,
+        cash: cashBalance,
+        assets,
+        expenses,
+        loanPayments,
+        specialExpenses,
+        totalAssets,
+      });
+    }
+
+    return details;
   }
 }

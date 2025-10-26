@@ -9,6 +9,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { FireCalculator, FireCalculationInput } from '@/lib/fire-calculator';
 import FireProjectionChart from '@/components/charts/fire-projection-chart';
 import FireSummary from '@/components/dashboard/fire-summary';
+import { YearlyDetailTable } from '@/components/dashboard/yearly-detail-table';
 import { ChartDataPoint, FireMetrics, AssetHolding, Loan, PensionPlan, SalaryPlan, SpecialExpense, SpecialIncome, ExpenseSegment } from '@/lib/types';
 import { ExpenseTimeline } from '@/components/expense/expense-timeline';
 import { formatCurrency } from '@/lib/utils';
@@ -99,6 +100,9 @@ function HomeContent() {
   // USD/JPY為替レート関連の状態
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [exchangeRateLoading, setExchangeRateLoading] = useState(true);
+
+  // 年次詳細データ表示の状態
+  const [showYearlyDetails, setShowYearlyDetails] = useState(false);
 
   // 既存の銘柄IDから次のIDを計算
   const calculateNextAssetId = (assetHoldings: AssetHolding[]): number => {
@@ -753,10 +757,17 @@ function HomeContent() {
         monthlyDeficit: fireResult.monthlyShortfall,
       };
 
+      // 年次詳細データを計算
+      const yearlyDetails = FireCalculator.calculateYearlyDetails({
+        ...input,
+        exchangeRate: exchangeRate
+      });
+
       return {
         chartData,
         metrics,
         requiredAssets: fireResult.requiredAssets,
+        yearlyDetails,
       };
     } catch (error) {
       console.error('Calculation error:', error);
@@ -1528,6 +1539,32 @@ function HomeContent() {
                     targetAmount={results.requiredAssets}
                     className="w-full h-96"
                   />
+                </div>
+
+                {/* 年次詳細データ */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      年次詳細データ
+                    </h2>
+                    <Button
+                      onClick={() => setShowYearlyDetails(!showYearlyDetails)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {showYearlyDetails ? '📊 詳細を非表示' : '📊 詳細を表示'}
+                    </Button>
+                  </div>
+
+                  {showYearlyDetails && results.yearlyDetails && (
+                    <YearlyDetailTable data={results.yearlyDetails} />
+                  )}
+
+                  {!showYearlyDetails && (
+                    <p className="text-gray-500 text-sm">
+                      年齢ごとの収入・支出・資産の詳細を表形式で確認できます。「詳細を表示」ボタンをクリックしてください。
+                    </p>
+                  )}
                 </div>
               </>
             ) : (
