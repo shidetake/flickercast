@@ -1032,11 +1032,43 @@ export class FireCalculator {
       // 現金累計の更新（年間収支を累積）
       cashBalance += netCashFlow;
 
-      // 投資された資産を記録
+      // 投資・取り崩し記録用
       const investedAssets = new Set<string>();
+      const withdrawnAssets = new Set<string>();
 
-      // 年間収支に応じて資産を調整
-      if (netCashFlow > 0) {
+      // 年間収支に応じて資産を調整（netCashFlowで判断）
+      if (netCashFlow < 0) {
+        // 赤字：利回りの低い順に取り崩し
+        const deficit = Math.abs(netCashFlow);
+        let remaining = deficit;
+
+        // 利回りの低い順に資産をソート
+        const sortedAssets = input.assetHoldings
+          .map(holding => ({
+            name: holding.name || `資産${holding.id}`,
+            returnRate: (holding.expectedReturn ?? 5) / 100,
+            balance: assetBalances[holding.name || `資産${holding.id}`] || 0
+          }))
+          .filter(asset => asset.balance > 0) // 残高がある資産のみ
+          .sort((a, b) => a.returnRate - b.returnRate); // 利回りの低い順
+
+        // 取り崩し処理
+        let totalWithdrawn = 0;
+        for (const asset of sortedAssets) {
+          if (remaining <= 0) break;
+
+          const withdrawAmount = Math.min(asset.balance, remaining);
+          assetBalances[asset.name] -= withdrawAmount;
+          totalWithdrawn += withdrawAmount;
+          remaining -= withdrawAmount;
+
+          if (withdrawAmount > 0) {
+            withdrawnAssets.add(asset.name); // 取り崩し記録
+          }
+        }
+        // 取り崩した分を現金に追加
+        cashBalance += totalWithdrawn;
+      } else if (netCashFlow > 0) {
         // 黒字：初期構成比で資産に投資
         const totalInitialRatio = Object.values(initialRatios).reduce((sum, val) => sum + val, 0);
         if (totalInitialRatio > 0) {
@@ -1049,39 +1081,6 @@ export class FireCalculator {
           });
           // 黒字分は資産に投資したので現金累計から減算
           cashBalance -= netCashFlow;
-        }
-      }
-
-      // 取り崩された資産を記録
-      const withdrawnAssets = new Set<string>();
-
-      // 現金が負数の場合、金融資産を取り崩す
-      if (cashBalance < 0) {
-        const deficit = -cashBalance; // 不足額（正の値）
-        let remaining = deficit;
-
-        // 利回りの低い順に資産をソート
-        const sortedAssets = input.assetHoldings
-          .map(holding => ({
-            name: holding.name || `資産${holding.id}`,
-            returnRate: (holding.expectedReturn ?? 5) / 100,
-            balance: assetBalances[holding.name || `資産${holding.id}`] || 0
-          }))
-          .filter(asset => asset.balance > 0) // 残高がある資産のみ
-          .sort((a, b) => a.returnRate - b.returnRate); // 利回りの低い順（同じ場合は入力順）
-
-        // 取り崩し処理
-        for (const asset of sortedAssets) {
-          if (remaining <= 0) break;
-
-          const withdrawAmount = Math.min(asset.balance, remaining);
-          assetBalances[asset.name] -= withdrawAmount;
-          cashBalance += withdrawAmount;
-          remaining -= withdrawAmount;
-
-          if (withdrawAmount > 0) {
-            withdrawnAssets.add(asset.name); // 取り崩し記録
-          }
         }
       }
 
