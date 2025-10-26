@@ -89,6 +89,11 @@ export function YearlyDetailTable({ data }: YearlyDetailTableProps) {
               </th>
             ))}
 
+            {/* 年間収支列 */}
+            <th className="sticky top-0 z-10 bg-yellow-50 px-3 py-2 text-right font-semibold border-r border-gray-200">
+              年間収支
+            </th>
+
             {/* 現金列 */}
             <th className="sticky top-0 z-10 bg-green-50 px-3 py-2 text-right font-semibold border-r border-gray-200">
               現金<br />（累計）
@@ -157,6 +162,11 @@ export function YearlyDetailTable({ data }: YearlyDetailTableProps) {
                   {row.specialExpenses[col] ? formatCurrency(row.specialExpenses[col]) : ''}
                 </td>
               ))}
+
+              {/* 年間収支 */}
+              <td className={`px-3 py-2 text-right border-r border-gray-200 bg-yellow-50 font-semibold ${row.annualNetCashFlow < 0 ? 'text-red-600' : ''}`}>
+                {formatCurrency(row.annualNetCashFlow)}
+              </td>
 
               {/* 現金累計 */}
               <td className="px-3 py-2 text-right border-r border-gray-200 bg-green-50 font-semibold">

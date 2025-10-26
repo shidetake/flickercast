@@ -51,11 +51,12 @@ export interface YearlyDetailData {
   salaries: { [key: string]: number }; // 給与項目別（key: 項目名, value: 年収）
   pensions: { [key: string]: number }; // 年金項目別
   specialIncomes: { [key: string]: number }; // 臨時収入
-  cash: number; // 現金累計（給与・年金の累計）
-  assets: { [key: string]: number }; // 金融資産銘柄別（利回り計算後）
   expenses: number; // 生活費（負数）
   loanPayments: number; // ローン返済（負数）
   specialExpenses: { [key: string]: number }; // 特別支出（負数）
+  annualNetCashFlow: number; // 年間収支（収入 - 支出）
+  cash: number; // 現金累計（給与・年金の累計）
+  assets: { [key: string]: number }; // 金融資産銘柄別（利回り計算後）
   totalAssets: number; // 合計資産
 }
 
@@ -1021,13 +1022,8 @@ export class FireCalculator {
         }
       });
 
-      // 現金累計の更新（給与・年金・臨時収入を加算、支出を減算）
-      cashBalance += Object.values(salaries).reduce((sum, val) => sum + val, 0);
-      cashBalance += Object.values(pensions).reduce((sum, val) => sum + val, 0);
-      cashBalance += Object.values(specialIncomes).reduce((sum, val) => sum + val, 0);
-      cashBalance += expenses; // 生活費（負数）
-      cashBalance += loanPayments; // ローン返済（負数）
-      cashBalance += Object.values(specialExpenses).reduce((sum, val) => sum + val, 0); // 特別支出（負数）
+      // 現金累計の更新（年間収支を累積）
+      cashBalance += netCashFlow;
 
       // 現金が負数の場合、金融資産を取り崩す
       if (cashBalance < 0) {
@@ -1070,11 +1066,12 @@ export class FireCalculator {
         salaries,
         pensions,
         specialIncomes,
-        cash: cashBalance,
-        assets,
         expenses,
         loanPayments,
         specialExpenses,
+        annualNetCashFlow: netCashFlow,
+        cash: cashBalance,
+        assets,
         totalAssets,
       });
     }
