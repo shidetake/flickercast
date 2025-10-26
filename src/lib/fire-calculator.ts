@@ -411,22 +411,21 @@ export class FireCalculator {
     const initialTotalAssets = calculateTotalAssets(input.assetHoldings, input.exchangeRate, 'yen');
     const currentExchangeRate = input.exchangeRate ?? 150;
 
-    // 資産残高の追跡（各銘柄ごと）
+    // 資産残高の追跡（各銘柄ごと、IDをキーとして使用）
     const assetBalances: { [key: string]: number } = {};
     input.assetHoldings.forEach(holding => {
-      const name = holding.name || `資産${holding.id}`;
       const value = holding.quantity * holding.pricePerUnit;
       const valueInYen = holding.currency === 'USD'
         ? value * currentExchangeRate
         : value;
-      assetBalances[name] = valueInYen;
+      assetBalances[holding.id] = valueInYen;
     });
 
     // 初期構成比を計算（既存のinitialTotalAssetsを使用）
     const initialRatios: { [key: string]: number } = {};
     if (initialTotalAssets > 0) {
-      Object.keys(assetBalances).forEach(name => {
-        initialRatios[name] = assetBalances[name] / initialTotalAssets;
+      Object.keys(assetBalances).forEach(id => {
+        initialRatios[id] = assetBalances[id] / initialTotalAssets;
       });
     }
 
@@ -538,11 +537,10 @@ export class FireCalculator {
 
       // 資産残高の更新（利回り適用のみ）
       input.assetHoldings.forEach(holding => {
-        const name = holding.name || `資産${holding.id}`;
         const returnRate = (holding.expectedReturn ?? 5) / 100;
 
         // 利回り適用
-        assetBalances[name] = assetBalances[name] * (1 + returnRate);
+        assetBalances[holding.id] = assetBalances[holding.id] * (1 + returnRate);
       });
 
       // 現金累計の更新（年間収支を累積）
@@ -561,9 +559,10 @@ export class FireCalculator {
         // 利回りの低い順に資産をソート
         const sortedAssets = input.assetHoldings
           .map(holding => ({
+            id: holding.id,
             name: holding.name || `資産${holding.id}`,
             returnRate: (holding.expectedReturn ?? 5) / 100,
-            balance: assetBalances[holding.name || `資産${holding.id}`] || 0
+            balance: assetBalances[holding.id] || 0
           }))
           .filter(asset => asset.balance > 0) // 残高がある資産のみ
           .sort((a, b) => a.returnRate - b.returnRate); // 利回りの低い順
@@ -574,12 +573,12 @@ export class FireCalculator {
           if (remaining <= 0) break;
 
           const withdrawAmount = Math.min(asset.balance, remaining);
-          assetBalances[asset.name] -= withdrawAmount;
+          assetBalances[asset.id] -= withdrawAmount;
           totalWithdrawn += withdrawAmount;
           remaining -= withdrawAmount;
 
           if (withdrawAmount > 0) {
-            withdrawnAssets.add(asset.name); // 取り崩し記録
+            withdrawnAssets.add(asset.name); // 取り崩し記録（表示名）
           }
         }
         // 取り崩した分を現金に追加
@@ -588,11 +587,12 @@ export class FireCalculator {
         // 黒字：初期構成比で資産に投資
         const totalInitialRatio = Object.values(initialRatios).reduce((sum, val) => sum + val, 0);
         if (totalInitialRatio > 0) {
-          Object.keys(assetBalances).forEach(name => {
-            const investAmount = netCashFlow * initialRatios[name];
+          input.assetHoldings.forEach(holding => {
+            const investAmount = netCashFlow * initialRatios[holding.id];
             if (investAmount > 0) {
-              assetBalances[name] += investAmount;
-              investedAssets.add(name); // 投資記録
+              assetBalances[holding.id] += investAmount;
+              const name = holding.name || `資産${holding.id}`;
+              investedAssets.add(name); // 投資記録（表示名）
             }
           });
           // 黒字分は資産に投資したので現金累計から減算
@@ -601,9 +601,12 @@ export class FireCalculator {
       }
 
       // 資産評価額（利回り適用後）
+      // 入力順に表示名を付与（同名でも区別できるようインデックスを追加）
       const assets: { [key: string]: number } = {};
-      Object.keys(assetBalances).forEach(name => {
-        assets[name] = assetBalances[name];
+      input.assetHoldings.forEach((holding, index) => {
+        const baseName = holding.name || `資産${holding.id}`;
+        const displayName = `${baseName} [${index + 1}]`;
+        assets[displayName] = assetBalances[holding.id];
       });
 
       // 合計資産（金融資産 + 現金残高）
