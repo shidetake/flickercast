@@ -58,6 +58,7 @@ export interface YearlyDetailData {
   cash: number; // 現金累計（給与・年金の累計）
   assets: { [key: string]: number }; // 金融資産銘柄別（利回り計算後）
   withdrawnAssets: Set<string>; // 取り崩された資産名のセット
+  investedAssets: Set<string>; // 黒字分を投資した資産名のセット
   totalAssets: number; // 合計資産
 }
 
@@ -929,6 +930,14 @@ export class FireCalculator {
       assetBalances[name] = valueInYen;
     });
 
+    // 初期構成比を計算（既存のinitialTotalAssetsを使用）
+    const initialRatios: { [key: string]: number } = {};
+    if (initialTotalAssets > 0) {
+      Object.keys(assetBalances).forEach(name => {
+        initialRatios[name] = assetBalances[name] / initialTotalAssets;
+      });
+    }
+
     // 現金残高の追跡（給与・年金の累計）
     let cashBalance = 0;
 
@@ -1019,6 +1028,26 @@ export class FireCalculator {
       // 現金累計の更新（年間収支を累積）
       cashBalance += netCashFlow;
 
+      // 投資された資産を記録
+      const investedAssets = new Set<string>();
+
+      // 年間収支に応じて資産を調整
+      if (netCashFlow > 0) {
+        // 黒字：初期構成比で資産に投資
+        const totalInitialRatio = Object.values(initialRatios).reduce((sum, val) => sum + val, 0);
+        if (totalInitialRatio > 0) {
+          Object.keys(assetBalances).forEach(name => {
+            const investAmount = netCashFlow * initialRatios[name];
+            if (investAmount > 0) {
+              assetBalances[name] += investAmount;
+              investedAssets.add(name); // 投資記録
+            }
+          });
+          // 黒字分は資産に投資したので現金累計から減算
+          cashBalance -= netCashFlow;
+        }
+      }
+
       // 取り崩された資産を記録
       const withdrawnAssets = new Set<string>();
 
@@ -1074,6 +1103,7 @@ export class FireCalculator {
         cash: cashBalance,
         assets,
         withdrawnAssets,
+        investedAssets,
         totalAssets,
       });
     }
