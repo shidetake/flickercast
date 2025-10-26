@@ -119,10 +119,10 @@ export function YearlyDetailTable({ data }: YearlyDetailTableProps) {
               className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
             >
               <td className="sticky left-0 z-10 px-3 py-2 font-medium border-r border-gray-300 bg-inherit">
-                {row.age}歳
+                {row.age}
               </td>
               <td className="px-3 py-2 border-r border-gray-300">
-                {row.year}年
+                {row.year}
               </td>
 
               {/* 給与データ */}
