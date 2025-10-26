@@ -96,7 +96,7 @@ export function YearlyDetailTable({ data }: YearlyDetailTableProps) {
 
             {/* 現金列 */}
             <th className="sticky top-0 z-10 bg-green-50 px-3 py-2 text-right font-semibold border-r border-gray-200">
-              現金<br />（累計）
+              現金資産
             </th>
 
             {/* 資産列 */}
