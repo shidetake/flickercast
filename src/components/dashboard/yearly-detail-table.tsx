@@ -19,6 +19,7 @@ export function YearlyDetailTable({ data }: YearlyDetailTableProps) {
   const allSpecialIncomeKeys = new Set<string>();
   const allAssetKeys = new Set<string>();
   const allSpecialExpenseKeys = new Set<string>();
+  const allLoanBalanceKeys = new Set<string>();
 
   data.forEach(row => {
     Object.keys(row.salaries).forEach(key => allSalaryKeys.add(key));
@@ -26,6 +27,7 @@ export function YearlyDetailTable({ data }: YearlyDetailTableProps) {
     Object.keys(row.specialIncomes).forEach(key => allSpecialIncomeKeys.add(key));
     Object.keys(row.assets).forEach(key => allAssetKeys.add(key));
     Object.keys(row.specialExpenses).forEach(key => allSpecialExpenseKeys.add(key));
+    Object.keys(row.loanBalances).forEach(key => allLoanBalanceKeys.add(key));
   });
 
   const salaryColumns = Array.from(allSalaryKeys);
@@ -33,6 +35,7 @@ export function YearlyDetailTable({ data }: YearlyDetailTableProps) {
   const specialIncomeColumns = Array.from(allSpecialIncomeKeys);
   const assetColumns = Array.from(allAssetKeys);
   const specialExpenseColumns = Array.from(allSpecialExpenseKeys);
+  const loanBalanceColumns = Array.from(allLoanBalanceKeys);
 
   const formatCurrency = (value: number) => {
     const manyen = value / 10000;
@@ -76,6 +79,13 @@ export function YearlyDetailTable({ data }: YearlyDetailTableProps) {
             <th className="sticky top-0 z-10 bg-red-50 px-3 py-2 text-right font-semibold border-r border-gray-200">
               生活費
             </th>
+
+            {/* ローン残高列 */}
+            {loanBalanceColumns.map(col => (
+              <th key={`loan-balance-${col}`} className="sticky top-0 z-10 bg-orange-50 px-3 py-2 text-right font-semibold border-r border-gray-200">
+                ローン残高<br />{col}
+              </th>
+            ))}
 
             {/* ローン返済列 */}
             <th className="sticky top-0 z-10 bg-red-50 px-3 py-2 text-right font-semibold border-r border-gray-200">
@@ -150,6 +160,13 @@ export function YearlyDetailTable({ data }: YearlyDetailTableProps) {
               <td className="px-3 py-2 text-right border-r border-gray-200 text-red-600">
                 {formatCurrency(row.expenses)}
               </td>
+
+              {/* ローン残高データ */}
+              {loanBalanceColumns.map(col => (
+                <td key={`loan-balance-${col}-${idx}`} className="px-3 py-2 text-right border-r border-gray-200 bg-orange-50">
+                  {row.loanBalances[col] ? formatCurrency(row.loanBalances[col]) : ''}
+                </td>
+              ))}
 
               {/* ローン返済（負数） */}
               <td className="px-3 py-2 text-right border-r border-gray-200 text-red-600">

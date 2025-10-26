@@ -53,6 +53,7 @@ export interface YearlyDetailData {
   specialIncomes: { [key: string]: number }; // 臨時収入
   expenses: number; // 生活費（負数）
   loanPayments: number; // ローン返済（負数）
+  loanBalances: { [key: string]: number }; // ローン残高（ローン名別）
   specialExpenses: { [key: string]: number }; // 特別支出（負数）
   annualNetCashFlow: number; // 年間収支（収入 - 支出）
   cash: number; // 現金累計（給与・年金の累計）
@@ -945,6 +946,13 @@ export class FireCalculator {
     // 現金残高の追跡（給与・年金の累計）
     let cashBalance = 0;
 
+    // ローン残高の追跡（各ローンごと）
+    const loanBalances: { [key: string]: number } = {};
+    input.loans.forEach(loan => {
+      const name = loan.name || `ローン${loan.id}`;
+      loanBalances[name] = loan.balance;
+    });
+
     for (let yearOffset = 0; yearOffset < years; yearOffset++) {
       const age = input.currentAge + yearOffset;
       const year = new Date().getFullYear() + yearOffset;
@@ -986,11 +994,33 @@ export class FireCalculator {
       const inflationAdjustedExpenses = annualExpenses * Math.pow(1 + inflationRate, yearOffset);
       const expenses = -inflationAdjustedExpenses;
 
-      // ローン返済（負数）
+      // ローン返済（負数）と残高更新
       let totalLoanPayment = 0;
       input.loans.forEach(loan => {
-        if (loan.balance > 0 && loan.monthlyPayment > 0) {
-          totalLoanPayment += loan.monthlyPayment * 12;
+        const name = loan.name || `ローン${loan.id}`;
+        const currentBalance = loanBalances[name];
+
+        if (currentBalance > 0 && loan.monthlyPayment > 0) {
+          // 年間返済額
+          const annualPayment = loan.monthlyPayment * 12;
+
+          // 金利適用（年利）
+          const annualInterestRate = (loan.annualInterestRate ?? 0) / 100;
+          const interestCharge = currentBalance * annualInterestRate;
+
+          // 残高更新: 金利を加算してから返済額を減算
+          let newBalance = currentBalance + interestCharge - annualPayment;
+
+          // 残高が0以下になったら0に固定
+          if (newBalance <= 0) {
+            // 最終返済額は残高+金利分のみ
+            totalLoanPayment += currentBalance + interestCharge;
+            newBalance = 0;
+          } else {
+            totalLoanPayment += annualPayment;
+          }
+
+          loanBalances[name] = newBalance;
         }
       });
       const loanPayments = -totalLoanPayment;
@@ -1093,6 +1123,12 @@ export class FireCalculator {
       // 合計資産
       const totalAssets = Object.values(assetBalances).reduce((sum, val) => sum + val, 0);
 
+      // ローン残高のコピー（現時点での残高）
+      const currentLoanBalances: { [key: string]: number } = {};
+      Object.keys(loanBalances).forEach(name => {
+        currentLoanBalances[name] = loanBalances[name];
+      });
+
       details.push({
         year,
         age,
@@ -1101,6 +1137,7 @@ export class FireCalculator {
         specialIncomes,
         expenses,
         loanPayments,
+        loanBalances: currentLoanBalances,
         specialExpenses,
         annualNetCashFlow: netCashFlow,
         cash: cashBalance,
