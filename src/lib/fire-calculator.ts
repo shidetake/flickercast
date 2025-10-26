@@ -994,33 +994,32 @@ export class FireCalculator {
       const inflationAdjustedExpenses = annualExpenses * Math.pow(1 + inflationRate, yearOffset);
       const expenses = -inflationAdjustedExpenses;
 
-      // ローン返済（負数）と残高更新
+      // ローン返済（負数）と残高更新（月次複利計算）
       let totalLoanPayment = 0;
       input.loans.forEach(loan => {
         const name = loan.name || `ローン${loan.id}`;
-        const currentBalance = loanBalances[name];
+        let remainingBalance = loanBalances[name];
 
-        if (currentBalance > 0 && loan.monthlyPayment > 0) {
-          // 年間返済額
-          const annualPayment = loan.monthlyPayment * 12;
+        if (remainingBalance > 0 && loan.monthlyPayment > 0) {
+          // 月次金利
+          const monthlyRate = (loan.interestRate ?? 0) / 100 / 12;
+          let yearlyPayment = 0;
 
-          // 金利適用（年利）
-          const annualInterestRate = (loan.annualInterestRate ?? 0) / 100;
-          const interestCharge = currentBalance * annualInterestRate;
+          // 月ごとに金利適用と返済を繰り返す
+          for (let month = 0; month < 12; month++) {
+            if (remainingBalance <= 0) break;
 
-          // 残高更新: 金利を加算してから返済額を減算
-          let newBalance = currentBalance + interestCharge - annualPayment;
+            // 金利分だけ残高が増える（月次複利）
+            remainingBalance *= (1 + monthlyRate);
 
-          // 残高が0以下になったら0に固定
-          if (newBalance <= 0) {
-            // 最終返済額は残高+金利分のみ
-            totalLoanPayment += currentBalance + interestCharge;
-            newBalance = 0;
-          } else {
-            totalLoanPayment += annualPayment;
+            // 月次返済額を引く（残高を超えない範囲で）
+            const payment = Math.min(loan.monthlyPayment, remainingBalance);
+            remainingBalance -= payment;
+            yearlyPayment += payment;
           }
 
-          loanBalances[name] = newBalance;
+          totalLoanPayment += yearlyPayment;
+          loanBalances[name] = remainingBalance;
         }
       });
       const loanPayments = -totalLoanPayment;
