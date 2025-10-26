@@ -206,23 +206,30 @@ export class FireCalculator {
 
     // 現在の退職年齢でFIRE達成可能かチェック
     const currentRetirementAge = highestSalaryPlan.endAge;
-    const canAchieveNow = canAchieveFire(currentRetirementAge);
 
-    let fireAge: number = currentRetirementAge; // デフォルトは現在の退職年齢
+    // 60歳を超える場合は、60歳でチェック
+    const checkAge = Math.min(currentRetirementAge, 60);
+    const canAchieveNow = canAchieveFire(checkAge);
+
+    let fireAge: number = checkAge; // デフォルトはcheckAge
 
     if (!canAchieveNow) {
-      // ケース1: 現時点で達成できない → 退職年齢を後ろにずらす（最大60歳まで）
+      // ケース1: 60歳時点で達成できない → 退職年齢を後ろにずらす（最大60歳まで）
       let found = false;
-      for (let age = currentRetirementAge + 1; age <= 60; age++) {
-        if (canAchieveFire(age)) {
-          fireAge = age;
-          found = true;
-          break;
+
+      // checkAge が60未満の場合のみ、後ろにずらす余地がある
+      if (checkAge < 60) {
+        for (let age = checkAge + 1; age <= 60; age++) {
+          if (canAchieveFire(age)) {
+            fireAge = age;
+            found = true;
+            break;
+          }
         }
       }
 
       if (!found) {
-        // 60歳までずらしてもダメ → FIRE不可能（4%ルールでフォールバック）
+        // 60歳までずらしてもダメ → FIRE不可能
         const currentSegment = expenseSegments.find(
           s => currentAge >= s.startAge && currentAge < s.endAge
         );
@@ -230,14 +237,13 @@ export class FireCalculator {
         const annualExpenses = monthlyExpenses * 12;
         return {
           targetAssets: annualExpenses * 25,
-          yearsToFire: 0,
+          yearsToFire: -1, // -1で不可能を示す
           fireAge: currentAge
         };
       }
     } else {
       // ケース2: 現時点で達成可能 → 退職年齢を前にずらす（最小は開始年齢まで）
-      fireAge = currentRetirementAge;
-      for (let age = currentRetirementAge - 1; age >= highestSalaryPlan.startAge; age--) {
+      for (let age = checkAge - 1; age >= highestSalaryPlan.startAge; age--) {
         if (canAchieveFire(age)) {
           fireAge = age;
         } else {

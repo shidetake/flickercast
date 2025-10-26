@@ -769,7 +769,7 @@ function HomeContent() {
       return {
         chartData,
         metrics,
-        requiredAssets: fireResult.requiredAssets,
+        requiredAssets: fireResult.yearsToFire < 0 ? undefined : fireResult.requiredAssets,
         yearlyDetails,
       };
     } catch (error) {

@@ -27,31 +27,31 @@ export default function FireSummary({ metrics, className = "" }: FireSummaryProp
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="text-center">
           <div className="text-3xl font-bold text-blue-600">
-            {Math.round(fireProgress)}%
+            {yearsToFire < 0 ? '達成不可能' : `${Math.round(fireProgress)}%`}
           </div>
           <div className="text-sm text-gray-600 mt-1">FIRE達成率</div>
           <div className="text-xs text-gray-500">
-            目標額に対する現在資産の割合
+            {yearsToFire < 0 ? '60歳まで働いても資産が不足' : '目標額に対する現在資産の割合'}
           </div>
         </div>
 
         <div className="text-center">
           <div className="text-3xl font-bold text-green-600">
-            {formatCurrency(Math.round(remainingAmount / 10000) * 10000)}
+            {yearsToFire < 0 ? '達成不可能' : formatCurrency(Math.round(remainingAmount / 10000) * 10000)}
           </div>
           <div className="text-sm text-gray-600 mt-1">FIRE目標額まで</div>
           <div className="text-xs text-gray-500">
-            {remainingAmount === 0 ? '達成済み！' : 'あと必要な金額'}
+            {yearsToFire < 0 ? '60歳まで働いても資産が不足' : (remainingAmount === 0 ? '達成済み！' : 'あと必要な金額')}
           </div>
         </div>
 
         <div className="text-center">
           <div className="text-3xl font-bold text-orange-600">
-            {yearsToFire}年
+            {yearsToFire < 0 ? '達成不可能' : `${yearsToFire}年`}
           </div>
           <div className="text-sm text-gray-600 mt-1">FIRE達成まで</div>
           <div className="text-xs text-gray-500">
-            現在のペースで継続した場合
+            {yearsToFire < 0 ? '60歳まで働いても資産が不足' : '現在のペースで継続した場合'}
           </div>
         </div>
       </div>
