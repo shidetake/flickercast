@@ -68,7 +68,7 @@ function HomeContent() {
       { id: '1', name: '', currency: 'JPY', startAge: 65, endAge: calculateLifeExpectancy(38) },
     ], // デフォルトは1つの空の年金
     salaryPlans: [
-      { id: '1', name: '', startAge: 38, endAge: 65 },
+      { id: '1', name: '', startAge: 38, endAge: 60 },
     ], // デフォルトは1つの空の給与
     specialExpenses: [
       { id: '1', name: '', amount: 0 },
@@ -430,7 +430,7 @@ function HomeContent() {
       id: nextSalaryId.toString(),
       name: '',
       startAge: input.currentAge,
-      endAge: 65,
+      endAge: 60,
     };
     setInput(prev => ({
       ...prev,
