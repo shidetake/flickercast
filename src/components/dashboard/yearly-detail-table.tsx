@@ -169,7 +169,7 @@ export function YearlyDetailTable({ data }: YearlyDetailTableProps) {
               </td>
 
               {/* 現金累計 */}
-              <td className="px-3 py-2 text-right border-r border-gray-200 bg-green-50 font-semibold">
+              <td className={`px-3 py-2 text-right border-r border-gray-200 bg-green-50 font-semibold ${row.cash < 0 ? 'text-red-600' : ''}`}>
                 {formatCurrency(row.cash)}
               </td>
 
