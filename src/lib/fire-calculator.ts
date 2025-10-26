@@ -558,9 +558,10 @@ export class FireCalculator {
 
         // 利回りの低い順に資産をソート
         const sortedAssets = input.assetHoldings
-          .map(holding => ({
+          .map((holding, index) => ({
             id: holding.id,
             name: holding.name || `資産${holding.id}`,
+            index: index,
             returnRate: (holding.expectedReturn ?? 5) / 100,
             balance: assetBalances[holding.id] || 0
           }))
@@ -578,7 +579,9 @@ export class FireCalculator {
           remaining -= withdrawAmount;
 
           if (withdrawAmount > 0) {
-            withdrawnAssets.add(asset.name); // 取り崩し記録（表示名）
+            // 表示名と同じ形式で記録（インデックス付き）
+            const displayName = `${asset.name} [${asset.index + 1}]`;
+            withdrawnAssets.add(displayName);
           }
         }
         // 取り崩した分を現金に追加
@@ -587,12 +590,14 @@ export class FireCalculator {
         // 黒字：初期構成比で資産に投資
         const totalInitialRatio = Object.values(initialRatios).reduce((sum, val) => sum + val, 0);
         if (totalInitialRatio > 0) {
-          input.assetHoldings.forEach(holding => {
+          input.assetHoldings.forEach((holding, index) => {
             const investAmount = netCashFlow * initialRatios[holding.id];
             if (investAmount > 0) {
               assetBalances[holding.id] += investAmount;
-              const name = holding.name || `資産${holding.id}`;
-              investedAssets.add(name); // 投資記録（表示名）
+              // 表示名と同じ形式で記録（インデックス付き）
+              const baseName = holding.name || `資産${holding.id}`;
+              const displayName = `${baseName} [${index + 1}]`;
+              investedAssets.add(displayName);
             }
           });
           // 黒字分は資産に投資したので現金累計から減算
