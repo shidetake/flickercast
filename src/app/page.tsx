@@ -1838,9 +1838,16 @@ function HomeContent() {
 
                       return (
                         <div key={child.id} className="mt-6">
-                          <div className="flex justify-between items-center mb-3">
-                            <Label className="text-base font-semibold">
+                          <div className="mb-3">
+                            <Label className="text-sm font-semibold">
                               子育て費用（{childNumber}） - {child.birthYear}年生まれ、{educationLabel}
+                            </Label>
+                          </div>
+
+                          {/* 単年費用セクション */}
+                          <div className="flex justify-between items-center mb-3">
+                            <Label className="text-sm font-medium text-gray-700">
+                              単年費用
                             </Label>
                             <div className="flex gap-2">
                               <Button
@@ -1936,7 +1943,7 @@ function HomeContent() {
                           {/* 複数年学費セクション */}
                           <div className="mt-6 pt-4 border-t border-gray-200">
                             <div className="flex justify-between items-center mb-3">
-                              <Label className="text-sm font-semibold text-gray-700">
+                              <Label className="text-sm font-medium text-gray-700">
                                 複数年学費（習い事・留学等）
                               </Label>
                               <div className="flex gap-2">
