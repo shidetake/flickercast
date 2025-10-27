@@ -408,6 +408,13 @@ export class FireCalculator {
     const years = input.lifeExpectancy - input.currentAge + 1;
     const inflationRate = input.inflationRate / 100;
 
+    // 子供を誕生年でソート（年上から順 = 昇順）し、childIdからインデックスへのマッピングを作成
+    const sortedChildren = (input.children || []).slice().sort((a, b) => a.birthYear - b.birthYear);
+    const childIdToIndex = new Map<string, number>();
+    sortedChildren.forEach((child, index) => {
+      childIdToIndex.set(child.id, index);
+    });
+
     // 初期資産の計算
     const initialTotalAssets = calculateTotalAssets(input.assetHoldings, input.exchangeRate, 'yen');
     const currentExchangeRate = input.exchangeRate ?? 150;
@@ -515,9 +522,22 @@ export class FireCalculator {
       const specialExpenses: { [key: string]: number } = {};
       input.specialExpenses.forEach(expense => {
         if (expense.targetAge === age && expense.amount) {
-          const name = expense.name || `特別支出${expense.id}`;
+          let name = expense.name || `特別支出${expense.id}`;
+
+          // 子供に紐づく費用の場合、数値サフィックスを追加
+          if (expense.childId && childIdToIndex.has(expense.childId)) {
+            const childIndex = childIdToIndex.get(expense.childId)!;
+            name = `${name}${childIndex}`;
+          }
+
           const inflationAdjusted = expense.amount * Math.pow(1 + inflationRate, yearOffset);
-          specialExpenses[name] = -inflationAdjusted;
+
+          // 同名の費用がある場合は合算
+          if (specialExpenses[name]) {
+            specialExpenses[name] -= inflationAdjusted;
+          } else {
+            specialExpenses[name] = -inflationAdjusted;
+          }
         }
       });
 
