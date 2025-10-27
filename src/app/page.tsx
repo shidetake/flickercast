@@ -1861,6 +1861,94 @@ function HomeContent() {
                       </div>
                     </div>
 
+                    <div className="mt-6">
+                      <div className="flex justify-between items-center mb-3">
+                        <Label>特別支出管理</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        onClick={addSpecialExpense}
+                        size="sm"
+                        variant="outline"
+                        disabled={isSpecialExpenseDeleteMode}
+                      >
+                        追加
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => setIsSpecialExpenseDeleteMode(!isSpecialExpenseDeleteMode)}
+                        size="sm"
+                        variant={isSpecialExpenseDeleteMode ? "default" : "outline"}
+                      >
+                        {isSpecialExpenseDeleteMode ? '完了' : '削除'}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    {/* ヘッダー行（特別支出が存在し、削除モードでない場合のみ表示） */}
+                    {input.specialExpenses.length > 0 && !isSpecialExpenseDeleteMode && (
+                      <div className="grid grid-cols-3 gap-2 mb-2">
+                        <Label className="text-sm font-medium">支出名</Label>
+                        <Label className="text-sm font-medium">支出額 [万円]</Label>
+                        <Label className="text-sm font-medium">年齢</Label>
+                      </div>
+                    )}
+
+                    {input.specialExpenses.map((expense) => (
+                      isSpecialExpenseDeleteMode ? (
+                        // 削除モード: 支出名のみ表示、左側に赤い削除ボタン
+                        <div key={expense.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
+                          <Button
+                            type="button"
+                            onClick={() => removeSpecialExpense(expense.id)}
+                            size="sm"
+                            className="w-5 h-5 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white flex-shrink-0"
+                          >
+                            <span className="text-sm font-bold">−</span>
+                          </Button>
+                          <span className="text-sm font-medium text-gray-900 truncate">
+                            {expense.name || '未設定'}
+                          </span>
+                        </div>
+                      ) : (
+                        // 通常モード: 全ての入力欄を表示
+                        <div key={expense.id} className="grid grid-cols-3 gap-2 items-center">
+                          <Input
+                            placeholder="結婚式"
+                            value={expense.name}
+                            onChange={(e) => updateSpecialExpense(expense.id, 'name', e.target.value)}
+                          />
+                          <Input
+                            type="number"
+                            placeholder="100"
+                            value={expense.amount ? (expense.amount / 10000) : ''}
+                            onChange={(e) => updateSpecialExpense(expense.id, 'amount', Number(e.target.value) * 10000)}
+                            min="0"
+                            step="1"
+                            noSpinner
+                          />
+                          <div className="relative">
+                            <Input
+                              type="number"
+                              placeholder={input.currentAge > 0 ? input.currentAge.toString() : "50"}
+                              value={expense.targetAge ?? ''}
+                              onChange={(e) => updateSpecialExpense(expense.id, 'targetAge', Number(e.target.value))}
+                              min={input.currentAge}
+                              max={input.lifeExpectancy}
+                              step="1"
+                              className="pr-8"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
+                              歳
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    ))}
+                  </div>
+                    </div>
+
                     {/* 子供ごとの支出セクション */}
                     {input.children && input.children.length > 0 && input.children.map((child, index) => {
                       // 私立の教育段階をリスト化
@@ -2101,94 +2189,6 @@ function HomeContent() {
                         </div>
                       );
                     })}
-
-                    <div className="mt-6">
-                      <div className="flex justify-between items-center mb-3">
-                        <Label>特別支出管理</Label>
-                    <div className="flex gap-2">
-                      <Button 
-                        type="button" 
-                        onClick={addSpecialExpense}
-                        size="sm"
-                        variant="outline"
-                        disabled={isSpecialExpenseDeleteMode}
-                      >
-                        追加
-                      </Button>
-                      <Button 
-                        type="button" 
-                        onClick={() => setIsSpecialExpenseDeleteMode(!isSpecialExpenseDeleteMode)}
-                        size="sm"
-                        variant={isSpecialExpenseDeleteMode ? "default" : "outline"}
-                      >
-                        {isSpecialExpenseDeleteMode ? '完了' : '削除'}
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {/* ヘッダー行（特別支出が存在し、削除モードでない場合のみ表示） */}
-                    {input.specialExpenses.length > 0 && !isSpecialExpenseDeleteMode && (
-                      <div className="grid grid-cols-3 gap-2 mb-2">
-                        <Label className="text-sm font-medium">支出名</Label>
-                        <Label className="text-sm font-medium">支出額 [万円]</Label>
-                        <Label className="text-sm font-medium">年齢</Label>
-                      </div>
-                    )}
-                    
-                    {input.specialExpenses.map((expense) => (
-                      isSpecialExpenseDeleteMode ? (
-                        // 削除モード: 支出名のみ表示、左側に赤い削除ボタン
-                        <div key={expense.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
-                          <Button 
-                            type="button"
-                            onClick={() => removeSpecialExpense(expense.id)}
-                            size="sm"
-                            className="w-5 h-5 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white flex-shrink-0"
-                          >
-                            <span className="text-sm font-bold">−</span>
-                          </Button>
-                          <span className="text-sm font-medium text-gray-900 truncate">
-                            {expense.name || '未設定'}
-                          </span>
-                        </div>
-                      ) : (
-                        // 通常モード: 全ての入力欄を表示
-                        <div key={expense.id} className="grid grid-cols-3 gap-2 items-center">
-                          <Input
-                            placeholder="結婚式"
-                            value={expense.name}
-                            onChange={(e) => updateSpecialExpense(expense.id, 'name', e.target.value)}
-                          />
-                          <Input
-                            type="number"
-                            placeholder="100"
-                            value={expense.amount ? (expense.amount / 10000) : ''}
-                            onChange={(e) => updateSpecialExpense(expense.id, 'amount', Number(e.target.value) * 10000)}
-                            min="0"
-                            step="1"
-                            noSpinner
-                          />
-                          <div className="relative">
-                            <Input
-                              type="number"
-                              placeholder={input.currentAge > 0 ? input.currentAge.toString() : "50"}
-                              value={expense.targetAge ?? ''}
-                              onChange={(e) => updateSpecialExpense(expense.id, 'targetAge', Number(e.target.value))}
-                              min={input.currentAge}
-                              max={input.lifeExpectancy}
-                              step="1"
-                              className="pr-8"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
-                              歳
-                            </span>
-                          </div>
-                        </div>
-                      )
-                    ))}
-                  </div>
-                    </div>
                   </div>
                 </div>
 
