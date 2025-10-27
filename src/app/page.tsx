@@ -594,6 +594,11 @@ function HomeContent() {
       multiYearExpenses: [], // 初期は空の配列
       manuallyEdited: false, // 初期は未編集
     };
+
+    // デフォルト教育費を生成（共通関数を使用）
+    const costs = generateChildEducationCosts(newChild, input.currentAge);
+    Object.assign(newChild, costs);
+
     setInput(prev => ({
       ...prev,
       children: [...(prev.children || []), newChild]
@@ -649,23 +654,34 @@ function HomeContent() {
     }
   };
 
+  // 子供の教育費を生成するヘルパー関数
+  const generateChildEducationCosts = (child: Child, currentAge: number) => {
+    const currentYear = new Date().getFullYear();
+    const newMultiYearExpenses = generateEducationMultiYearExpenses(child, currentYear, currentAge);
+    const newExpenses = generateEducationExpenses(child, currentYear, currentAge);
+
+    return {
+      multiYearExpenses: newMultiYearExpenses,
+      expenses: newExpenses
+    };
+  };
+
   // ダイアログで「変更する」を選択した時の処理
   const regenerateChildEducationCosts = (childId: string, field: keyof Child, value: string | number | boolean) => {
-    const currentYear = new Date().getFullYear();
     setInput(prev => ({
       ...prev,
       children: (prev.children || []).map(child => {
         if (child.id !== childId) return child;
 
-        // 設定を更新し、教育費を再生成
+        // 設定を更新
         const updated = { ...child, [field]: value, manuallyEdited: false };
-        const newMultiYearExpenses = generateEducationMultiYearExpenses(updated, currentYear, prev.currentAge);
-        const newExpenses = generateEducationExpenses(updated, currentYear, prev.currentAge);
+
+        // 教育費を生成（共通関数を使用）
+        const costs = generateChildEducationCosts(updated, prev.currentAge);
 
         return {
           ...updated,
-          multiYearExpenses: newMultiYearExpenses,
-          expenses: newExpenses
+          ...costs
         };
       })
     }));
