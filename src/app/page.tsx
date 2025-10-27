@@ -16,7 +16,7 @@ import { formatCurrency } from '@/lib/utils';
 import { saveToLocalStorage, loadFromLocalStorage, exportToJson, importFromJson } from '@/lib/storage';
 import { useToast, ToastProvider } from '@/lib/toast-context';
 import { calculateTotalAssets as calculateTotalAssetsUnified } from '@/lib/asset-calculator';
-import { generateEducationExpenses, hasManualEdits, expandAllChildrenMultiYearExpenses } from '@/lib/education-cost';
+import { generateEducationExpenses, generateEducationMultiYearExpenses, hasManualEdits, expandAllChildrenMultiYearExpenses } from '@/lib/education-cost';
 
 interface StockSymbol {
   symbol: string;
@@ -333,10 +333,13 @@ function HomeContent() {
     setInput(prev => ({
       ...prev,
       children: (prev.children || []).map(child => {
-        // この子供の教育費を生成
+        // 複数年学費を生成
+        const newMultiYearExpenses = generateEducationMultiYearExpenses(child, currentYear, prev.currentAge);
+        // 単年費用（大学入学金のみ）を生成
         const newExpenses = generateEducationExpenses(child, currentYear, prev.currentAge);
         return {
           ...child,
+          multiYearExpenses: newMultiYearExpenses,
           expenses: newExpenses
         };
       })

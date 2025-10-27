@@ -1,64 +1,42 @@
 import { Child, SpecialExpense, MultiYearEducationExpense } from './types';
 
 /**
- * 教育費の典型的な金額（文部科学省の統計データに基づく）
+ * 教育費の年間費用
  * 金額は円単位
  */
 
-// 幼稚園（3-6歳、3年分）
-const KINDERGARTEN_COST = {
-  public: 220000 * 3, // 公立: 約66万円
-  private: 530000 * 3, // 私立: 約159万円
+// 幼稚園（年間費用、3年保育想定）
+const KINDERGARTEN_ANNUAL_COST = {
+  public: 200000, // 公立: 年間20万円
+  private: 350000, // 私立: 年間35万円
 };
 
-// 小学校（6-12歳、6年分）
-const ELEMENTARY_COST = {
-  public: 320000 * 6, // 公立: 約192万円
-  private: 1590000 * 6, // 私立: 約954万円
+// 小学校（年間費用、6年間）
+const ELEMENTARY_ANNUAL_COST = {
+  public: 350000, // 公立: 年間35万円
+  private: 1800000, // 私立: 年間180万円
 };
 
-// 中学校（3年分 + 入学金）
-const JUNIOR_HIGH_COST = {
-  public: {
-    tuition: 490000 * 3, // 公立: 約147万円
-    entrance: 0, // 公立は入学金なし
-  },
-  private: {
-    tuition: 1410000 * 3, // 私立: 約423万円
-    entrance: 260000, // 私立入学金: 約26万円
-  },
+// 中学校（年間費用、3年間）
+const JUNIOR_HIGH_ANNUAL_COST = {
+  public: 550000, // 公立: 年間55万円
+  private: 1600000, // 私立: 年間160万円
 };
 
-// 高校（3年分 + 入学金）
-const HIGH_SCHOOL_COST = {
-  public: {
-    tuition: 460000 * 3, // 公立: 約138万円
-    entrance: 0, // 公立は入学金なし
-  },
-  private: {
-    tuition: 970000 * 3, // 私立: 約291万円
-    entrance: 170000, // 私立入学金: 約17万円
-  },
+// 高校（年間費用、3年間）
+const HIGH_SCHOOL_ANNUAL_COST = {
+  public: 600000, // 公立: 年間60万円
+  private: 1000000, // 私立: 年間100万円
 };
 
-// 大学（4年分 + 入学金）
-const UNIVERSITY_COST = {
-  public: {
-    tuition: 540000 * 4, // 国立: 約216万円
-    entrance: 280000, // 国立入学金: 約28万円
-  },
-  private: {
-    tuition: 930000 * 4, // 私立文系: 約372万円（理系は約124万円だが、平均的な文系で計算）
-    entrance: 250000, // 私立入学金: 約25万円
-  },
+// 大学（年間費用、4年間）
+const UNIVERSITY_ANNUAL_COST = {
+  public: 550000, // 公立: 年間55万円
+  private: 1000000, // 私立: 年間100万円
 };
 
-// 受験関連費用（塾代・予備校代を含む）
-const EXAM_PREP_COST = {
-  juniorHigh: 2000000, // 中学受験: 約200万円（3年間の塾代等）
-  highSchool: 1000000, // 高校受験: 約100万円（3年間の塾代等）
-  university: 1500000, // 大学受験: 約150万円（3年間の塾代等）
-};
+// 大学入学金（初年度のみ、私立・公立共通）
+const UNIVERSITY_ENTRANCE_FEE = 300000; // 30万円
 
 /**
  * 子供の誕生年から、各教育段階に到達する年齢（ユーザーの年齢）を計算
@@ -91,7 +69,109 @@ function calculateEducationMilestones(
 }
 
 /**
- * 子供の教育費を自動生成
+ * 子供の複数年教育費を自動生成
+ * @param child 子供情報
+ * @param currentYear 現在の年（例: 2025）
+ * @param currentAge ユーザーの現在年齢
+ * @returns 生成された複数年教育費の配列
+ */
+export function generateEducationMultiYearExpenses(
+  child: Child,
+  currentYear: number,
+  currentAge: number
+): MultiYearEducationExpense[] {
+  const expenses: MultiYearEducationExpense[] = [];
+
+  // ユーザーの誕生年を計算
+  const userBirthYear = currentYear - currentAge;
+  // 親子の年齢差を計算
+  const ageDifference = child.birthYear - userBirthYear;
+
+  // 幼稚園（3歳から3年間）
+  const kindergartenAnnualCost = child.kindergartenPrivate
+    ? KINDERGARTEN_ANNUAL_COST.private
+    : KINDERGARTEN_ANNUAL_COST.public;
+
+  const kindergartenStartAge = ageDifference + 3;
+  if (kindergartenStartAge >= currentAge || kindergartenStartAge + 2 >= currentAge) {
+    expenses.push({
+      id: `${child.id}-kindergarten-multiyear`,
+      name: '幼稚園',
+      annualAmount: kindergartenAnnualCost,
+      childAge: 3,
+      years: 3,
+    });
+  }
+
+  // 小学校（6歳から6年間）
+  const elementaryAnnualCost = child.elementaryPrivate
+    ? ELEMENTARY_ANNUAL_COST.private
+    : ELEMENTARY_ANNUAL_COST.public;
+
+  const elementaryStartAge = ageDifference + 6;
+  if (elementaryStartAge >= currentAge || elementaryStartAge + 5 >= currentAge) {
+    expenses.push({
+      id: `${child.id}-elementary-multiyear`,
+      name: '小学校',
+      annualAmount: elementaryAnnualCost,
+      childAge: 6,
+      years: 6,
+    });
+  }
+
+  // 中学（12歳から3年間）
+  const juniorHighAnnualCost = child.juniorHighPrivate
+    ? JUNIOR_HIGH_ANNUAL_COST.private
+    : JUNIOR_HIGH_ANNUAL_COST.public;
+
+  const juniorHighStartAge = ageDifference + 12;
+  if (juniorHighStartAge >= currentAge || juniorHighStartAge + 2 >= currentAge) {
+    expenses.push({
+      id: `${child.id}-juniorhigh-multiyear`,
+      name: '中学',
+      annualAmount: juniorHighAnnualCost,
+      childAge: 12,
+      years: 3,
+    });
+  }
+
+  // 高校（15歳から3年間）
+  const highSchoolAnnualCost = child.highSchoolPrivate
+    ? HIGH_SCHOOL_ANNUAL_COST.private
+    : HIGH_SCHOOL_ANNUAL_COST.public;
+
+  const highSchoolStartAge = ageDifference + 15;
+  if (highSchoolStartAge >= currentAge || highSchoolStartAge + 2 >= currentAge) {
+    expenses.push({
+      id: `${child.id}-highschool-multiyear`,
+      name: '高校',
+      annualAmount: highSchoolAnnualCost,
+      childAge: 15,
+      years: 3,
+    });
+  }
+
+  // 大学（18歳から4年間）
+  const universityAnnualCost = child.universityPrivate
+    ? UNIVERSITY_ANNUAL_COST.private
+    : UNIVERSITY_ANNUAL_COST.public;
+
+  const universityStartAge = ageDifference + 18;
+  if (universityStartAge >= currentAge || universityStartAge + 3 >= currentAge) {
+    expenses.push({
+      id: `${child.id}-university-multiyear`,
+      name: '大学',
+      annualAmount: universityAnnualCost,
+      childAge: 18,
+      years: 4,
+    });
+  }
+
+  return expenses;
+}
+
+/**
+ * 子供の単年教育費を自動生成（大学入学金のみ）
  * @param child 子供情報
  * @param currentYear 現在の年（例: 2025）
  * @param currentAge ユーザーの現在年齢
@@ -110,117 +190,13 @@ export function generateEducationExpenses(
   // 各教育段階に到達するユーザーの年齢を計算
   const milestones = calculateEducationMilestones(child.birthYear, userBirthYear);
 
-  // 幼稚園
-  const kindergartenCost = child.kindergartenPrivate
-    ? KINDERGARTEN_COST.private
-    : KINDERGARTEN_COST.public;
-
-  if (milestones.kindergartenAge >= currentAge) {
-    expenses.push({
-      id: `${child.id}-kindergarten`,
-      name: `幼稚園（3年分）`,
-      amount: kindergartenCost,
-      targetAge: milestones.kindergartenAge,
-      autoGenerated: true,
-      childId: child.id,
-    });
-  }
-
-  // 小学校
-  const elementaryCost = child.elementaryPrivate
-    ? ELEMENTARY_COST.private
-    : ELEMENTARY_COST.public;
-
-  if (milestones.elementaryAge >= currentAge) {
-    expenses.push({
-      id: `${child.id}-elementary`,
-      name: `小学校（6年分）`,
-      amount: elementaryCost,
-      targetAge: milestones.elementaryAge,
-      autoGenerated: true,
-      childId: child.id,
-    });
-  }
-
-  // 中学校
-  const juniorHighCost = child.juniorHighPrivate
-    ? JUNIOR_HIGH_COST.private.tuition + JUNIOR_HIGH_COST.private.entrance
-    : JUNIOR_HIGH_COST.public.tuition;
-
-  if (milestones.juniorHighAge >= currentAge) {
-    expenses.push({
-      id: `${child.id}-junior-high`,
-      name: `中学校（3年分${child.juniorHighPrivate ? '+入学金' : ''}）`,
-      amount: juniorHighCost,
-      targetAge: milestones.juniorHighAge,
-      autoGenerated: true,
-      childId: child.id,
-    });
-  }
-
-  // 中学受験準備費用
-  if (child.juniorHighPrivate && milestones.juniorHighExamAge >= currentAge) {
-    expenses.push({
-      id: `${child.id}-junior-high-exam`,
-      name: `中学受験準備（塾代等）`,
-      amount: EXAM_PREP_COST.juniorHigh,
-      targetAge: milestones.juniorHighExamAge,
-      autoGenerated: true,
-      childId: child.id,
-    });
-  }
-
-  // 高校
-  const highSchoolCost = child.highSchoolPrivate
-    ? HIGH_SCHOOL_COST.private.tuition + HIGH_SCHOOL_COST.private.entrance
-    : HIGH_SCHOOL_COST.public.tuition;
-
-  if (milestones.highSchoolAge >= currentAge) {
-    expenses.push({
-      id: `${child.id}-high-school`,
-      name: `高校（3年分${child.highSchoolPrivate ? '+入学金' : ''}）`,
-      amount: highSchoolCost,
-      targetAge: milestones.highSchoolAge,
-      autoGenerated: true,
-      childId: child.id,
-    });
-  }
-
-  // 高校受験準備費用（私立高校の場合）
-  if (child.highSchoolPrivate && milestones.highSchoolExamAge >= currentAge) {
-    expenses.push({
-      id: `${child.id}-high-school-exam`,
-      name: `高校受験準備（塾代等）`,
-      amount: EXAM_PREP_COST.highSchool,
-      targetAge: milestones.highSchoolExamAge,
-      autoGenerated: true,
-      childId: child.id,
-    });
-  }
-
-  // 大学
-  const universityCost = child.universityPrivate
-    ? UNIVERSITY_COST.private.tuition + UNIVERSITY_COST.private.entrance
-    : UNIVERSITY_COST.public.tuition + UNIVERSITY_COST.public.entrance;
-
+  // 大学入学金のみ（18歳時、私立・公立共通で30万円）
   if (milestones.universityAge >= currentAge) {
     expenses.push({
-      id: `${child.id}-university`,
-      name: `大学（4年分+入学金）`,
-      amount: universityCost,
+      id: `${child.id}-university-entrance`,
+      name: `大学入学金`,
+      amount: UNIVERSITY_ENTRANCE_FEE,
       targetAge: milestones.universityAge,
-      autoGenerated: true,
-      childId: child.id,
-    });
-  }
-
-  // 大学受験準備費用（全員）
-  if (milestones.universityExamAge >= currentAge) {
-    expenses.push({
-      id: `${child.id}-university-exam`,
-      name: `大学受験準備（塾代等）`,
-      amount: EXAM_PREP_COST.university,
-      targetAge: milestones.universityExamAge,
       autoGenerated: true,
       childId: child.id,
     });
@@ -230,7 +206,20 @@ export function generateEducationExpenses(
 }
 
 /**
- * 複数の子供の教育費を一括生成
+ * 複数の子供の複数年教育費を一括生成
+ */
+export function generateAllEducationMultiYearExpenses(
+  children: Child[],
+  currentYear: number,
+  currentAge: number
+): MultiYearEducationExpense[] {
+  return children.flatMap(child =>
+    generateEducationMultiYearExpenses(child, currentYear, currentAge)
+  );
+}
+
+/**
+ * 複数の子供の単年教育費を一括生成（大学入学金のみ）
  */
 export function generateAllEducationExpenses(
   children: Child[],
