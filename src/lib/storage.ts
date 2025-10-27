@@ -436,6 +436,79 @@ function validateFireCalculationInput(data: any): data is FireCalculationInput {
     }
   }
 
+  // childrenの配列チェック（オプショナル）
+  if ('children' in data) {
+    if (!Array.isArray(data.children)) {
+      console.error('バリデーションエラー: childrenは配列である必要があります', data.children);
+      return false;
+    }
+
+    // 各childの構造チェック
+    for (let i = 0; i < data.children.length; i++) {
+      const child = data.children[i];
+      if (!child || typeof child !== 'object') {
+        console.error(`バリデーションエラー: children[${i}]がオブジェクトではありません`, child);
+        return false;
+      }
+
+      const requiredChildFields = [
+        'id', 'birthYear', 'kindergartenPrivate', 'elementaryPrivate',
+        'juniorHighPrivate', 'highSchoolPrivate', 'universityPrivate', 'expenses'
+      ];
+      for (const field of requiredChildFields) {
+        if (!(field in child)) {
+          console.error(`バリデーションエラー: children[${i}].${field} が見つかりません`);
+          return false;
+        }
+      }
+
+      if (typeof child.id !== 'string' ||
+          typeof child.birthYear !== 'number' ||
+          typeof child.kindergartenPrivate !== 'boolean' ||
+          typeof child.elementaryPrivate !== 'boolean' ||
+          typeof child.juniorHighPrivate !== 'boolean' ||
+          typeof child.highSchoolPrivate !== 'boolean' ||
+          typeof child.universityPrivate !== 'boolean' ||
+          !Array.isArray(child.expenses)) {
+        console.error(`バリデーションエラー: children[${i}]のフィールド型が不正です`);
+        return false;
+      }
+
+      // multiYearExpensesのチェック（オプショナル、デフォルトは空配列）
+      if ('multiYearExpenses' in child) {
+        if (!Array.isArray(child.multiYearExpenses)) {
+          console.error(`バリデーションエラー: children[${i}].multiYearExpensesは配列である必要があります`);
+          return false;
+        }
+
+        for (let j = 0; j < child.multiYearExpenses.length; j++) {
+          const expense = child.multiYearExpenses[j];
+          if (!expense || typeof expense !== 'object') {
+            console.error(`バリデーションエラー: children[${i}].multiYearExpenses[${j}]がオブジェクトではありません`);
+            return false;
+          }
+
+          const requiredExpenseFields = ['id', 'name', 'annualAmount', 'childAge', 'years'];
+          for (const field of requiredExpenseFields) {
+            if (!(field in expense)) {
+              console.error(`バリデーションエラー: children[${i}].multiYearExpenses[${j}].${field} が見つかりません`);
+              return false;
+            }
+          }
+
+          if (typeof expense.id !== 'string' ||
+              typeof expense.name !== 'string' ||
+              typeof expense.annualAmount !== 'number' ||
+              typeof expense.childAge !== 'number' ||
+              typeof expense.years !== 'number') {
+            console.error(`バリデーションエラー: children[${i}].multiYearExpenses[${j}]のフィールド型が不正です`);
+            return false;
+          }
+        }
+      }
+    }
+  }
+
   console.log('バリデーション成功: データ形式は正しいです');
   return true;
 }

@@ -221,6 +221,15 @@ export interface AlphaVantageData {
 // 通貨タイプ
 export type Currency = 'JPY' | 'USD';
 
+// 複数年教育費（習い事、留学費用など）
+export interface MultiYearEducationExpense {
+  id: string;
+  name: string; // 学費名（例: ピアノレッスン、留学費用）
+  annualAmount: number; // 年間支出額（円単位）
+  childAge: number; // 子供の開始年齢
+  years: number; // 継続年数
+}
+
 // 子供情報
 export interface Child {
   id: string;
@@ -231,6 +240,7 @@ export interface Child {
   highSchoolPrivate: boolean; // 高校が私立か
   universityPrivate: boolean; // 大学が私立か
   expenses: SpecialExpense[]; // この子供に関連する教育費
+  multiYearExpenses: MultiYearEducationExpense[]; // 複数年に渡る学費
 }
 
 // 銘柄保有情報

@@ -10,13 +10,13 @@ import { FireCalculator, FireCalculationInput } from '@/lib/fire-calculator';
 import FireProjectionChart from '@/components/charts/fire-projection-chart';
 import FireSummary from '@/components/dashboard/fire-summary';
 import { YearlyDetailTable } from '@/components/dashboard/yearly-detail-table';
-import { ChartDataPoint, FireMetrics, AssetHolding, Loan, PensionPlan, SalaryPlan, SpecialExpense, SpecialIncome, ExpenseSegment, Child } from '@/lib/types';
+import { ChartDataPoint, FireMetrics, AssetHolding, Loan, PensionPlan, SalaryPlan, SpecialExpense, SpecialIncome, ExpenseSegment, Child, MultiYearEducationExpense } from '@/lib/types';
 import { ExpenseTimeline } from '@/components/expense/expense-timeline';
 import { formatCurrency } from '@/lib/utils';
 import { saveToLocalStorage, loadFromLocalStorage, exportToJson, importFromJson } from '@/lib/storage';
 import { useToast, ToastProvider } from '@/lib/toast-context';
 import { calculateTotalAssets as calculateTotalAssetsUnified } from '@/lib/asset-calculator';
-import { generateEducationExpenses, hasManualEdits } from '@/lib/education-cost';
+import { generateEducationExpenses, hasManualEdits, expandAllChildrenMultiYearExpenses } from '@/lib/education-cost';
 
 interface StockSymbol {
   symbol: string;
@@ -94,6 +94,7 @@ function HomeContent() {
   const [nextSpecialIncomeId, setNextSpecialIncomeId] = useState(2); // 次に使用するSpecialIncome ID（デフォルトは1なので2から開始）
   const [nextChildId, setNextChildId] = useState(1); // 次に使用するChild ID
   const [nextChildExpenseId, setNextChildExpenseId] = useState(1); // 次に使用する子供の支出ID
+  const [nextMultiYearExpenseId, setNextMultiYearExpenseId] = useState(1); // 次に使用する複数年学費ID
   const [isDeleteMode, setIsDeleteMode] = useState(false); // 削除モード状態
   const [isLoanDeleteMode, setIsLoanDeleteMode] = useState(false); // ローン削除モード状態
   const [isPensionDeleteMode, setIsPensionDeleteMode] = useState(false); // 年金削除モード状態
@@ -102,6 +103,7 @@ function HomeContent() {
   const [isSpecialIncomeDeleteMode, setIsSpecialIncomeDeleteMode] = useState(false); // 臨時収入削除モード状態
   const [isChildDeleteMode, setIsChildDeleteMode] = useState(false); // 子供削除モード状態
   const [childExpenseDeleteModes, setChildExpenseDeleteModes] = useState<Record<string, boolean>>({}); // 子供ごとの支出削除モード状態
+  const [childMultiYearExpenseDeleteModes, setChildMultiYearExpenseDeleteModes] = useState<Record<string, boolean>>({}); // 子供ごとの複数年学費削除モード状態
 
   // 子供情報変更時の確認ダイアログ関連の状態
   const [pendingChildUpdate, setPendingChildUpdate] = useState<{
@@ -192,6 +194,14 @@ function HomeContent() {
   useEffect(() => {
     const savedData = loadFromLocalStorage();
     if (savedData) {
+      // 古いデータにmultiYearExpensesフィールドがない場合は初期化
+      if (savedData.children) {
+        savedData.children = savedData.children.map(child => ({
+          ...child,
+          multiYearExpenses: child.multiYearExpenses || []
+        }));
+      }
+
       setInput(savedData);
 
       // nextAssetIdを適切に設定
@@ -616,6 +626,7 @@ function HomeContent() {
       highSchoolPrivate: false,
       universityPrivate: true,
       expenses: [], // 初期は空の配列
+      multiYearExpenses: [], // 初期は空の配列
     };
     setInput(prev => ({
       ...prev,
@@ -743,6 +754,66 @@ function HomeContent() {
             }
           : child
       )
+    }));
+  };
+
+  // 複数年学費管理のヘルパー関数
+  const addMultiYearExpense = (childId: string) => {
+    const newExpense: MultiYearEducationExpense = {
+      id: `child-${childId}-multiyear-${nextMultiYearExpenseId}`,
+      name: '',
+      annualAmount: 0,
+      childAge: 0,
+      years: 1,
+    };
+    setInput(prev => ({
+      ...prev,
+      children: (prev.children || []).map(child =>
+        child.id === childId
+          ? {
+              ...child,
+              multiYearExpenses: [...child.multiYearExpenses, newExpense]
+            }
+          : child
+      )
+    }));
+    setNextMultiYearExpenseId(prev => prev + 1);
+  };
+
+  const updateMultiYearExpense = (childId: string, expenseId: string, field: keyof MultiYearEducationExpense, value: string | number) => {
+    setInput(prev => ({
+      ...prev,
+      children: (prev.children || []).map(child =>
+        child.id === childId
+          ? {
+              ...child,
+              multiYearExpenses: child.multiYearExpenses.map(expense =>
+                expense.id === expenseId ? { ...expense, [field]: value } : expense
+              )
+            }
+          : child
+      )
+    }));
+  };
+
+  const removeMultiYearExpense = (childId: string, expenseId: string) => {
+    setInput(prev => ({
+      ...prev,
+      children: (prev.children || []).map(child =>
+        child.id === childId
+          ? {
+              ...child,
+              multiYearExpenses: child.multiYearExpenses.filter(expense => expense.id !== expenseId)
+            }
+          : child
+      )
+    }));
+  };
+
+  const toggleChildMultiYearExpenseDeleteMode = (childId: string) => {
+    setChildMultiYearExpenseDeleteModes(prev => ({
+      ...prev,
+      [childId]: !prev[childId]
     }));
   };
 
@@ -898,6 +969,15 @@ function HomeContent() {
 
     try {
       const importedData = await importFromJson(file);
+
+      // 古いデータにmultiYearExpensesフィールドがない場合は初期化
+      if (importedData.children) {
+        importedData.children = importedData.children.map(child => ({
+          ...child,
+          multiYearExpenses: child.multiYearExpenses || []
+        }));
+      }
+
       setInput(importedData);
 
       // nextAssetIdを適切に設定
@@ -934,7 +1014,16 @@ function HomeContent() {
     try {
       // 子供の支出を統合
       const allChildExpenses = (input.children || []).flatMap(child => child.expenses);
-      const combinedExpenses = [...input.specialExpenses, ...allChildExpenses];
+
+      // 複数年学費を展開して統合
+      const currentYear = new Date().getFullYear();
+      const expandedMultiYearExpenses = expandAllChildrenMultiYearExpenses(
+        input.children || [],
+        currentYear,
+        input.currentAge
+      );
+
+      const combinedExpenses = [...input.specialExpenses, ...allChildExpenses, ...expandedMultiYearExpenses];
 
       // FIRE計算実行（為替レートを含む）
       const fireResult = FireCalculator.calculateFire({
@@ -1862,6 +1951,120 @@ function HomeContent() {
                                 教育費が自動生成されます
                               </p>
                             )}
+                          </div>
+
+                          {/* 複数年学費セクション */}
+                          <div className="mt-6 pt-4 border-t border-gray-200">
+                            <div className="flex justify-between items-center mb-3">
+                              <Label className="text-sm font-semibold text-gray-700">
+                                複数年学費（習い事・留学等）
+                              </Label>
+                              <div className="flex gap-2">
+                                <Button
+                                  type="button"
+                                  onClick={() => addMultiYearExpense(child.id)}
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={childMultiYearExpenseDeleteModes[child.id] || false}
+                                >
+                                  追加
+                                </Button>
+                                <Button
+                                  type="button"
+                                  onClick={() => toggleChildMultiYearExpenseDeleteMode(child.id)}
+                                  size="sm"
+                                  variant={childMultiYearExpenseDeleteModes[child.id] ? "default" : "outline"}
+                                  disabled={child.multiYearExpenses.length === 0}
+                                >
+                                  {childMultiYearExpenseDeleteModes[child.id] ? '完了' : '削除'}
+                                </Button>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              {/* ヘッダー行（削除モードでない場合のみ表示） */}
+                              {child.multiYearExpenses.length > 0 && !childMultiYearExpenseDeleteModes[child.id] && (
+                                <div className="grid grid-cols-4 gap-2 mb-2">
+                                  <Label className="text-sm font-medium">学費名</Label>
+                                  <Label className="text-sm font-medium">年間支出額 [万円]</Label>
+                                  <Label className="text-sm font-medium">子供年齢</Label>
+                                  <Label className="text-sm font-medium">年数</Label>
+                                </div>
+                              )}
+
+                              {child.multiYearExpenses.map((expense) =>
+                                childMultiYearExpenseDeleteModes[child.id] ? (
+                                  // 削除モード
+                                  <div key={expense.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
+                                    <Button
+                                      type="button"
+                                      onClick={() => removeMultiYearExpense(child.id, expense.id)}
+                                      size="sm"
+                                      className="w-5 h-5 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white flex-shrink-0"
+                                    >
+                                      <span className="text-sm font-bold">−</span>
+                                    </Button>
+                                    <span className="text-sm font-medium text-gray-900 truncate">
+                                      {expense.name || '未設定'} ({expense.childAge}歳から{expense.years}年間、年{(expense.annualAmount / 10000).toFixed(0)}万円)
+                                    </span>
+                                  </div>
+                                ) : (
+                                  // 通常モード
+                                  <div key={expense.id} className="grid grid-cols-4 gap-2 items-center">
+                                    <Input
+                                      placeholder="ピアノレッスン"
+                                      value={expense.name}
+                                      onChange={(e) => updateMultiYearExpense(child.id, expense.id, 'name', e.target.value)}
+                                    />
+                                    <Input
+                                      type="number"
+                                      placeholder="10"
+                                      value={expense.annualAmount ? (expense.annualAmount / 10000) : ''}
+                                      onChange={(e) => updateMultiYearExpense(child.id, expense.id, 'annualAmount', Number(e.target.value) * 10000)}
+                                      min="0"
+                                      step="1"
+                                      noSpinner
+                                    />
+                                    <div className="relative">
+                                      <Input
+                                        type="number"
+                                        placeholder="6"
+                                        value={expense.childAge ?? ''}
+                                        onChange={(e) => updateMultiYearExpense(child.id, expense.id, 'childAge', Number(e.target.value))}
+                                        min="0"
+                                        max="30"
+                                        step="1"
+                                        className="pr-8"
+                                      />
+                                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
+                                        歳
+                                      </span>
+                                    </div>
+                                    <div className="relative">
+                                      <Input
+                                        type="number"
+                                        placeholder="10"
+                                        value={expense.years ?? ''}
+                                        onChange={(e) => updateMultiYearExpense(child.id, expense.id, 'years', Number(e.target.value))}
+                                        min="1"
+                                        max="25"
+                                        step="1"
+                                        className="pr-8"
+                                      />
+                                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
+                                        年
+                                      </span>
+                                    </div>
+                                  </div>
+                                )
+                              )}
+
+                              {child.multiYearExpenses.length === 0 && (
+                                <p className="text-sm text-gray-500 py-2">
+                                  習い事や留学など、複数年に渡る学費を追加できます
+                                </p>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );
