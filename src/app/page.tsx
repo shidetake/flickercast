@@ -94,7 +94,7 @@ function HomeContent() {
   const [nextSpecialIncomeId, setNextSpecialIncomeId] = useState(2); // 次に使用するSpecialIncome ID（デフォルトは1なので2から開始）
   const [nextChildId, setNextChildId] = useState(1); // 次に使用するChild ID
   const [nextChildExpenseId, setNextChildExpenseId] = useState(1); // 次に使用する子供の支出ID
-  const [nextMultiYearExpenseId, setNextMultiYearExpenseId] = useState(1); // 次に使用する複数年学費ID
+  const [nextMultiYearExpenseId, setNextMultiYearExpenseId] = useState(1); // 次に使用する複数年支出ID
   const [isDeleteMode, setIsDeleteMode] = useState(false); // 削除モード状態
   const [isLoanDeleteMode, setIsLoanDeleteMode] = useState(false); // ローン削除モード状態
   const [isPensionDeleteMode, setIsPensionDeleteMode] = useState(false); // 年金削除モード状態
@@ -103,7 +103,7 @@ function HomeContent() {
   const [isSpecialIncomeDeleteMode, setIsSpecialIncomeDeleteMode] = useState(false); // 臨時収入削除モード状態
   const [isChildDeleteMode, setIsChildDeleteMode] = useState(false); // 子供削除モード状態
   const [childExpenseDeleteModes, setChildExpenseDeleteModes] = useState<Record<string, boolean>>({}); // 子供ごとの支出削除モード状態
-  const [childMultiYearExpenseDeleteModes, setChildMultiYearExpenseDeleteModes] = useState<Record<string, boolean>>({}); // 子供ごとの複数年学費削除モード状態
+  const [childMultiYearExpenseDeleteModes, setChildMultiYearExpenseDeleteModes] = useState<Record<string, boolean>>({}); // 子供ごとの複数年支出削除モード状態
 
   // 子供情報変更時の確認ダイアログ関連の状態
   const [childUpdateDialog, setChildUpdateDialog] = useState<{
@@ -734,7 +734,7 @@ function HomeContent() {
     }));
   };
 
-  // 複数年学費管理のヘルパー関数
+  // 複数年支出管理のヘルパー関数
   const addMultiYearExpense = (childId: string) => {
     const newExpense: MultiYearEducationExpense = {
       id: `child-${childId}-multiyear-${nextMultiYearExpenseId}`,
@@ -995,7 +995,7 @@ function HomeContent() {
       // 子供の支出を統合
       const allChildExpenses = (input.children || []).flatMap(child => child.expenses);
 
-      // 複数年学費を展開して統合
+      // 複数年支出を展開して統合
       const currentYear = new Date().getFullYear();
       const expandedMultiYearExpenses = expandAllChildrenMultiYearExpenses(
         input.children || [],
@@ -1840,14 +1840,14 @@ function HomeContent() {
                         <div key={child.id} className="mt-6">
                           <div className="mb-3">
                             <Label className="text-sm font-semibold">
-                              子育て費用（{childNumber}） - {child.birthYear}年生まれ、{educationLabel}
+                              子育て（{childNumber}） - {child.birthYear}年生まれ、{educationLabel}
                             </Label>
                           </div>
 
-                          {/* 単年費用セクション */}
+                          {/* 単年支出セクション */}
                           <div className="flex justify-between items-center mb-3">
                             <Label className="text-sm font-medium text-gray-700">
-                              単年費用
+                              単年支出
                             </Label>
                             <div className="flex gap-2">
                               <Button
@@ -1875,7 +1875,7 @@ function HomeContent() {
                             {/* ヘッダー行（削除モードでない場合のみ表示） */}
                             {child.expenses.length > 0 && !isDeleteMode && (
                               <div className="grid grid-cols-3 gap-2 mb-2">
-                                <Label className="text-sm font-medium">費用名</Label>
+                                <Label className="text-sm font-medium">支出名</Label>
                                 <Label className="text-sm font-medium">支出額 [万円]</Label>
                                 <Label className="text-sm font-medium">年齢</Label>
                               </div>
@@ -1883,7 +1883,7 @@ function HomeContent() {
 
                             {child.expenses.map((expense) =>
                               isDeleteMode ? (
-                                // 削除モード: 費用名のみ表示、左側に赤い削除ボタン
+                                // 削除モード: 支出名のみ表示、左側に赤い削除ボタン
                                 <div key={expense.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
                                   <Button
                                     type="button"
@@ -1901,7 +1901,7 @@ function HomeContent() {
                                 // 通常モード: 全ての入力欄を表示
                                 <div key={expense.id} className="grid grid-cols-3 gap-2 items-center">
                                   <Input
-                                    placeholder="費用名"
+                                    placeholder="支出名"
                                     value={expense.name}
                                     onChange={(e) => updateChildExpense(child.id, expense.id, 'name', e.target.value)}
                                   />
@@ -1940,11 +1940,11 @@ function HomeContent() {
                             )}
                           </div>
 
-                          {/* 複数年学費セクション */}
+                          {/* 複数年支出セクション */}
                           <div className="mt-6 pt-4 border-t border-gray-200">
                             <div className="flex justify-between items-center mb-3">
                               <Label className="text-sm font-medium text-gray-700">
-                                複数年学費（習い事・留学等）
+                                複数年支出（学費・習い事等）
                               </Label>
                               <div className="flex gap-2">
                                 <Button
@@ -1972,7 +1972,7 @@ function HomeContent() {
                               {/* ヘッダー行（削除モードでない場合のみ表示） */}
                               {child.multiYearExpenses.length > 0 && !childMultiYearExpenseDeleteModes[child.id] && (
                                 <div className="grid grid-cols-4 gap-2 mb-2">
-                                  <Label className="text-sm font-medium">学費名</Label>
+                                  <Label className="text-sm font-medium">支出名</Label>
                                   <Label className="text-sm font-medium">年間支出額 [万円]</Label>
                                   <Label className="text-sm font-medium">子供年齢</Label>
                                   <Label className="text-sm font-medium">年数</Label>
@@ -2048,7 +2048,7 @@ function HomeContent() {
 
                               {child.multiYearExpenses.length === 0 && (
                                 <p className="text-sm text-gray-500 py-2">
-                                  習い事や留学など、複数年に渡る学費を追加できます
+                                  学費や習い事など、複数年に渡る支出を追加できます
                                 </p>
                               )}
                             </div>
