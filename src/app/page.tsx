@@ -2306,9 +2306,9 @@ function HomeContent() {
       {childUpdateDialog && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 min-w-96">
-            <h3 className="text-lg font-semibold mb-3">教育費の再計算</h3>
+            <h3 className="text-lg font-semibold mb-3">子育て費用の再計算</h3>
             <p className="text-sm text-gray-700 mb-4">
-              教育費を手動で編集しています。設定変更により教育費を再計算しますか？
+              この子供の情報を変更しました。子育て費用を再計算すると、この子供に関する手動で追加・編集した費用が全てリセットされ、自動計算された費用に置き換わります。再計算しますか？
             </p>
             <div className="flex gap-3 justify-end">
               <Button
