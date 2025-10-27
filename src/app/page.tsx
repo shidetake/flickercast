@@ -1318,7 +1318,7 @@ function HomeContent() {
 
                       {(!input.children || input.children.length === 0) && (
                         <p className="text-sm text-gray-500">
-                          子供を追加すると、教育費が自動的に特別支出として計上されます
+                          子供を追加すると子育て費用が自動的に追加されます
                         </p>
                       )}
                     </div>
