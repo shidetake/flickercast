@@ -7,11 +7,10 @@ export interface ToastProps {
   type: 'success' | 'error' | 'info';
   message: string;
   duration?: number;
-  index?: number;
   onClose: (id: string) => void;
 }
 
-export default function Toast({ id, type, message, duration = 3000, index = 0, onClose }: ToastProps) {
+export default function Toast({ id, type, message, duration = 3000, onClose }: ToastProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
 

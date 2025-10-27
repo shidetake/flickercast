@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AutocompleteInput } from '@/components/ui/autocomplete-input';
@@ -10,9 +10,8 @@ import { FireCalculator, FireCalculationInput } from '@/lib/fire-calculator';
 import FireProjectionChart from '@/components/charts/fire-projection-chart';
 import FireSummary from '@/components/dashboard/fire-summary';
 import { YearlyDetailTable } from '@/components/dashboard/yearly-detail-table';
-import { ChartDataPoint, FireMetrics, AssetHolding, Loan, PensionPlan, SalaryPlan, SpecialExpense, SpecialIncome, ExpenseSegment, Child, MultiYearEducationExpense } from '@/lib/types';
+import { ChartDataPoint, FireMetrics, AssetHolding, Loan, PensionPlan, SalaryPlan, SpecialExpense, SpecialIncome, Child, MultiYearEducationExpense } from '@/lib/types';
 import { ExpenseTimeline } from '@/components/expense/expense-timeline';
-import { formatCurrency } from '@/lib/utils';
 import { saveToLocalStorage, loadFromLocalStorage, exportToJson, importFromJson } from '@/lib/storage';
 import { useToast, ToastProvider } from '@/lib/toast-context';
 import { calculateTotalAssets as calculateTotalAssetsUnified } from '@/lib/asset-calculator';
@@ -307,7 +306,7 @@ function HomeContent() {
     if (needsUpdate) {
       setInput(prev => ({ ...prev, assetHoldings: updatedHoldings }));
     }
-  }, [stockSymbols]); // inputは依存から除外（無限ループ防止）
+  }, [stockSymbols, input.assetHoldings]);
 
   // データ変更時にlocalStorageへ自動保存
   useEffect(() => {
@@ -756,8 +755,8 @@ function HomeContent() {
       id: `child-${childId}-multiyear-${nextMultiYearExpenseId}`,
       name: '',
       annualAmount: 0,
-      childAge: undefined as any,
-      years: undefined as any,
+      childAge: 0,
+      years: 0,
     };
     setInput(prev => ({
       ...prev,
@@ -821,9 +820,9 @@ function HomeContent() {
   };
 
   // 総資産額を計算（統一関数を使用）
-  const calculateTotalAssets = () => {
+  const calculateTotalAssets = useCallback(() => {
     return calculateTotalAssetsUnified(input.assetHoldings, exchangeRate, 'manyen');
-  };
+  }, [input.assetHoldings, exchangeRate]);
 
   // 総月間返済額を計算（万円単位で返す）
   const calculateTotalMonthlyPayments = () => {
@@ -1068,12 +1067,6 @@ function HomeContent() {
       }));
 
       // メトリクス計算
-      // 現在年齢での月間支出を取得
-      const currentSegment = input.expenseSegments.find(
-        s => input.currentAge >= s.startAge && input.currentAge <= s.endAge
-      );
-      const currentMonthlyExpenses = currentSegment?.monthlyExpenses ?? 0;
-      const annualExpenses = currentMonthlyExpenses * 12;
       const currentAssets = calculateTotalAssets() * 10000; // 万円 → 円に変換
       const requiredAssets = fireResult.requiredAssets; // FIRE目標額（円）
       const fireProgress = requiredAssets > 0
@@ -1105,7 +1098,7 @@ function HomeContent() {
       console.error('Calculation error:', error);
       return null;
     }
-  }, [input, exchangeRate, exchangeRateLoading]);
+  }, [input, exchangeRate, exchangeRateLoading, calculateTotalAssets]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">

@@ -105,8 +105,8 @@ export default function AssetAllocationChart({
             ))}
           </Pie>
           <Tooltip formatter={formatTooltip} />
-          <Legend 
-            formatter={(value, entry) => {
+          <Legend
+            formatter={(value) => {
               const item = chartData.find(d => d.name === value);
               const percentage = item ? (item.value / totalValue) * 100 : 0;
               return `${value} (${percentage.toFixed(1)}%)`;

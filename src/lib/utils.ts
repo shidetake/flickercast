@@ -7,7 +7,6 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatCurrency(
   amount: number,
-  currency: string = 'JPY',
   locale: string = 'ja-JP'
 ): string {
   // 万円単位で表示（円を万円に変換）

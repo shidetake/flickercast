@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import Toast, { ToastProps } from '@/components/ui/toast';
+import Toast from '@/components/ui/toast';
 
 interface ToastItem {
   id: string;
@@ -72,14 +72,13 @@ export function ToastProvider({ children }: ToastProviderProps) {
       
       {/* Toast表示エリア */}
       <div className="fixed top-4 right-4 z-50 space-y-2">
-        {toasts.map((toast, index) => (
+        {toasts.map((toast) => (
           <Toast
             key={toast.id}
             id={toast.id}
             type={toast.type}
             message={toast.message}
             duration={toast.duration}
-            index={index}
             onClose={removeToast}
           />
         ))}
