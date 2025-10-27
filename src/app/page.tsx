@@ -16,7 +16,7 @@ import { formatCurrency } from '@/lib/utils';
 import { saveToLocalStorage, loadFromLocalStorage, exportToJson, importFromJson } from '@/lib/storage';
 import { useToast, ToastProvider } from '@/lib/toast-context';
 import { calculateTotalAssets as calculateTotalAssetsUnified } from '@/lib/asset-calculator';
-import { generateEducationExpenses, generateEducationMultiYearExpenses, expandAllChildrenMultiYearExpenses } from '@/lib/education-cost';
+import { generateEducationExpenses, generateEducationMultiYearExpenses, expandAllChildrenMultiYearExpenses, calculateParentAgeFromChildAge } from '@/lib/education-cost';
 
 interface StockSymbol {
   symbol: string;
@@ -992,16 +992,45 @@ function HomeContent() {
     if (exchangeRateLoading) return null;
 
     try {
-      // 子供の支出を統合
-      const allChildExpenses = (input.children || []).flatMap(child => child.expenses);
-
-      // 複数年支出を展開して統合
+      // 子供の支出を統合し、childAgeをtargetAgeに変換
       const currentYear = new Date().getFullYear();
+      const allChildExpenses = (input.children || []).flatMap(child =>
+        child.expenses.map(expense => {
+          // childAgeが設定されている場合は親の年齢に変換
+          if (expense.childAge !== undefined && expense.childId) {
+            const parentAge = calculateParentAgeFromChildAge(
+              expense.childAge,
+              child.birthYear,
+              currentYear,
+              input.currentAge
+            );
+            return { ...expense, targetAge: parentAge };
+          }
+          return expense;
+        })
+      );
+
+      // 複数年支出を展開して統合（こちらも同様に変換される）
       const expandedMultiYearExpenses = expandAllChildrenMultiYearExpenses(
         input.children || [],
         currentYear,
         input.currentAge
-      );
+      ).map(expense => {
+        // childAgeが設定されている場合は親の年齢に変換
+        if (expense.childAge !== undefined && expense.childId) {
+          const child = input.children?.find(c => c.id === expense.childId);
+          if (child) {
+            const parentAge = calculateParentAgeFromChildAge(
+              expense.childAge,
+              child.birthYear,
+              currentYear,
+              input.currentAge
+            );
+            return { ...expense, targetAge: parentAge };
+          }
+        }
+        return expense;
+      });
 
       const combinedExpenses = [...input.specialExpenses, ...allChildExpenses, ...expandedMultiYearExpenses];
 
@@ -1877,7 +1906,7 @@ function HomeContent() {
                               <div className="grid grid-cols-3 gap-2 mb-2">
                                 <Label className="text-sm font-medium">支出名</Label>
                                 <Label className="text-sm font-medium">支出額 [万円]</Label>
-                                <Label className="text-sm font-medium">年齢</Label>
+                                <Label className="text-sm font-medium">子供年齢</Label>
                               </div>
                             )}
 
@@ -1917,11 +1946,11 @@ function HomeContent() {
                                   <div className="relative">
                                     <Input
                                       type="number"
-                                      placeholder={input.currentAge > 0 ? input.currentAge.toString() : "50"}
-                                      value={expense.targetAge ?? ''}
-                                      onChange={(e) => updateChildExpense(child.id, expense.id, 'targetAge', Number(e.target.value))}
-                                      min={input.currentAge}
-                                      max={input.lifeExpectancy}
+                                      placeholder="18"
+                                      value={expense.childAge ?? ''}
+                                      onChange={(e) => updateChildExpense(child.id, expense.id, 'childAge', Number(e.target.value))}
+                                      min={0}
+                                      max={30}
                                       step="1"
                                       className="pr-8"
                                     />
