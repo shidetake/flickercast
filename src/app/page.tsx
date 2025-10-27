@@ -756,8 +756,8 @@ function HomeContent() {
       id: `child-${childId}-multiyear-${nextMultiYearExpenseId}`,
       name: '',
       annualAmount: 0,
-      childAge: 0,
-      years: 1,
+      childAge: undefined as any,
+      years: undefined as any,
     };
     setInput(prev => ({
       ...prev,
@@ -2034,13 +2034,13 @@ function HomeContent() {
                                 // 通常モード: 全ての入力欄を表示
                                 <div key={expense.id} className="grid grid-cols-3 gap-2 items-center">
                                   <Input
-                                    placeholder="支出名"
+                                    placeholder="七五三"
                                     value={expense.name}
                                     onChange={(e) => updateChildExpense(child.id, expense.id, 'name', e.target.value)}
                                   />
                                   <Input
                                     type="number"
-                                    placeholder="100"
+                                    placeholder="10"
                                     value={expense.amount ? (expense.amount / 10000) : ''}
                                     onChange={(e) => updateChildExpense(child.id, expense.id, 'amount', Number(e.target.value) * 10000)}
                                     min="0"
@@ -2050,7 +2050,7 @@ function HomeContent() {
                                   <div className="relative">
                                     <Input
                                       type="number"
-                                      placeholder="18"
+                                      placeholder="7"
                                       value={expense.childAge ?? ''}
                                       onChange={(e) => updateChildExpense(child.id, expense.id, 'childAge', Number(e.target.value))}
                                       min={0}
@@ -2148,7 +2148,7 @@ function HomeContent() {
                                     <div className="relative">
                                       <Input
                                         type="number"
-                                        placeholder="6"
+                                        placeholder="5"
                                         value={expense.childAge ?? ''}
                                         onChange={(e) => updateMultiYearExpense(child.id, expense.id, 'childAge', Number(e.target.value))}
                                         min="0"
@@ -2163,7 +2163,7 @@ function HomeContent() {
                                     <div className="relative">
                                       <Input
                                         type="number"
-                                        placeholder="10"
+                                        placeholder="5"
                                         value={expense.years ?? ''}
                                         onChange={(e) => updateMultiYearExpense(child.id, expense.id, 'years', Number(e.target.value))}
                                         min="1"
