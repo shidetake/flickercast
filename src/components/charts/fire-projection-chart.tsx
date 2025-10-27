@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import { ChartDataPoint } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-media-query';
 
 interface FireProjectionChartProps {
   data: ChartDataPoint[];
@@ -19,11 +20,13 @@ interface FireProjectionChartProps {
   className?: string;
 }
 
-export default function FireProjectionChart({ 
-  data, 
+export default function FireProjectionChart({
+  data,
   targetAmount,
-  className = "w-full h-96" 
+  className = "w-full h-96"
 }: FireProjectionChartProps) {
+  const isMobile = useIsMobile();
+
   const formatTooltip = (value: number, name: string) => {
     if (name === '資産') {
       return [formatCurrency(value), name];
@@ -32,15 +35,20 @@ export default function FireProjectionChart({
   };
 
   const formatYAxis = (tickItem: number) => {
-    // 万円単位で表示
     const amountInManYen = tickItem / 10000;
-    if (amountInManYen >= 10000) {
-      return `${(amountInManYen / 10000).toFixed(1)}億円`;
+    // モバイル時は「円」を省略
+    const suffix = isMobile ? '' : '円';
+
+    // 1000万以上は常に億単位で表示(FIREシミュレーションでは億単位が標準)
+    if (amountInManYen >= 1000) {
+      return `${(amountInManYen / 10000).toFixed(1)}億${suffix}`;
     }
+
+    // 1000万未満は万円単位
     if (amountInManYen >= 1) {
-      return `${amountInManYen.toFixed(0)}万円`;
+      return `${amountInManYen.toFixed(0)}万${suffix}`;
     }
-    return `${amountInManYen.toFixed(1)}万円`;
+    return `${amountInManYen.toFixed(1)}万${suffix}`;
   };
 
   return (
@@ -50,21 +58,24 @@ export default function FireProjectionChart({
           data={data}
           margin={{
             top: 5,
-            right: 30,
-            left: 20,
+            right: isMobile ? 5 : 10,
+            left: 0,
             bottom: 5,
           }}
         >
           <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-          <XAxis 
-            dataKey="year" 
+          <XAxis
+            dataKey="year"
             type="number"
             scale="linear"
             domain={['dataMin', 'dataMax']}
             tickFormatter={(value) => `${value}年`}
+            tick={{ fontSize: isMobile ? 11 : 12 }}
           />
           <YAxis
             tickFormatter={formatYAxis}
+            tick={{ fontSize: isMobile ? 11 : 12 }}
+            width={isMobile ? 45 : 55}
             domain={[
               0,
               (dataMax: number) => {
@@ -104,7 +115,11 @@ export default function FireProjectionChart({
               stroke="#f59e0b"
               strokeDasharray="8 4"
               strokeWidth={2}
-              label={{ value: "FIRE目標額", position: "top" }}
+              label={{
+                value: "FIRE目標額",
+                position: "top",
+                fontSize: isMobile ? 11 : 12
+              }}
             />
           )}
         </LineChart>
