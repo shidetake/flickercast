@@ -241,6 +241,7 @@ export interface Child {
   universityPrivate: boolean; // 大学が私立か
   expenses: SpecialExpense[]; // この子供に関連する教育費
   multiYearExpenses: MultiYearEducationExpense[]; // 複数年に渡る学費
+  manuallyEdited: boolean; // 手動で教育費を編集したかどうか
 }
 
 // 銘柄保有情報

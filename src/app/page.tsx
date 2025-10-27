@@ -16,7 +16,7 @@ import { formatCurrency } from '@/lib/utils';
 import { saveToLocalStorage, loadFromLocalStorage, exportToJson, importFromJson } from '@/lib/storage';
 import { useToast, ToastProvider } from '@/lib/toast-context';
 import { calculateTotalAssets as calculateTotalAssetsUnified } from '@/lib/asset-calculator';
-import { generateEducationExpenses, generateEducationMultiYearExpenses, hasManualEdits, expandAllChildrenMultiYearExpenses } from '@/lib/education-cost';
+import { generateEducationExpenses, generateEducationMultiYearExpenses, expandAllChildrenMultiYearExpenses } from '@/lib/education-cost';
 
 interface StockSymbol {
   symbol: string;
@@ -106,13 +106,11 @@ function HomeContent() {
   const [childMultiYearExpenseDeleteModes, setChildMultiYearExpenseDeleteModes] = useState<Record<string, boolean>>({}); // 子供ごとの複数年学費削除モード状態
 
   // 子供情報変更時の確認ダイアログ関連の状態
-  const [pendingChildUpdate, setPendingChildUpdate] = useState<{
+  const [childUpdateDialog, setChildUpdateDialog] = useState<{
     childId: string;
     field: keyof Child;
     value: string | number | boolean;
-    previousValue: string | number | boolean;
   } | null>(null);
-  const [skipAutoGeneration, setSkipAutoGeneration] = useState(false); // 自動生成をスキップするフラグ
 
   // USD/JPY為替レート関連の状態
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
@@ -194,11 +192,12 @@ function HomeContent() {
   useEffect(() => {
     const savedData = loadFromLocalStorage();
     if (savedData) {
-      // 古いデータにmultiYearExpensesフィールドがない場合は初期化
+      // 古いデータにmultiYearExpensesやmanuallyEditedフィールドがない場合は初期化
       if (savedData.children) {
         savedData.children = savedData.children.map(child => ({
           ...child,
-          multiYearExpenses: child.multiYearExpenses || []
+          multiYearExpenses: child.multiYearExpenses || [],
+          manuallyEdited: child.manuallyEdited ?? false
         }));
       }
 
@@ -314,43 +313,6 @@ function HomeContent() {
   useEffect(() => {
     saveToLocalStorage(input);
   }, [input]);
-
-  // 子供情報が変更されたときに教育費を自動生成
-  useEffect(() => {
-    if (!input.children || input.children.length === 0) {
-      return;
-    }
-
-    // スキップフラグが立っている場合は自動生成をスキップ
-    if (skipAutoGeneration) {
-      setSkipAutoGeneration(false);
-      return;
-    }
-
-    const currentYear = new Date().getFullYear();
-
-    // 各子供の教育費を自動生成
-    setInput(prev => ({
-      ...prev,
-      children: (prev.children || []).map((child) => {
-        // 複数年学費を生成
-        const newMultiYearExpenses = generateEducationMultiYearExpenses(child, currentYear, prev.currentAge);
-        // 単年費用（大学入学金のみ）を生成
-        const newExpenses = generateEducationExpenses(child, currentYear, prev.currentAge);
-        return {
-          ...child,
-          multiYearExpenses: newMultiYearExpenses,
-          expenses: newExpenses
-        };
-      })
-    }));
-  }, [
-    // 子供の誕生年または教育段階設定が変更されたとき、または現在年齢が変更されたときに実行
-    input.children?.map(c =>
-      `${c.birthYear}-${c.kindergartenPrivate}-${c.elementaryPrivate}-${c.juniorHighPrivate}-${c.highSchoolPrivate}-${c.universityPrivate}`
-    ).join(','),
-    input.currentAge
-  ]);
 
   // 株価取得関数（共通化）
   const fetchStockPricesForSymbols = async (symbols: string[]) => {
@@ -630,6 +592,7 @@ function HomeContent() {
       universityPrivate: true,
       expenses: [], // 初期は空の配列
       multiYearExpenses: [], // 初期は空の配列
+      manuallyEdited: false, // 初期は未編集
     };
     setInput(prev => ({
       ...prev,
@@ -639,64 +602,71 @@ function HomeContent() {
   };
 
   const updateChild = (id: string, field: keyof Child, value: string | number | boolean) => {
-    // 誕生年または教育段階の変更の場合、編集チェック
-    if (
+    // 誕生年または教育段階の変更の場合、手動編集フラグをチェック
+    const isEducationRelatedField =
       field === 'birthYear' ||
       field === 'kindergartenPrivate' ||
       field === 'elementaryPrivate' ||
       field === 'juniorHighPrivate' ||
       field === 'highSchoolPrivate' ||
-      field === 'universityPrivate'
-    ) {
+      field === 'universityPrivate';
+
+    if (isEducationRelatedField) {
       const child = input.children?.find(c => c.id === id);
-      if (child && hasManualEdits(child, new Date().getFullYear(), input.currentAge)) {
-        // 編集済みの場合、確認ダイアログを表示
-        setPendingChildUpdate({
-          childId: id,
-          field,
-          value,
-          previousValue: child[field]
-        });
+      if (child?.manuallyEdited) {
+        // 手動編集済みの場合、確認ダイアログを表示
+        setChildUpdateDialog({ childId: id, field, value });
         return;
       }
+
+      // 手動編集なしの場合、教育費を再計算
+      const currentYear = new Date().getFullYear();
+      setInput(prev => ({
+        ...prev,
+        children: (prev.children || []).map(child => {
+          if (child.id !== id) return child;
+
+          // 設定を更新し、教育費を再生成
+          const updated = { ...child, [field]: value, manuallyEdited: false };
+          const newMultiYearExpenses = generateEducationMultiYearExpenses(updated, currentYear, prev.currentAge);
+          const newExpenses = generateEducationExpenses(updated, currentYear, prev.currentAge);
+
+          return {
+            ...updated,
+            multiYearExpenses: newMultiYearExpenses,
+            expenses: newExpenses
+          };
+        })
+      }));
+    } else {
+      // 教育関連以外のフィールドの場合、そのまま更新
+      setInput(prev => ({
+        ...prev,
+        children: (prev.children || []).map(child =>
+          child.id === id ? { ...child, [field]: value } : child
+        )
+      }));
     }
-
-    // 編集なしまたは他のフィールドの場合、直接更新
-    applyChildUpdate(id, field, value);
   };
 
-  const applyChildUpdate = (id: string, field: keyof Child, value: string | number | boolean) => {
-    setInput(prev => ({
-      ...prev,
-      children: (prev.children || []).map(child =>
-        child.id === id ? { ...child, [field]: value } : child
-      )
-    }));
-  };
-
-  const applyChildUpdateWithAgeAdjustment = (childId: string, field: keyof Child, value: string | number | boolean, previousValue: string | number | boolean) => {
+  // ダイアログで「変更する」を選択した時の処理
+  const regenerateChildEducationCosts = (childId: string, field: keyof Child, value: string | number | boolean) => {
+    const currentYear = new Date().getFullYear();
     setInput(prev => ({
       ...prev,
       children: (prev.children || []).map(child => {
         if (child.id !== childId) return child;
 
-        const updated = { ...child, [field]: value };
+        // 設定を更新し、教育費を再生成
+        const updated = { ...child, [field]: value, manuallyEdited: false };
+        const newMultiYearExpenses = generateEducationMultiYearExpenses(updated, currentYear, prev.currentAge);
+        const newExpenses = generateEducationExpenses(updated, currentYear, prev.currentAge);
 
-        // 誕生年が変更された場合、手動追加費用の年齢を調整
-        if (field === 'birthYear' && typeof value === 'number' && typeof previousValue === 'number') {
-          const yearDiff = value - previousValue;
-          updated.expenses = child.expenses.map(expense => {
-            if (expense.autoGenerated) return expense; // 自動生成費用はuseEffectで再生成
-            if (!expense.targetAge) return expense;
-
-            return {
-              ...expense,
-              targetAge: expense.targetAge + yearDiff
-            };
-          });
-        }
-
-        return updated;
+        return {
+          ...updated,
+          multiYearExpenses: newMultiYearExpenses,
+          expenses: newExpenses
+        };
       })
     }));
   };
@@ -723,7 +693,8 @@ function HomeContent() {
         child.id === childId
           ? {
               ...child,
-              expenses: [...child.expenses, newExpense]
+              expenses: [...child.expenses, newExpense],
+              manuallyEdited: true
             }
           : child
       )
@@ -740,7 +711,8 @@ function HomeContent() {
               ...child,
               expenses: child.expenses.map(expense =>
                 expense.id === expenseId ? { ...expense, [field]: value } : expense
-              )
+              ),
+              manuallyEdited: true
             }
           : child
       )
@@ -754,7 +726,8 @@ function HomeContent() {
         child.id === childId
           ? {
               ...child,
-              expenses: child.expenses.filter(expense => expense.id !== expenseId)
+              expenses: child.expenses.filter(expense => expense.id !== expenseId),
+              manuallyEdited: true
             }
           : child
       )
@@ -776,7 +749,8 @@ function HomeContent() {
         child.id === childId
           ? {
               ...child,
-              multiYearExpenses: [...child.multiYearExpenses, newExpense]
+              multiYearExpenses: [...child.multiYearExpenses, newExpense],
+              manuallyEdited: true
             }
           : child
       )
@@ -793,7 +767,8 @@ function HomeContent() {
               ...child,
               multiYearExpenses: child.multiYearExpenses.map(expense =>
                 expense.id === expenseId ? { ...expense, [field]: value } : expense
-              )
+              ),
+              manuallyEdited: true
             }
           : child
       )
@@ -807,7 +782,8 @@ function HomeContent() {
         child.id === childId
           ? {
               ...child,
-              multiYearExpenses: child.multiYearExpenses.filter(expense => expense.id !== expenseId)
+              multiYearExpenses: child.multiYearExpenses.filter(expense => expense.id !== expenseId),
+              manuallyEdited: true
             }
           : child
       )
@@ -2275,7 +2251,7 @@ function HomeContent() {
       </footer>
 
       {/* 子供情報変更時の確認ダイアログ */}
-      {pendingChildUpdate && (
+      {childUpdateDialog && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-200 min-w-96">
             <h3 className="text-lg font-semibold mb-3">教育費の再計算</h3>
@@ -2285,30 +2261,30 @@ function HomeContent() {
             <div className="flex gap-3 justify-end">
               <Button
                 onClick={() => {
-                  // キャンセル: 設定は変更したまま、費用は再生成しない
-                  applyChildUpdate(
-                    pendingChildUpdate.childId,
-                    pendingChildUpdate.field,
-                    pendingChildUpdate.value
-                  );
-                  // useEffectでの自動生成を一時的にスキップ
-                  setSkipAutoGeneration(true);
-                  setPendingChildUpdate(null);
+                  // 再計算しない: 設定は変更するが教育費は再生成しない、フラグは維持
+                  setInput(prev => ({
+                    ...prev,
+                    children: (prev.children || []).map(child =>
+                      child.id === childUpdateDialog.childId
+                        ? { ...child, [childUpdateDialog.field]: childUpdateDialog.value, manuallyEdited: true }
+                        : child
+                    )
+                  }));
+                  setChildUpdateDialog(null);
                 }}
                 variant="outline"
               >
-                キャンセル
+                再計算しない
               </Button>
               <Button
                 onClick={() => {
-                  // 再計算: 費用を再生成
-                  applyChildUpdateWithAgeAdjustment(
-                    pendingChildUpdate.childId,
-                    pendingChildUpdate.field,
-                    pendingChildUpdate.value,
-                    pendingChildUpdate.previousValue
+                  // 変更する: 教育費を再生成
+                  regenerateChildEducationCosts(
+                    childUpdateDialog.childId,
+                    childUpdateDialog.field,
+                    childUpdateDialog.value
                   );
-                  setPendingChildUpdate(null);
+                  setChildUpdateDialog(null);
                 }}
               >
                 再計算する
